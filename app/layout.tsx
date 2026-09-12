@@ -4,7 +4,7 @@ import { themeBootstrap } from './theme-config';
 
 export const metadata: Metadata = {
   title: 'MigrationDirector Plus',
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: { url: '/favicon.svg?v=huawei', type: 'image/svg+xml' } },
   description: '面向迁移工程师的交付协作工作台',
   openGraph: {
     title: 'MigrationDirector Plus',

@@ -44,4 +44,4 @@ The platform name and mark sit at the top of the left navigation, above the proj
 
 ## Header logo
 
-The upper-left navigation and project setup header use the Huawei flower symbol before MigrationDirector Plus. Preserve its official red and proportions across all themes. The local `public/huawei-symbol.svg` contains the symbol path from the [Huawei website logo](https://consumer.huawei.com/.resources/huawei-cbg-site-lm-basic/webresources/mkt/etc/designs/huawei-cbg-site/clientlib-campaign-v4/common-v4/images/logo.svg).
+The upper-left navigation and project setup header use the Huawei flower symbol before MigrationDirector Plus. The browser favicon uses the same symbol, centered in a square viewport. Preserve its official red and proportions across all themes. The local `public/huawei-symbol.svg` contains the symbol path from the [Huawei website logo](https://consumer.huawei.com/.resources/huawei-cbg-site-lm-basic/webresources/mkt/etc/designs/huawei-cbg-site/clientlib-campaign-v4/common-v4/images/logo.svg).
