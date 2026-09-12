@@ -4,7 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, useSyncEx
 import { AgentPanel, Icon, ShortcutMenu, type QuickGroup, type WorkStep } from './workspace-ui';
 import { ThemePicker } from './theme-picker';
 
-import { StageConversationList, initialStageConversations, mainConversationId, type StageConversation, type StageId } from './stage-conversations';
+import { StageConversationList, StageHandoff, createStageConversation, initialStageConversations, mainConversationId, type StageConversation, type StageId } from './stage-conversations';
 
 interface ConversationView { draft?: string; typing?: boolean; workOpen?: boolean; panel?: PanelId }
 type PanelId = 'risk' | 'tasks' | 'creation' | 'cutover' | 'sync' | 'validation' | 'deliverables' | 'logs' | null;
@@ -307,6 +307,8 @@ function ProjectSetup({ onCreate, onCancel }: { onCreate: (project: ProjectInfo)
 
 function ProjectWorkspace({ visible, project, projects, projectId, onSelectProject, onNewProject }: { visible: boolean; project: ProjectInfo | null; projects: ProjectEntry[]; projectId: string; onSelectProject: (id: string) => void; onNewProject: () => void }) {
   const [activeStage, setActiveStage] = useState<StageId>('research');
+  const [enteredStages, setEnteredStages] = useState<StageId[]>(project ? ['research'] : []);
+  const [transitionReview, setTransitionReview] = useState<StageId | null>(null);
   const [managementPanel, setManagementPanel] = useState<PanelId>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
@@ -377,22 +379,25 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
   ] : []);
   const visibleMessages = messages.filter((message) => message.conversationId === conversationId);
   const validationAnnounced = useRef(false);
-  const availableStages: Record<StageId, boolean> = { research: Boolean(project), planning: planningStatus !== 'locked', migration: batchConfirmation === 'confirmed', validation: validationTasks.length > 0 };
+  const availableStages = Object.fromEntries(stageMeta.map((stage) => [stage.id, enteredStages.includes(stage.id)])) as Record<StageId, boolean>;
   function newChat() {
+    setTransitionReview(null);
     const id = `chat-${crypto.randomUUID()}`;
     setTemporaryChats((items) => [...items, { id, title: '新聊天' }]);
     setTemporaryChat(id); setManagementPanel(null); setNavOpen(false);
     window.setTimeout(() => composer.current?.focus(), 50);
   }
-  function openChat(id: string) { setTemporaryChat(id); setManagementPanel(null); setNavOpen(false); }
+  function openChat(id: string) { setTransitionReview(null); setTemporaryChat(id); setManagementPanel(null); setNavOpen(false); }
 
   function openStageChat(id: string) {
+    setTransitionReview(null);
     const chat = stageConversations.find((item) => item.id === id);
     if (!chat || !availableStages[chat.stageId]) return;
     setLastStageChats((items) => ({ ...items, [chat.stageId]: id }));
     setActiveStage(chat.stageId); setTemporaryChat(null); setManagementPanel(null); setNavOpen(false);
   }
   function newStageChat() {
+    setTransitionReview(null);
     if (!project || !availableStages[activeStage]) return;
     const id = `stage-chat-${crypto.randomUUID()}`;
     setStageConversations((items) => [...items, { id, stageId: activeStage, title: '新会话', kind: 'child' }]);
@@ -401,7 +406,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
     window.setTimeout(() => composer.current?.focus(), 50);
   }
   function renameStageChat(id: string, title: string) {
-    setStageConversations((items) => items.map((chat) => chat.id === id && chat.kind === 'child' ? { ...chat, title, manuallyNamed: true } : chat));
+    setStageConversations((items) => items.map((chat) => chat.id === id ? { ...chat, title, manuallyNamed: true } : chat));
   }
   function showStageWork() {
     if (!project || !availableStages[activeStage]) return;
@@ -465,10 +470,24 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
     migration: ['checking-connection', 'connected', 'checking-config'].includes(mdStatus) || (['creation', 'sync', 'cutover'] as ExecutionTaskKind[]).some((kind) => executionApprovals[kind] && executionMetrics[kind].completed < executionMetrics[kind].total),
     validation: false,
   };
-  const workflowStage: StageId = validationTasks.length ? 'validation' : batchConfirmation === 'confirmed' ? 'migration' : planningStatus !== 'locked' ? 'planning' : 'research';
+  const workflowStage: StageId = enteredStages.at(-1) || 'research';
+  const readyStages: Record<StageId, boolean> = {
+    research: Boolean(project),
+    planning: availableStages.research && assessed && researchHigh === 0,
+    migration: availableStages.planning && planned && planningHigh === 0,
+    validation: availableStages.migration && validationTasks.length > 0,
+  };
+  const nextStage = stageMeta[stageMeta.findIndex((stage) => stage.id === workflowStage) + 1]?.id;
+  const handoffTarget = nextStage && readyStages[nextStage] ? nextStage : null;
+  const handoffChecks: Record<StageId, string[]> = {
+    research: [],
+    planning: [`评估资料已核对，迁移范围 ${vmCount} 台`, '评估报告已生成，评估高风险已全部闭环'],
+    migration: [`已生成 ${batchTasks.length} 个迁移批次及 RunBook`, '规划高风险已全部闭环，请确认批次与实施窗口'],
+    validation: [`已有 ${validationTasks.length} 台虚拟机完成割接并生成配置对比`, '进入后需逐台或批量完成人工验收，不影响其余实施任务'],
+  };
   const stages: StageView[] = stageMeta.map((meta) => {
     const steps = stageSteps[meta.id];
-    const progress = Math.round(steps.filter((s) => s.state === 'done').length / steps.length * 100);
+    const progress = availableStages[meta.id] ? Math.round(steps.filter((s) => s.state === 'done').length / steps.length * 100) : 0;
     return { ...meta, progress, status: progress === 100 ? 'completed' : project && meta.id === workflowStage ? 'running' : 'pending', actions: [] };
   });
 
@@ -496,7 +515,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
 
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
-      if (visible && event.key === 'Escape') { setPanelValue(null); setNavOpen(false); setCompactInspectorOpen(false); }
+      if (visible && event.key === 'Escape') { setTransitionReview(null); setPanelValue(null); setNavOpen(false); setCompactInspectorOpen(false); }
     };
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
@@ -537,8 +556,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
         });
         if (!validationAnnounced.current) {
           validationAnnounced.current = true;
-          setMessages((items) => [...items, { id: Date.now() + Math.random(), role: 'agent', text: '割接结果已就绪。请查看配置对比，逐台或批量完成人工验收。', time: now(), conversationId: mainConversationId('validation'), stageId: 'validation' }]);
-          setToast('已有割接结果，可从顶部进入结果验证');
+          setToast('已有割接结果，人工确认交接后可进入结果验证');
         }
       }
       (['creation', 'sync', 'cutover'] as ExecutionTaskKind[]).forEach((kind) => {
@@ -547,7 +565,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
         if (!origin || !metric.total || metric.completed < metric.total || executionAnnounced.current.has(kind)) return;
         executionAnnounced.current.add(kind);
         const label = { creation: '新建', sync: '增量同步', cutover: '割接' }[kind];
-        setMessages((items) => [...items, { id: Date.now() + Math.random(), role: 'system', text: `${metric.total} 个${label}任务已完成。${kind === 'cutover' ? '可从顶部进入结果验证，当前会话继续保留。' : ''}`, time: now(), ...origin, operation: true }]);
+        setMessages((items) => [...items, { id: Date.now() + Math.random(), role: 'system', text: `${metric.total} 个${label}任务已完成。${kind === 'cutover' ? '配置对比已更新，可在结果验证阶段查看。' : ''}`, time: now(), ...origin, operation: true }]);
       });
       if (executionApprovals.creation) {
         setCreationTasks((items) => items.map((task, index) => index < executionMetrics.creation.completed && task.status !== '已创建' ? { ...task, status: '已创建' } : task));
@@ -663,13 +681,40 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
 
   function selectStage(target: StageId) {
     if (!project) { setToast('创建项目后自动开启评估会话'); return; }
-    if (target === 'planning' && (!assessed || researchHigh > 0)) { setToast('完成调研评估并闭环高风险后，进入规划设计'); return; }
-    if (target === 'migration' && batchConfirmation !== 'confirmed') { setToast('确认规划批次后，进入迁移实施'); return; }
-    if (target === 'validation' && !validationTasks.length) { setToast('割接完成后，自动生成验证任务'); return; }
+    if (!availableStages[target]) {
+      if (!readyStages[target]) { setToast('请先完成上一阶段的交付条件'); return; }
+      setTransitionReview(target);
+      conversation.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setTransitionReview(null);
     setTemporaryChat(null);
     setActiveStage(target);
     setManagementPanel(null);
     setNavOpen(false);
+  }
+
+  function confirmStageTransition(target: StageId) {
+    if (target !== handoffTarget || availableStages[target] || !claimOperation(`enter-${target}`, readyStages[target])) return;
+    appendOperation('user', `已人工确认阶段交接，进入${stageName[target]}。`);
+    setStageConversations((items) => items.some((chat) => chat.id === mainConversationId(target)) ? items : [...items, createStageConversation(target)]);
+    setEnteredStages((items) => [...items, target]);
+    setLastStageChats((items) => ({ ...items, [target]: mainConversationId(target) }));
+    setTransitionReview(null);
+    setTemporaryChat(null); setManagementPanel(null); setNavOpen(false);
+    setActiveStage(target);
+    appendMessage('system', `${stageName[target]}会话已创建。`, target);
+    if (target === 'planning') {
+      setPlanningStatus('scope-review');
+      appendMessage('agent', '评估交接已确认。请先核对迁移范围，再补充业务属性、依赖关系和迁移窗口。', 'planning');
+    } else if (target === 'migration') {
+      setBatchConfirmation('confirmed');
+      setMdHistory(() => [{ id: Date.now(), time: now(), title: '等待近端 MD 配置', detail: '服务端 23.45.2.2:7839 · 项目 x3ddrnb' }]);
+      appendMessage('agent', '规划交接已确认。请在近端 MigrationDirector 配置服务端 IP 23.45.2.2、端口 7839、项目 ID x3ddrnb，再检查连接与配置。', 'migration');
+    } else if (target === 'validation') {
+      appendMessage('agent', `实施交接已确认。已有 ${validationTasks.length} 台虚拟机进入配置对比，请逐台或批量完成人工验收。阶段切换不影响其余实施任务。`, 'validation');
+    }
+    setToast(`已确认交接，${stageName[target]}会话已创建`);
   }
 
   function sendPrompt(text: string) {
@@ -719,19 +764,9 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
       setPanel('risk');
       return;
     }
-    if (!claimOperation('confirm-batches', planned && batchConfirmation !== 'confirmed')) return;
-    appendOperation('user', '已确认迁移批次，进入迁移实施。');
-    setBatchConfirmation('confirmed');
-    setManagementPanel(null);
-    setActiveStage('migration');
-    setMdStatus('unconfigured');
-    setMdHistory(() => [{ id: Date.now(), time: now(), title: '等待近端 MD 配置', detail: '服务端 23.45.2.2:7839 · 项目 x3ddrnb' }]);
-    setExecutionApprovals({ creation: false, cutover: false, sync: false });
-    setExecutionStarted(false);
-    setExecutionMetrics({ creation: { total: 0, completed: 0, queued: 0, running: 0 }, cutover: { total: 0, completed: 0, queued: 0, running: 0 }, sync: { total: 0, completed: 0, queued: 0, running: 0 } });
-    appendMessage('system', '迁移批次已确认，项目进入迁移实施准备阶段。', 'migration');
-    appendMessage('agent', '请在近端 MigrationDirector 配置服务端连接：IP 23.45.2.2、端口 7839、项目 ID x3ddrnb。配置完成后点击“检查连接与配置”。', 'migration');
-    setToast('批次已确认，请配置近端 MigrationDirector');
+    if (!planned || availableStages.migration) return;
+    setTransitionReview('migration');
+    conversation.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function startMdCheck() {
@@ -810,7 +845,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
       return { ...items, cutover: { ...items.cutover, completed, queued: items.cutover.total - completed, running: 0 } };
     });
     appendOperation('system', `${completedTasks.length} 台虚拟机已确认割接完成，验证任务已生成。`);
-    setToast(`已生成 ${generated.length} 个验证任务，可从顶部进入结果验证`);
+    setToast(`已生成 ${generated.length} 个验证任务，确认阶段交接后可进入结果验证`);
   }
 
   function confirmValidationTasks(ids: string[]) {
@@ -833,13 +868,11 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
     setRisks((items) => items.map((risk) => risk.id === id ? { ...risk, closed: true, closedAt: new Date().toLocaleString('zh-CN', { hour12: false }), closureDescription } : risk));
     appendOperation('system', `风险 R-${String(id).padStart(3, '0')} 已人工确认闭环。`);
     if (riskBeingClosed?.stage === 'research' && riskBeingClosed.level === '高' && remainingStageHighRisks.length === 0) {
-      setPlanningStatus('scope-review');
-      appendMessage('system', '评估阶段门已通过，规划会话已开启。', 'planning');
-      appendMessage('agent', '调研评估阶段的高风险已全部闭环，阶段门通过。规划设计已解锁，可从顶部进入并确认迁移虚拟机总数与范围。', 'planning');
-      setToast('高风险已全部闭环，可从顶部进入规划设计');
+      appendMessage('agent', '评估高风险已全部闭环。请查看阶段交接，人工确认后开启规划设计会话。');
+      setToast('评估交付条件已满足，等待人工确认阶段交接');
     } else if (riskBeingClosed?.stage === 'planning' && riskBeingClosed.level === '高' && remainingStageHighRisks.length === 0) {
-      appendMessage('agent', '规划设计阶段的高风险已全部闭环，阶段门通过。迁移批次任务已就绪，可以进入迁移实施阶段。');
-      setToast('规划高风险已闭环，可以进入迁移实施阶段');
+      appendMessage('agent', '规划高风险已全部闭环。请确认批次与实施窗口，再人工确认阶段交接。');
+      setToast('规划交付条件已满足，等待人工确认阶段交接');
     } else {
       setToast('风险已闭环，阶段门状态已更新');
     }
@@ -848,6 +881,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
   const panelNames: Record<Exclude<PanelId, null>, string> = { risk: '迁移风险', tasks: '迁移任务', creation: '新建任务配置', cutover: '割接任务', sync: '增量同步', validation: '验证与验收', deliverables: '迁移交付件', logs: '操作日志' };
 
   function setPanel(next: PanelId) {
+    setTransitionReview(null);
     setPanelValue(next);
     setNavOpen(false);
     if (next) {
@@ -926,21 +960,22 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
         <div className="nav-platform"><span className="huawei-symbol" role="img" aria-label="华为" /><h1>MigrationDirector <span>Plus</span></h1><button className="icon-button nav-close" aria-label="收起导航" onClick={() => setNavOpen(false)}><Icon name="close" size={16} /></button></div>
         <div className="project-switcher-row"><div className="project-switcher"><Icon name="folder" size={18} /><select aria-label="切换当前项目" title={project ? projectName : '工作空间'} value={projectId} onChange={(e) => onSelectProject(e.target.value)}><option value="lobby">工作空间</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.info.siteName}</option>)}</select><Icon name="chevron" size={13} /></div><button className="icon-button" title="新建项目" aria-label="新建项目" onClick={startNewProject}><Icon name="plus" size={18} /></button><button className="icon-button" title="新建聊天" aria-label="新建聊天" onClick={newChat}><Icon name="chat" size={18} /></button></div>
         <div className="nav-tree-scroll">
-          <StageConversationList key={activeStage} title={active.title} conversations={stageConversations.filter((chat) => chat.stageId === activeStage)} selectedId={!temporaryChat && !isManagement ? conversationId : null} disabled={!availableStages[activeStage]} busyIds={Object.entries(conversationViews).filter(([, item]) => item.typing).map(([id]) => id)} onCreate={newStageChat} onSelect={openStageChat} onRename={renameStageChat} />
           <nav className="primary-nav project-resources" aria-label="项目资料">
             {([{ id: 'tasks', label: '迁移任务', icon: 'tasks' }, { id: 'risk', label: '迁移风险', icon: 'shield' }, { id: 'deliverables', label: '迁移交付件', icon: 'file' }, { id: 'logs', label: '操作日志', icon: 'clock' }] as const).map((item) => <button key={item.id} className={panel === item.id ? 'selected' : ''} disabled={!project} onClick={() => setPanel(item.id)}><Icon name={item.icon} size={17} /><span>{item.label}</span>{item.id === 'risk' && risks.some((risk) => !risk.closed) && <span className="nav-count">{risks.filter((risk) => !risk.closed).length}</span>}</button>)}
           </nav>
+          <StageConversationList title={active.title} conversations={stageConversations} selectedId={!temporaryChat && !isManagement ? conversationId : null} disabled={!project} busyIds={Object.entries(conversationViews).filter(([, item]) => item.typing).map(([id]) => id)} onCreate={newStageChat} onSelect={openStageChat} onRename={renameStageChat} />
           <section className="nav-section"><div className="nav-section-heading"><h2>临时对话</h2><button className="icon-button" aria-label="添加临时对话" onClick={newChat}><Icon name="plus" size={15} /></button></div><nav className="temporary-conversations" aria-label="临时对话">{temporaryChats.map((chat) => <button key={chat.id} title={chat.title} className={temporaryChat === chat.id ? 'selected' : ''} onClick={() => openChat(chat.id)}><Icon name="chat" size={15} /><span>{chat.title}</span></button>)}</nav>{!temporaryChats.length && <p className="nav-empty">随时开启一段讨论</p>}</section>
         </div>
         <div className="nav-bottom"><div className="user-profile" aria-label="当前用户"><span><Icon name="user" size={17} /></span><div><strong>当前用户</strong><small>个人账户</small></div></div><ThemePicker /></div>
       </aside>
       <section className="conversation-workspace">
         <div className="mobile-workspace-bar"><button className="icon-button" aria-label="打开导航" onClick={() => setNavOpen(true)}><Icon name="menu" /></button><span>{project ? projectName : '工作空间'}</span></div>
-        {showStageRail && <section className="progress-rail" aria-label="迁移项目进度"><div className="progress-caption"><span>项目流程</span><span><strong>{overallProgress}%</strong> 本轮进度 · {stages.filter((s) => s.status === 'completed').length} / 4 阶段完成</span></div><ol>{stages.map((stage, index) => <li key={stage.id} className={`${project && stage.id === workflowStage ? 'current' : ''} ${stage.status === 'completed' ? 'done' : ''} ${runningStages[stage.id] ? 'is-processing' : ''} ${project && activeStage === stage.id ? 'viewed-stage' : ''}`}><button disabled={!availableStages[stage.id]} onClick={() => selectStage(stage.id)} aria-current={project && stage.id === activeStage ? 'step' : undefined}><span className="stage-sequence">{stage.status === 'completed' ? <Icon name="check" size={12} /> : index + 1}</span><span>{stage.title}</span><small>{stage.progress}%</small></button><div className="stage-track" role="progressbar" aria-label={`${stage.title}进度`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={stage.progress}><i style={{ width: `${stage.progress}%` }} /></div></li>)}</ol></section>}
-        {!isManagement && <div className="conversation-toolbar"><div className="conversation-context"><Icon name={temporaryChat ? 'chat' : 'agent'} size={15} /><span>{temporaryChat ? temporaryChats.find((chat) => chat.id === temporaryChat)?.title : project ? `${active.title} / ${currentStageChat.title}` : '准备开始'}</span></div>{temporaryChat && <span className="conversation-context-note">独立讨论</span>}{project && !temporaryChat && !showInspector && <button className="show-execution-details" onClick={toggleInspector}><Icon name="tasks" size={14} />查看执行详情</button>}</div>}
+        {showStageRail && <section className="progress-rail" aria-label="迁移项目进度"><div className="progress-caption"><span>项目流程</span><span><strong>{overallProgress}%</strong> 本轮进度 · {stages.filter((s) => s.status === 'completed').length} / 4 阶段完成</span></div><ol>{stages.map((stage, index) => <li key={stage.id} className={`${project && stage.id === workflowStage ? 'current' : ''} ${stage.status === 'completed' ? 'done' : ''} ${runningStages[stage.id] ? 'is-processing' : ''} ${project && activeStage === stage.id ? 'viewed-stage' : ''}`}><button disabled={!availableStages[stage.id] && !readyStages[stage.id]} onClick={() => selectStage(stage.id)} aria-current={project && stage.id === activeStage ? 'step' : undefined}><span className="stage-sequence">{stage.status === 'completed' ? <Icon name="check" size={12} /> : index + 1}</span><span>{stage.title}</span><small>{!availableStages[stage.id] && readyStages[stage.id] ? '待确认' : `${stage.progress}%`}</small></button><div className="stage-track" role="progressbar" aria-label={`${stage.title}进度`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={stage.progress}><i style={{ width: `${stage.progress}%` }} /></div></li>)}</ol></section>}
+        {!isManagement && <div className="conversation-toolbar"><div className="conversation-context"><Icon name={temporaryChat ? 'chat' : 'agent'} size={15} /><span>{temporaryChat ? temporaryChats.find((chat) => chat.id === temporaryChat)?.title : project ? (currentStageChat.title === active.title ? active.title : `${active.title} / ${currentStageChat.title}`) : '准备开始'}</span></div>{temporaryChat && <span className="conversation-context-note">独立讨论</span>}{project && !temporaryChat && !showInspector && <button className="show-execution-details" onClick={toggleInspector}><Icon name="tasks" size={14} />查看执行详情</button>}</div>}
         <div className="conversation-scroll" ref={conversation} id={`conversation-${projectId}`} tabIndex={-1}>
           <div className={`conversation-content ${panel ? 'has-inline-panel' : ''}`}>
             {!isManagement && (project || temporaryChat) && <div className="conversation-date"><span>今天</span><span>·</span><span>{temporaryChat ? '临时对话' : '项目协作'}</span></div>}
+            {project && !temporaryChat && !isManagement && handoffTarget && <StageHandoff from={stageName[workflowStage]} to={stageName[handoffTarget]} checks={handoffChecks[handoffTarget]} reviewing={transitionReview === handoffTarget} onReview={() => setTransitionReview(handoffTarget)} onCancel={() => setTransitionReview(null)} onConfirm={() => confirmStageTransition(handoffTarget)} />}
             {!isManagement && <div className="message-history" role="log" aria-label="迁移对话记录" aria-live="polite">{visibleMessages.map((message) => <article className={`message message-${message.role}`} key={message.id}>{message.role === 'agent' && <div className="message-author"><Icon name="agent" size={14} /><time>{message.time}</time></div>}{message.role === 'system' ? <p className="system-event"><Icon name="check" size={13} />{message.text}</p> : <div className="message-body"><p>{message.text}</p></div>}</article>)}</div>}
             {(!project && !temporaryChat) && <div className="workspace-welcome"><Icon name="brand" size={32} /><h2>从这里开始迁移交付</h2><p>创建项目，按四个阶段推进。<br />也可以先开一段聊天，理清思路。</p><div><button className="primary" onClick={startNewProject}><Icon name="plus" size={17} />新建项目</button><button onClick={newChat}><Icon name="chat" size={17} />新建聊天</button></div></div>}
             {temporaryChat && !visibleMessages.length && <div className="workspace-welcome chat-welcome"><Icon name="chat" size={28} /><h2>这次想讨论什么？</h2><p>{project ? `这段对话关联「${projectName}」。` : '可以先讨论迁移需求，再创建项目。'}<br />讨论内容会单独保留。</p></div>}
@@ -987,7 +1022,7 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
                 {(planningStatus === 'details-pending' || planningStatus === 'generating') && <div className="planning-card details-card"><div className="planning-card-copy"><small>STEP 2 · PLANNING WORKBOOK</small><h3><Icon name="file" size={16} />补充虚拟机业务信息与迁移约束</h3><p>填写模板中的业务信息、依赖关系和迁移约束，上传后生成批次计划。</p></div><div className="sheet-requirements"><div><span>01</span><p><strong>虚拟机清单</strong><small>业务系统名称、业务等级、集群类型、集群角色</small></p></div><div><span>02</span><p><strong>业务依赖关系</strong><small>上下游系统、依赖类型、端口及说明</small></p></div><div><span>03</span><p><strong>迁移约束条件</strong><small>迁移窗口、约束说明和回退要求</small></p></div></div><div className="planning-card-actions"><a href={planningTemplateHref} download={`${projectName}-迁移规划信息模板.xls`}>↓ 下载三 Sheet 规划模板</a><label className={planningWorkbook ? 'uploaded' : ''}><input type="file" accept=".xlsx,.xls" disabled={planningStatus === 'generating'} onChange={uploadPlanningWorkbook} />{planningStatus === 'generating' ? '正在校验并生成计划…' : planningWorkbook ? `已上传：${planningWorkbook}` : '选择已填写的规划模板'}</label><button onClick={useDemoPlanning} disabled={planningStatus === 'generating'}>使用示例规划信息</button></div></div>}
 
                 {planningStatus === 'completed' && <div className="planning-result"><span>✓</span><div><small>PLANNING COMPLETED</small><h3>迁移批次与实施计划已生成</h3><p>共生成 {batchTasks.length} 项批次任务和 4 项规划风险；规划高风险闭环后可确认批次。</p></div><div className="planning-downloads"><a href={batchPlanHref} download={`${projectName}-迁移批次与实施计划.xls`}><small>实施批次计划</small><strong>下载</strong><span>↓</span></a><a href={runBookHref} download={`${projectName}-RunBook.md`}><small>RunBook</small><strong>下载</strong><span>↓</span></a></div><div className="planning-result-actions"><button onClick={() => setPanel('tasks')}>查看批次任务</button></div></div>}
-                {planningStatus === 'completed' && batchConfirmation !== 'confirmed' && <div className={`batch-confirm-card ${batchConfirmation}`}><span className="batch-confirm-icon">?</span><div><small>STAGE GATE · BATCH CONFIRMATION</small><h3>请确认迁移任务批次是否需要调整</h3><p>可在对话中调整批次、范围或排期，确认后进入实施。</p></div><div className="batch-confirm-actions"><button onClick={requestBatchAdjustment}>需要调整，与 Agent 交互</button><button className="primary" onClick={confirmBatchesAndPrepareMigration}>批次无误，进入迁移实施 →</button></div></div>}
+                {planningStatus === 'completed' && batchConfirmation !== 'confirmed' && <div className={`batch-confirm-card ${batchConfirmation}`}><span className="batch-confirm-icon">?</span><div><small>STAGE GATE · BATCH CONFIRMATION</small><h3>请确认迁移任务批次是否需要调整</h3><p>可在对话中调整批次、范围或排期，确认后进入实施。</p></div><div className="batch-confirm-actions"><button onClick={requestBatchAdjustment}>需要调整，与 Agent 交互</button><button className="primary" onClick={confirmBatchesAndPrepareMigration}>审核交接，进入迁移实施 →</button></div></div>}
               </div>
             )}
             {project && activeStage === 'migration' && batchConfirmation === 'confirmed' && mdStatus !== 'ready' && <div className="md-onboarding-card">

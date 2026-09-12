@@ -934,3 +934,25 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 .conversation-context { min-width: 0; }
 .conversation-context > svg, .show-execution-details { flex-shrink: 0; }
 .conversation-context > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Resource navigation leads; delivery history stays visible across stages. */
+.nav-tree-scroll > .project-resources { border-top: 0; padding-top: 0; margin-top: 0; }
+.nav-tree-scroll > .nav-delivery { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.delivery-chat-title { display: flex; flex-direction: column; gap: 3px; }
+.delivery-chat-title small { color: var(--muted); font-size: 10px; font-weight: 400; }
+.stage-chat-link { min-height: 45px; }
+.stage-handoff { margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.stage-handoff-summary { display: flex; align-items: center; gap: 10px; }
+.stage-handoff-summary > svg { flex-shrink: 0; color: var(--success); }
+.stage-handoff-summary > div { flex: 1; min-width: 0; }
+.stage-handoff strong { font-size: 13px; font-weight: 550; }
+.stage-handoff p { margin: 5px 0 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.stage-handoff button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); font-size: 12px; }
+.stage-handoff button:hover { background: var(--hover); }
+.stage-handoff button.primary { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.stage-handoff-review { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.stage-handoff-review ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+.stage-handoff-review li { display: flex; align-items: baseline; gap: 7px; line-height: 1.7; }
+.stage-handoff-review li svg { flex-shrink: 0; color: var(--success); }
+.stage-handoff-review > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+@media (max-width: 760px) { .stage-handoff { padding: 12px; }.stage-handoff-summary { flex-wrap: wrap; }.stage-handoff-summary > div { min-width: 180px; } }
