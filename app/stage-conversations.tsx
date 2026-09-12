@@ -13,6 +13,7 @@ export interface StageConversation {
 }
 export const mainConversationId = (stageId: StageId) => `stage-${stageId}-main`;
 export const stageTitles: Record<StageId, string> = { research: '调研评估', planning: '规划设计', migration: '迁移实施', validation: '结果验证' };
+const stageLabels: Record<StageId, string> = { research: '评估', planning: '规划', migration: '实施', validation: '验证' };
 export const createStageConversation = (stageId: StageId): StageConversation => ({ id: mainConversationId(stageId), stageId, title: stageTitles[stageId], kind: 'main' });
 export const initialStageConversations = (): StageConversation[] => [createStageConversation('research')];
 
@@ -36,7 +37,7 @@ export function StageConversationList({ title, conversations, selectedId, disabl
         <button className="icon-button" type="submit" aria-label="保存会话名称" disabled={!name.trim()}><Icon name="check" size={14} /></button>
         <button className="icon-button" type="button" aria-label="取消重命名" onClick={() => setEditing(null)}><Icon name="close" size={14} /></button>
       </form> : <div key={chat.id} className={`stage-chat-row ${selectedId === chat.id ? 'selected' : ''}`}>
-        <button className="stage-chat-link" title={chat.title} aria-current={selectedId === chat.id ? 'page' : undefined} onClick={() => onSelect(chat.id)}><Icon name={chat.kind === 'main' ? 'agent' : 'chat'} size={15} /><span className="delivery-chat-title">{chat.title}<small>{chat.kind === 'main' && chat.title === stageTitles[chat.stageId] ? '阶段启动时创建' : stageTitles[chat.stageId]}</small></span>{busyIds.includes(chat.id) && <span className="chat-busy" aria-label="正在处理"><Icon name="clock" size={12} /></span>}</button>
+        <button className="stage-chat-link" title={`${chat.title} · ${stageTitles[chat.stageId]}${chat.kind === 'main' ? ' · 阶段启动时创建' : ''}`} aria-current={selectedId === chat.id ? 'page' : undefined} onClick={() => onSelect(chat.id)}><Icon name={chat.kind === 'main' ? 'agent' : 'chat'} size={15} /><span className="delivery-chat-title">{chat.title}</span>{chat.title !== stageTitles[chat.stageId] && <small className="delivery-chat-stage" aria-label={stageTitles[chat.stageId]}>{stageLabels[chat.stageId]}</small>}{busyIds.includes(chat.id) && <span className="chat-busy" aria-label="正在处理"><Icon name="clock" size={12} /></span>}</button>
         <button className="icon-button rename-chat" aria-label={`重命名${chat.title}`} title="重命名" onClick={() => { setEditing(chat.id); setName(chat.title); }}><Icon name="edit" size={13} /></button>
       </div>)}
     </nav>

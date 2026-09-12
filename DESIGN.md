@@ -18,7 +18,7 @@ One native system sans-serif stack, including PingFang SC and Microsoft YaHei fo
 
 ## Layout
 
-Desktop: 236px navigation, flexible conversation, 282px inspector. Four stages occupy a horizontal progress rail instead of large cards. Chat content uses a responsive centered column: 790px normally, 980px from 1600px viewport width, and 1160px from 1920px. The progress rail and composer align to its inner reading width. Embedded forms remain narrower (620/700/780px) to keep conversation primary. The message body scrolls independently. The composer stays anchored below it. Under 981px, the inspector is opt-in; under 761px, navigation becomes a drawer.
+Desktop: 256px navigation (240px on compact desktops), flexible conversation, 282px inspector. Four stages occupy a horizontal progress rail instead of large cards. Chat content uses a responsive centered column: 790px normally, 980px from 1600px viewport width, and 1160px from 1920px. The progress rail and composer align to its inner reading width. Embedded forms remain narrower (620/700/780px) to keep conversation primary. The message body scrolls independently. The composer stays anchored below it. Under 981px, the inspector is opt-in; under 761px, navigation becomes a drawer.
 
 ## Components
 
@@ -32,13 +32,13 @@ Show distinct waiting, active, blocked and done steps with text and icons, not c
 
 ## Project navigation and entry
 
-The left header contains a native project switcher and icon actions for new project and new chat. The sidebar order is project resources, a unified delivery conversation list, then temporary chats. Delivery history remains visible across stages. Automatically created conversations are named after their stage; manually created conversations show their stage as secondary metadata. Both support inline renaming. The plus action creates a conversation in the currently viewed stage.
+The left header contains a native project switcher and icon actions for new project and new chat. The sidebar order is project resources, a unified delivery conversation list, then temporary chats. Delivery history remains visible across stages. Automatically created conversations are named after their stage; other conversation names show a short stage label inline at the right. Full names and stage context remain available in hover titles and accessible labels; omit repeated creation subtitles. Both support inline renaming. The plus action creates a conversation in the currently viewed stage.
 
 The top progress rail switches between entered stages and restores their last viewed conversation. A ready but unentered stage is labeled “待确认”. An inline handoff notice progressively discloses completed prerequisites and the effect of proceeding. Only explicit confirmation creates the next stage conversation; cancellation preserves all state. Background completion announces readiness without navigation or conversation creation.
 
 Stage entry conversations retain guided forms. Other conversations start with short project context and reveal shared operations through shortcuts. Messages, drafts, pending replies and expanded panels belong to a conversation, while execution and project records are shared. Results return to the initiating conversation. Management and temporary chats hide the rail but retain delivery history. New project remains a standalone form followed by the research conversation. The empty lobby retains the disabled rail; project state resets on refresh.
 
-Resource navigation uses 32–34px rows on desktop; delivery conversations use 45px rows to include stage metadata. Keep 2px row gaps and 12–16px group spacing. Mobile rows retain a 38px minimum height. The bottom-left area displays the current user avatar and account label.
+Resource, delivery and temporary navigation share 14px text, 16px leading icons, 36px desktop rows and 2px row gaps. Section labels use 12px text; 20px spacing separates groups without divider lines. Align icon and text columns across lists. Long conversation names truncate on one line while stage labels remain visible. The mobile drawer is 288px wide at most, with 44px navigation rows and icon targets. The bottom-left area displays the current user avatar and account label.
 
 ## Workspace refinement
 
