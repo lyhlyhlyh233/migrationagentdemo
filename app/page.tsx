@@ -269,6 +269,7 @@ export default function Home() {
   const [projects, setProjects] = useState<ProjectEntry[]>([]);
   const [selected, setSelected] = useState('lobby');
   const [creating, setCreating] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
   return <>
     {creating && <ProjectSetup onCancel={() => setCreating(false)} onCreate={(info) => {
       const id = crypto.randomUUID();
@@ -277,7 +278,7 @@ export default function Home() {
       setCreating(false);
     }} />}
     {[{ id: 'lobby', info: null }, ...projects].map((entry) => <div key={entry.id} hidden={creating || selected !== entry.id}>
-      <ProjectWorkspace visible={!creating && selected === entry.id} project={entry.info} projects={projects} projectId={entry.id} onSelectProject={setSelected} onNewProject={() => setCreating(true)} />
+      <ProjectWorkspace navCollapsed={navCollapsed} onNavCollapsedChange={setNavCollapsed} visible={!creating && selected === entry.id} project={entry.info} projects={projects} projectId={entry.id} onSelectProject={setSelected} onNewProject={() => setCreating(true)} />
     </div>)}
   </>;
 }
@@ -305,12 +306,18 @@ function ProjectSetup({ onCreate, onCancel }: { onCreate: (project: ProjectInfo)
   </main>;
 }
 
-function ProjectWorkspace({ visible, project, projects, projectId, onSelectProject, onNewProject }: { visible: boolean; project: ProjectInfo | null; projects: ProjectEntry[]; projectId: string; onSelectProject: (id: string) => void; onNewProject: () => void }) {
+function ProjectWorkspace({ navCollapsed, onNavCollapsedChange, visible, project, projects, projectId, onSelectProject, onNewProject }: { navCollapsed: boolean; onNavCollapsedChange: (collapsed: boolean) => void; visible: boolean; project: ProjectInfo | null; projects: ProjectEntry[]; projectId: string; onSelectProject: (id: string) => void; onNewProject: () => void }) {
   const [activeStage, setActiveStage] = useState<StageId>('research');
   const [enteredStages, setEnteredStages] = useState<StageId[]>(project ? ['research'] : []);
   const [transitionReview, setTransitionReview] = useState<StageId | null>(null);
   const [managementPanel, setManagementPanel] = useState<PanelId>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const collapseNavButton = useRef<HTMLButtonElement>(null);
+  const expandNavButton = useRef<HTMLButtonElement>(null);
+  function toggleNavigation(collapsed: boolean) {
+    onNavCollapsedChange(collapsed);
+    requestAnimationFrame(() => (collapsed ? expandNavButton : collapseNavButton).current?.focus());
+  }
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const wideViewport = useSyncExternalStore(subscribeViewport, getWideViewport, getServerViewport);
@@ -953,11 +960,17 @@ function ProjectWorkspace({ visible, project, projects, projectId, onSelectProje
   ];
 
   return (
-    <main className={`workspace ${navOpen ? 'nav-open' : ''} ${showInspector ? '' : 'inspector-collapsed'} ${isManagement ? 'management-view' : ''}`}>
+    <main className={`workspace ${navOpen ? 'nav-open' : ''} ${navCollapsed ? 'nav-collapsed' : ''} ${showInspector ? '' : 'inspector-collapsed'} ${isManagement ? 'management-view' : ''}`}>
       <a href={`#conversation-${projectId}`} className="skip-link">跳转到对话</a>
       {navOpen && <button className="nav-scrim" aria-label="关闭导航" onClick={() => setNavOpen(false)} />}
-      <aside className="workspace-nav" aria-label="项目导航">
-        <div className="nav-platform"><span className="huawei-symbol" role="img" aria-label="华为" /><h1>MigrationDirector <span>Plus</span></h1><button className="icon-button nav-close" aria-label="收起导航" onClick={() => setNavOpen(false)}><Icon name="close" size={16} /></button></div>
+      <aside className="nav-rail" aria-label="折叠导航">
+        <button ref={expandNavButton} className="icon-button" aria-label="展开左侧菜单" title="展开左侧菜单" aria-expanded={false} aria-controls={`project-navigation-${projectId}`} onClick={() => toggleNavigation(false)}><Icon name="sidebar" size={19} /></button>
+        <button className="icon-button" aria-label="新建项目" title="新建项目" onClick={startNewProject}><Icon name="plus" size={19} /></button>
+        <button className="icon-button" aria-label="新建聊天" title="新建聊天" onClick={newChat}><Icon name="chat" size={19} /></button>
+        <button className="icon-button nav-rail-account" aria-label="展开用户与外观设置" title="用户与外观" onClick={() => toggleNavigation(false)}><Icon name="user" size={19} /></button>
+      </aside>
+      <aside className="workspace-nav" id={`project-navigation-${projectId}`} aria-label="项目导航">
+        <div className="nav-platform"><span className="huawei-symbol" role="img" aria-label="华为" /><h1>MigrationDirector <span>Plus</span></h1><button ref={collapseNavButton} className="icon-button nav-collapse" aria-label="折叠左侧菜单" title="折叠左侧菜单" aria-expanded={true} aria-controls={`project-navigation-${projectId}`} onClick={() => toggleNavigation(true)}><Icon name="sidebar" size={17} /></button><button className="icon-button nav-close" aria-label="收起导航" onClick={() => setNavOpen(false)}><Icon name="close" size={16} /></button></div>
         <div className="project-switcher-row"><div className="project-switcher"><Icon name="folder" size={18} /><select aria-label="切换当前项目" title={project ? projectName : '工作空间'} value={projectId} onChange={(e) => onSelectProject(e.target.value)}><option value="lobby">工作空间</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.info.siteName}</option>)}</select><Icon name="chevron" size={13} /></div><button className="icon-button" title="新建项目" aria-label="新建项目" onClick={startNewProject}><Icon name="plus" size={18} /></button><button className="icon-button" title="新建聊天" aria-label="新建聊天" onClick={newChat}><Icon name="chat" size={18} /></button></div>
         <div className="nav-tree-scroll">
           <nav className="primary-nav project-resources" aria-label="项目资料">

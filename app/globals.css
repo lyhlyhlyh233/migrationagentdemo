@@ -968,3 +968,23 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
   .workspace-nav .nav-platform { padding-inline: 4px; gap: 6px; }
   .workspace-nav .nav-platform .nav-close { margin-right: -4px; }
 }
+
+/* Desktop navigation collapses independently of the execution inspector. */
+.nav-rail, .nav-collapse { display: none; }
+@media (min-width: 761px) {
+  .nav-platform { padding-inline: 4px; gap: 6px; }
+  .nav-platform h1 { flex: 1; min-width: 0; }
+  .nav-platform .nav-collapse { display: inline-flex; flex-shrink: 0; width: 28px; height: 32px; }
+  .workspace.nav-collapsed { grid-template-columns: 56px minmax(0, 1fr); }
+  .workspace.nav-collapsed > .workspace-nav { display: none; }
+  .workspace.nav-collapsed > .nav-rail { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 6px 12px; min-height: 0; background: var(--sidebar); }
+  .nav-rail .icon-button { width: 44px; height: 40px; flex-shrink: 0; }
+  .nav-rail .icon-button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+  .nav-rail-account { margin-top: auto; }
+}
+@media (min-width: 981px) {
+  .workspace.nav-collapsed:has(> .agent-inspector) { grid-template-columns: 56px minmax(0, 1fr) 282px; }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+  .workspace.nav-collapsed:has(> .agent-inspector) { grid-template-columns: 56px minmax(0, 1fr) 250px; }
+}

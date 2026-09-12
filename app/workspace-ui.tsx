@@ -11,6 +11,7 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6M8 13h8M8 17h5',
     shield: 'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7l-9-4Zm0 5v5m0 3h.01',
     tasks: 'm3 6 2 2 4-4m-6 9 2 2 4-4m-6 9 2 2 4-4M12 6h9M12 13h9M12 20h9',
+    sidebar: 'M3 4h18v16H3V4Zm6 0v16',
     panel: 'M3 4h18v16H3V4Zm12 0v16', menu: 'M4 6h16M4 12h16M4 18h16',
     chevron: 'm8 10 4 4 4-4', arrow: 'M12 19V5m-6 6 6-6 6 6', right: 'M5 12h14m-6-6 6 6-6 6',
     close: 'm6 6 12 12M6 18 18 6', check: 'm5 12 4 4L19 6', clock: 'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
