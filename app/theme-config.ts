@@ -1,8 +1,8 @@
 export const themes = [
   { id: 'white', label: '白色' },
+  { id: 'dark', label: '深色' },
   { id: 'teal', label: '青绿' },
   { id: 'burgundy', label: '酒红' },
-  { id: 'dark', label: '深色' },
 ] as const;
 
 export type Theme = (typeof themes)[number]['id'];

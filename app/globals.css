@@ -728,7 +728,7 @@ button.primary:hover { background: var(--secondary); }
 }
 
 /* Shared identity: actions, selection, and live work share one accent. */
-.nav-platform > svg { box-sizing: content-box; padding: 5px; border-radius: 7px; background: var(--accent); color: var(--on-accent); }
+.huawei-symbol { display: inline-block; width: 29px; height: 24px; flex: 0 0 29px; background: url("/huawei-symbol.svg") center / contain no-repeat; }
 .nav-platform h1 > span { color: var(--accent); font-weight: 650; }
 .nav-platform { padding-left: 2px; gap: 7px; }
 .nav-platform h1 { font-size: 13px; }
