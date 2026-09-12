@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AgentPanel, Icon, ShortcutMenu, type QuickGroup, type WorkStep } from './workspace-ui';
+import { ThemePicker } from './theme-picker';
 
 type StageId = 'research' | 'planning' | 'migration' | 'validation';
 type PanelId = 'risk' | 'tasks' | 'creation' | 'cutover' | 'sync' | 'validation' | 'deliverables' | 'logs' | null;
@@ -830,7 +831,7 @@ function ProjectWorkspace({ project, projects, projectId, onSelectProject, onNew
           </nav>
           <section className="nav-section"><div className="nav-section-heading"><h2>临时对话</h2><button className="icon-button" aria-label="添加临时对话" onClick={newChat}><Icon name="plus" size={15} /></button></div><nav className="temporary-conversations" aria-label="临时对话">{temporaryChats.map((chat) => <button key={chat.id} title={chat.title} className={temporaryChat === chat.id ? 'selected' : ''} onClick={() => openChat(chat.id)}><Icon name="chat" size={15} /><span>{chat.title}</span></button>)}</nav>{!temporaryChats.length && <p className="nav-empty">随时开启一段讨论</p>}</section>
         </div>
-        <div className="nav-bottom"><div className="user-profile" aria-label="当前用户"><span><Icon name="user" size={17} /></span><div><strong>当前用户</strong><small>个人账户</small></div></div></div>
+        <div className="nav-bottom"><div className="user-profile" aria-label="当前用户"><span><Icon name="user" size={17} /></span><div><strong>当前用户</strong><small>个人账户</small></div></div><ThemePicker /></div>
       </aside>
       <section className="conversation-workspace">
         <div className="mobile-workspace-bar"><button className="icon-button" aria-label="打开导航" onClick={() => setNavOpen(true)}><Icon name="menu" /></button><span>{project ? projectName : '工作空间'}</span></div>

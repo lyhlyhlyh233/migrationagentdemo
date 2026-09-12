@@ -6,7 +6,9 @@ A quiet, light workspace for migration delivery. The conversation is the primary
 
 ## Surfaces and color
 
-Use restrained graphite and burgundy with semantic OKLCH tokens from `app/globals.css`. Brand/action burgundy is #934352; selected surfaces use #F7EDF0 with darker burgundy text. The canvas stays white; navigation and the inspector have a slight brand tint. Accent color marks brand identity, primary actions, selection and running work. Slate blue identifies inputs and scale statistics; green means completion and amber means risk. Compact step segments and risk closure bars use actual project state; labels and counts provide the same information without color. No gradients, decorative glow, or agent-specific color palettes.
+Four user-selectable appearances sit below the account in the sidebar: white (default), teal (#167D7F), burgundy (#934352), and neutral charcoal dark. The choice applies across projects, standalone setup, conversations, management pages and diagrams; it is stored locally and restored before first paint. An absent or invalid saved value falls back to white. White uses the original quiet neutral surfaces; teal and burgundy retain restrained module tints. Dark uses separate canvas, panel and raised surface tokens, light text and adjusted semantic colors. All components use theme tokens rather than hard-coded light backgrounds.
+
+Slate blue identifies inputs and scale statistics in colored themes; green means completion and amber means risk. Compact step segments and risk closure bars use actual project state; labels and counts provide the same information without color. No gradients, decorative glow, or agent-specific color palettes.
 
 ## Typography
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { themeBootstrap } from './theme-config';
 
 export const metadata: Metadata = {
   title: 'MigrationDirector +',
@@ -25,7 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-theme="white" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrap }} /></head>
       <body>
         {children}
       </body>
