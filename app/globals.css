@@ -2,7 +2,7 @@
 
 :root {
   --canvas: oklch(1 0 0);
-  --sidebar: oklch(.974 0 0);
+  --sidebar: oklch(.978 .004 195);
   --surface: oklch(.985 0 0);
   --hover: oklch(.945 0 0);
   --ink: oklch(.24 0 0);
@@ -10,7 +10,12 @@
   --muted: oklch(.49 0 0);
   --line: oklch(.91 0 0);
   --line-strong: oklch(.83 0 0);
-  --accent: oklch(.26 0 0);
+  --accent: oklch(.53714 .08638 196.96); /* #167D7F */
+  --accent-hover: oklch(.46216 .07418 198.66);
+  --accent-ink: oklch(.42 .069 197);
+  --accent-soft: oklch(.95938 .01068 189.82); /* #EAF4F3 */
+  --accent-surface: oklch(.99 .003 195);
+  --accent-line: oklch(.85 .032 195);
   --success: oklch(.43 .08 160);
   --warning: oklch(.43 .09 65);
   --radius: 10px;
@@ -656,3 +661,90 @@ button.primary:hover { background: var(--secondary); }
   .mobile-workspace-bar > span { font-size: 12px; color: var(--secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .conversation-workspace > .progress-rail { padding-top: 7px; }
 }
+
+/* Deep teal identity: actions, selection, and live work share one accent. */
+.nav-platform > svg { box-sizing: content-box; padding: 5px; border-radius: 7px; background: var(--accent); color: white; }
+.nav-platform h1 > span { color: var(--accent); font-weight: 650; }
+.nav-platform { padding-left: 2px; gap: 7px; }
+.nav-platform h1 { font-size: 13px; }
+.project-setup-page > header > span > svg, .project-setup > svg { color: var(--accent); }
+.workspace-welcome > svg { box-sizing: content-box; padding: 15px; color: var(--accent); background: var(--accent-soft); border-radius: 15px; }
+.user-profile > span { background: var(--accent-soft); color: var(--accent-ink); }
+.project-switcher-row .icon-button:hover, .show-execution-details:hover { color: var(--accent-ink); background: var(--accent-soft); }
+.primary-nav button:hover:not(:disabled), .stage-conversations button:hover:not(:disabled), .temporary-conversations button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.primary-nav button.selected, .stage-conversations button.selected, .temporary-conversations button.selected { color: var(--accent-ink); background: var(--accent-soft); }
+.stage-conversations .selected .nav-stage-dot { color: white; background: var(--accent); border-color: var(--accent); }
+.stage-conversations .selected small { color: var(--accent-ink); }
+.nav-section-heading > span { font-variant-numeric: tabular-nums; }
+.progress-caption strong, .progress-rail li.current button { color: var(--accent-ink); }
+.current .stage-sequence { background: var(--accent); border-color: var(--accent); }
+.stage-track { position: relative; }
+.stage-track i, .validation-progress > span > i, .vm-progress i { background: var(--accent); }
+.stage-track i { transition: width 450ms cubic-bezier(.22,1,.36,1); }
+.progress-rail li.current .stage-track { background: var(--accent-soft); }
+.progress-rail li.is-processing .stage-track::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 30%; border-radius: inherit; background: var(--accent); opacity: .4; animation: progress-sweep 2.5s linear infinite; }
+.conversation-context > svg, .message-author > svg, .composer-bottom > span > svg { color: var(--accent); }
+.message-user .message-body { background: var(--accent-soft); color: var(--accent-ink); }
+.shortcut-menu[open] summary, .shortcut-menu summary:hover { color: var(--accent-ink); background: var(--accent-soft); }
+.shortcut-options { border-color: var(--accent-line); }
+.shortcut-menu[open] .shortcut-options { animation: menu-appear 160ms ease-out; }
+.shortcut-options button:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.shortcut-options button:hover small { color: var(--accent-ink); }
+.chat-composer { border-color: var(--accent-line); }
+.chat-composer:focus-within { border-color: var(--accent); outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline-color: var(--accent); }
+input[type=checkbox] { accent-color: var(--accent); }
+button.primary, .project-form-foot button, .inline-assess, .planning-card-actions > button:last-child, .md-onboarding-actions button, .approval-actions button:last-child, .validation-progress > button, .risk-gate-button, .closure-dialog-actions button:last-child, .validation-approval button, .send-button { background: var(--accent); border-color: var(--accent); color: white; }
+button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabled), .inline-assess:hover:not(:disabled), .planning-card-actions > button:last-child:hover:not(:disabled), .md-onboarding-actions button:hover:not(:disabled), .approval-actions button:last-child:hover:not(:disabled), .validation-progress > button:hover:not(:disabled), .risk-gate-button:hover:not(:disabled), .closure-dialog-actions button:last-child:hover:not(:disabled), .validation-approval button:hover:not(:disabled), .send-button:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.send-button:disabled { background: var(--hover); border-color: transparent; color: var(--muted); }
+.follow-up-prompts button:hover { border-color: var(--accent-line); color: var(--accent-ink); background: var(--accent-soft); }
+.workflow-embeds :is(.upload-card, .planning-card, .md-onboarding-card) { border-color: var(--accent-line); background: var(--accent-surface); }
+.workflow-embeds h3 > svg { display: inline-block; color: var(--accent); margin-right: 7px; vertical-align: -3px; }
+.upload-items label > span { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+.sample-files, .planning-card-actions > a, .planning-steps > span.active { color: var(--accent-ink); }
+.planning-card-actions > a:hover, .planning-card-actions > label:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.agent-inspector { background: var(--accent-surface); }
+.inspector-status { align-self: flex-start; width: fit-content; padding: 7px 9px; border-radius: 7px; background: var(--accent-soft); color: var(--accent-ink); }
+.work-steps .active .step-indicator { border-color: var(--accent); background: white; }
+.work-steps .active .step-indicator i { background: var(--accent); }
+.work-steps .active strong { color: var(--accent-ink); }
+.agent-inspector[data-running=true] .work-steps .active .step-indicator i { animation: live-node 2.4s ease-in-out infinite; }
+.agent-inspector[data-running=true] .inspector-status > svg { animation: live-node 2.4s ease-in-out infinite; }
+.work-steps .done .step-indicator svg path { stroke-dasharray: 24; animation: complete-check 350ms ease-out; }
+.thinking-dot { background: var(--accent); }
+.artifact-list > * > svg:first-child, .deliverable-row > svg { color: var(--accent); }
+.artifact-list > a:hover, .artifact-list > button:hover, .deliverable-row:hover { color: var(--accent-ink); background: var(--accent-soft); }
+.risk-toolbar button.active, .batch-toolbar button.active, .task-primary-tabs button.active, .vm-task-tabs button.active { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; }
+.wizard-steps button.active { color: var(--accent-ink); }
+.advanced-options button.on { background: var(--accent); }
+@keyframes progress-sweep { from { transform: translateX(-110%); } to { transform: translateX(440%); } }
+@keyframes live-node { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(.82); } }
+@keyframes complete-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes menu-appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .progress-rail li.is-processing .stage-track::after { display: none; }
+  .stage-track i, .shortcut-menu[open] .shortcut-options, .work-steps .done .step-indicator svg path, .agent-inspector[data-running=true] .work-steps .active .step-indicator i, .agent-inspector[data-running=true] .inspector-status > svg { animation: none; transition: none; }
+}
+
+/* Keep the progress rail and conversation on one responsive reading column. */
+.workspace { --conversation-width: 790px; --conversation-gutter: 34px; --reading-width: calc(var(--conversation-width) - var(--conversation-gutter) * 2); }
+.conversation-content { max-width: var(--conversation-width); padding-inline: var(--conversation-gutter); }
+.progress-rail > .progress-caption, .progress-rail > ol { max-width: var(--reading-width); margin-inline: auto; }
+.conversation-toolbar { width: 100%; max-width: var(--conversation-width); margin-inline: auto; padding-inline: var(--conversation-gutter); }
+.chat-composer, .composer-shortcuts { max-width: var(--reading-width); }
+@media (min-width: 1600px) {
+  .workspace { --conversation-width: 980px; --conversation-gutter: 36px; }
+  .workflow-embeds { max-width: 700px; }
+  .inline-work > .inline-artifact { max-width: 820px; }
+}
+@media (min-width: 1920px) {
+  .workspace { --conversation-width: 1160px; --conversation-gutter: 40px; }
+  .workflow-embeds { max-width: 780px; }
+  .inline-work > .inline-artifact { max-width: 920px; }
+  .message-body p { max-width: 78ch; }
+  .chat-composer textarea { font-size: 14px; }
+}
+@media (max-width: 1180px) { .workspace { --conversation-gutter: 24px; } }
+@media (max-width: 760px) { .workspace { --conversation-gutter: 18px; } }
+/* Management lists use their own wider column, independent of chat sizing. */
+.management-view .conversation-content { max-width: 1280px; }

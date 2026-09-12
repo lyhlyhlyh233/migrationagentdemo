@@ -6,7 +6,7 @@ A quiet, light workspace for migration delivery. The conversation is the primary
 
 ## Surfaces and color
 
-Use neutral OKLCH tokens from `app/globals.css`: white conversation canvas; slightly gray navigation and inspector; dark neutral text and primary actions. Green is reserved for completed states and muted amber for risk. No gradients, orbit graphics, decorative glow, or color-coded agent cards.
+Use restrained graphite and deep teal with semantic OKLCH tokens from `app/globals.css`. Brand/action teal is #167D7F; selected surfaces use #EAF4F3 with darker teal text. The canvas stays white; navigation and the inspector have a slight brand tint. Accent color marks brand identity, primary actions, selection and running work. Green remains for completion and amber for risk. No gradients, decorative glow, or agent-specific color palettes.
 
 ## Typography
 
@@ -14,7 +14,7 @@ One native system sans-serif stack, including PingFang SC and Microsoft YaHei fo
 
 ## Layout
 
-Desktop: 236px navigation, flexible conversation, 282px inspector. Four stages occupy a horizontal progress rail instead of large cards. Chat content has a 790px maximum width and an independently scrolling body. The composer stays anchored below it. Under 981px, the inspector is opt-in; under 761px, navigation becomes a drawer.
+Desktop: 236px navigation, flexible conversation, 282px inspector. Four stages occupy a horizontal progress rail instead of large cards. Chat content uses a responsive centered column: 790px normally, 980px from 1600px viewport width, and 1160px from 1920px. The progress rail and composer align to its inner reading width. Embedded forms remain narrower (620/700/780px) to keep conversation primary. The message body scrolls independently. The composer stays anchored below it. Under 981px, the inspector is opt-in; under 761px, navigation becomes a drawer.
 
 ## Components
 
@@ -24,7 +24,7 @@ Planning inputs, MD setup, task configuration and verification live inside compa
 
 ## State and accessibility
 
-Show distinct waiting, active, blocked and done steps with text and icons, not color alone. Queue and artifact statistics come from current demo state. Progress bars expose value and label. Respect reduced motion. Use live regions for assistant messages and task notifications; do not move keyboard focus when background progress updates.
+Show distinct waiting, active, blocked and done steps with text and icons, not color alone. Queue and artifact statistics come from current demo state. Progress bars expose value and label. Use a slow sweep only while a stage is executing, breathing nodes only for actual running work, brief check drawing for completed steps, and a 160ms menu entrance. Waiting for user input is static. Respect reduced motion. Use live regions for assistant messages and task notifications; do not move keyboard focus when background progress updates.
 
 ## Project navigation and entry
 

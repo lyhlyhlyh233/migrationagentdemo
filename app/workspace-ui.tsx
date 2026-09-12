@@ -41,17 +41,17 @@ export function ShortcutMenu({ groups }: { groups: QuickGroup[] }) {
   return <div className="shortcut-groups" ref={root}>{groups.map((group) => <details key={group.label} name="stage-shortcuts" className="shortcut-menu"><summary><Icon name={group.icon} size={15} /><span>{group.label}</span><Icon name="chevron" size={13} /></summary><div className="shortcut-options">{group.options.map((option) => <button key={option.label} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); option.onClick(); }}><strong>{option.label}</strong><small>{option.description}</small></button>)}</div></details>)}</div>;
 }
 
-export function AgentPanel({ status, steps, stats, artifacts, events, onClose }: {
-  status: string; steps: WorkStep[];
+export function AgentPanel({ running, status, steps, stats, artifacts, events, onClose }: {
+  running: boolean; status: string; steps: WorkStep[];
   stats: { label: string; value: string | number }[];
   artifacts: { label: string; meta: string; href?: string; download?: string; onClick?: () => void }[];
   events: { text: string; time: string }[]; onClose: () => void;
 }) {
   const completed = steps.filter((step) => step.state === 'done').length;
-  return <aside className="agent-inspector" aria-label="子智能体执行详情">
+  return <aside className="agent-inspector" data-running={running} aria-label="子智能体执行详情">
     <header className="inspector-header"><span>执行详情</span><button className="icon-button" aria-label="收起执行详情" onClick={onClose}><Icon name="panel" size={17} /></button></header>
     <div className="inspector-scroll">
-      <div className={`state-label inspector-status ${steps.some((s) => s.state === 'active') ? 'is-active' : ''}`}><Icon name="agent" size={16} /><span>{status}</span></div>
+      <div className={`state-label inspector-status ${running ? 'is-active' : ''}`}><Icon name="agent" size={16} /><span>{status}</span></div>
       <section className="inspector-section"><header><h3>执行步骤</h3><span>{completed} / {steps.length}</span></header><ol className="work-steps">{steps.map((step) => <li key={step.label} className={step.state}><span className="step-indicator">{step.state === 'done' ? <Icon name="check" size={12} /> : step.state === 'blocked' ? '!' : <i />}</span><div><strong>{step.label}</strong><p>{step.detail}</p></div></li>)}</ol></section>
       <section className="inspector-section"><header><h3>当前统计</h3><span>随任务更新</span></header><dl className="inspector-stats">{stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl></section>
       <section className="inspector-section"><header><h3>文件与产物</h3><span>{artifacts.length}</span></header>{artifacts.length ? <div className="artifact-list">{artifacts.map((item) => item.href ? <a href={item.href} download={item.download} key={item.label}><Icon name="file" /><span><strong>{item.label}</strong><small>{item.meta}</small></span><Icon name="download" size={15} /></a> : <button key={item.label} onClick={item.onClick}><Icon name="file" /><span><strong>{item.label}</strong><small>{item.meta}</small></span><Icon name="right" size={15} /></button>)}</div> : <p className="inspector-empty">完成当前步骤后，产物会保存在这里。</p>}</section>

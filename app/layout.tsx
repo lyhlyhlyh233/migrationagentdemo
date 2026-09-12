@@ -3,6 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'MigrationDirector +',
+  icons: { icon: '/favicon.svg' },
   description: '面向迁移工程师的交付协作工作台',
   openGraph: {
     title: 'MigrationDirector +',
