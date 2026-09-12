@@ -6,7 +6,7 @@ A quiet, light workspace for migration delivery. The conversation is the primary
 
 ## Surfaces and color
 
-Use restrained graphite and deep teal with semantic OKLCH tokens from `app/globals.css`. Brand/action teal is #167D7F; selected surfaces use #EAF4F3 with darker teal text. The canvas stays white; navigation and the inspector have a slight brand tint. Accent color marks brand identity, primary actions, selection and running work. Green remains for completion and amber for risk. No gradients, decorative glow, or agent-specific color palettes.
+Use restrained graphite and burgundy with semantic OKLCH tokens from `app/globals.css`. Brand/action burgundy is #934352; selected surfaces use #F7EDF0 with darker burgundy text. The canvas stays white; navigation and the inspector have a slight brand tint. Accent color marks brand identity, primary actions, selection and running work. Slate blue identifies inputs and scale statistics; green means completion and amber means risk. Compact step segments and risk closure bars use actual project state; labels and counts provide the same information without color. No gradients, decorative glow, or agent-specific color palettes.
 
 ## Typography
 
