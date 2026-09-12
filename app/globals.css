@@ -881,16 +881,18 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 
 /* Appearance selection stays directly below the account in every project. */
 .nav-bottom { flex-shrink: 0; }
-.theme-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 12px 4px 0; }
-.theme-picker h3 { grid-column: 1 / -1; margin-bottom: 1px; color: var(--muted); font-size: 11px; font-weight: 500; }
-.theme-picker button { display: flex; align-items: center; justify-content: center; padding: 3px; border: 2px solid transparent; border-radius: 6px; background: transparent; }
+.theme-picker { display: flex; align-items: center; gap: 5px; padding: 12px 4px 0; }
+.theme-picker h3 { margin: 0 auto 0 0; color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
+.theme-picker button { display: flex; align-items: center; justify-content: center; flex: 0 0 32px; height: 28px; padding: 4px; border: 1px solid transparent; border-radius: 6px; background: transparent; }
 .theme-picker button:hover { background: var(--hover); }
 .theme-picker button[aria-pressed=true] { border-color: var(--ink); background: var(--panel); }
-.theme-swatch { width: 100%; height: 23px; border-radius: 2px; border: 1px solid oklch(.65 0 0); }
-.swatch-white { background: oklch(1 0 0); }
-.swatch-teal { background: oklch(.53714 .08638 196.96); }
-.swatch-burgundy { background: oklch(.49034 .10857 10.24); }
-.swatch-dark { background: oklch(.19 0 0); }
+.theme-swatch { position: relative; width: 22px; height: 16px; border-radius: 3px; border: 1px solid var(--preview-line); background: var(--preview-canvas); }
+.theme-swatch::before { content: ''; position: absolute; inset: 2px auto 2px 2px; width: 5px; border-radius: 1px; background: var(--preview-accent); }
+.theme-swatch::after { content: ''; position: absolute; top: 3px; right: 2px; width: 8px; height: 6px; border-block: 2px solid var(--preview-accent); }
+.swatch-white { --preview-canvas: oklch(1 0 0); --preview-accent: oklch(.45 0 0); --preview-line: oklch(.68 0 0); }
+.swatch-teal { --preview-canvas: oklch(.95938 .01068 189.82); --preview-accent: oklch(.53714 .08638 196.96); --preview-line: oklch(.71 .06 197); }
+.swatch-burgundy { --preview-canvas: oklch(.95476 .01146 357); --preview-accent: oklch(.49034 .10857 10.24); --preview-line: oklch(.68 .06 10); }
+.swatch-dark { --preview-canvas: oklch(.19 0 0); --preview-accent: oklch(.78 0 0); --preview-line: oklch(.55 0 0); }
 .composer-area { background: var(--canvas); }
 .toast, .toast button { color: var(--on-ink); }
 :root[data-theme=white] .workflow-embeds :is(.upload-card, .planning-card, .md-onboarding-card, .planning-result, .execution-summary) { background: var(--panel); border-color: var(--line); }

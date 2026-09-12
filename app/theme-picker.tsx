@@ -32,8 +32,8 @@ function selectTheme(theme: Theme) {
 
 export function ThemePicker() {
   const selected = useSyncExternalStore(subscribe, getTheme, () => 'white' as const);
-  return <div className="theme-picker" role="group" aria-label="界面样式">
-    <h3>界面样式</h3>
+  return <div className="theme-picker" role="group" aria-label="外观">
+    <h3>外观</h3>
     {themes.map((theme) => <button key={theme.id} type="button" aria-pressed={selected === theme.id} aria-label={`${theme.label}样式`} title={`${theme.label}样式`} onClick={() => selectTheme(theme.id)}>
       <span className={`theme-swatch swatch-${theme.id}`} aria-hidden="true" />
     </button>)}

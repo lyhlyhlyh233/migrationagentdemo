@@ -285,7 +285,7 @@ function ProjectSetup({ onCreate, onCancel }: { onCreate: (project: ProjectInfo)
     if (draft.office.trim() && draft.siteName.trim()) onCreate({ ...draft, office: draft.office.trim(), siteName: draft.siteName.trim() });
   }
   return <main className="project-setup-page">
-    <header><span><Icon name="brand" />MigrationDirector +</span><button onClick={onCancel}><Icon name="close" size={16} />返回工作空间</button></header>
+    <header><span><Icon name="brand" />MigrationDirector Plus</span><button onClick={onCancel}><Icon name="close" size={16} />返回工作空间</button></header>
     <form className="project-setup" onSubmit={submit}>
       <Icon name="folder" size={28} /><h1>新建迁移项目</h1><p>先建立项目，再从调研评估开始推进交付。</p>
       <div className="project-form-grid">
@@ -822,7 +822,7 @@ function ProjectWorkspace({ project, projects, projectId, onSelectProject, onNew
       <a href={`#conversation-${projectId}`} className="skip-link">跳转到对话</a>
       {navOpen && <button className="nav-scrim" aria-label="关闭导航" onClick={() => setNavOpen(false)} />}
       <aside className="workspace-nav" aria-label="项目导航">
-        <div className="nav-platform"><Icon name="brand" size={19} /><h1>MigrationDirector <span>+</span></h1><button className="icon-button nav-close" aria-label="收起导航" onClick={() => setNavOpen(false)}><Icon name="close" size={16} /></button></div>
+        <div className="nav-platform"><Icon name="brand" size={19} /><h1>MigrationDirector <span>Plus</span></h1><button className="icon-button nav-close" aria-label="收起导航" onClick={() => setNavOpen(false)}><Icon name="close" size={16} /></button></div>
         <div className="project-switcher-row"><div className="project-switcher"><Icon name="folder" size={18} /><select aria-label="切换当前项目" title={project ? projectName : '工作空间'} value={projectId} onChange={(e) => onSelectProject(e.target.value)}><option value="lobby">工作空间</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.info.siteName}</option>)}</select><Icon name="chevron" size={13} /></div><button className="icon-button" title="新建项目" aria-label="新建项目" onClick={startNewProject}><Icon name="plus" size={18} /></button><button className="icon-button" title="新建聊天" aria-label="新建聊天" onClick={newChat}><Icon name="chat" size={18} /></button></div>
         <div className="nav-tree-scroll">
           <section className="nav-section nav-delivery"><div className="nav-section-heading"><h2>四阶交付</h2><span>{stages.filter((stage) => stage.progress === 100).length} / 4</span></div><nav className="stage-conversations" aria-label="四阶段会话">{stages.map((stage, index) => <button key={stage.id} disabled={!availableStages[stage.id]} className={!temporaryChat && !panel && project && activeStage === stage.id ? 'selected' : ''} aria-current={!temporaryChat && !panel && project && activeStage === stage.id ? 'page' : undefined} onClick={() => selectStage(stage.id)}><span className={`nav-stage-dot ${stage.progress === 100 ? 'done' : ''}`}>{stage.progress === 100 ? <Icon name="check" size={11} /> : index + 1}</span><span>{stage.title}</span><small>{!availableStages[stage.id] ? '待开始' : stage.progress === 100 ? '已完成' : `${stage.progress}%`}</small></button>)}</nav></section>

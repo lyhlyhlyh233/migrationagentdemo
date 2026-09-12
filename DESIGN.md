@@ -12,7 +12,7 @@ Slate blue identifies inputs and scale statistics in colored themes; green means
 
 ## Typography
 
-The sidebar appearance picker has a visible “界面样式” heading and four rectangular color swatches. Option names appear only in hover titles and accessible labels; a stronger outline marks the selected swatch.
+The sidebar appearance picker places “外观” and four compact interface thumbnails on one row below the account. Each thumbnail previews a sidebar and content in its theme colors, with space between buttons. Option names appear only in hover titles and accessible labels; an outline marks the selected thumbnail.
 
 One native system sans-serif stack, including PingFang SC and Microsoft YaHei for Chinese. Conversation body is 14–15px with generous line height. Metadata stays subordinate; headings use modest size and weight differences. Use clear Chinese labels instead of repeated English eyebrows.
 
@@ -38,6 +38,6 @@ Navigation uses 32–34px rows on desktop, 2px row gaps, and 12–16px group spa
 
 ## Workspace refinement
 
-Use MigrationDirector + as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon and their recorded timestamp, without repeating the platform name. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
+Use MigrationDirector Plus as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon and their recorded timestamp, without repeating the platform name. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
 
 The platform name and mark sit at the top of the left navigation, above the project switcher and creation actions. The main canvas starts directly with stage progress; its redundant branding toolbar is removed. Narrow layouts retain a small navigation launcher. When execution details are hidden, a text action in the conversation context restores them.
