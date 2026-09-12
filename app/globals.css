@@ -882,7 +882,7 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 /* Appearance selection stays directly below the account in every project. */
 .nav-bottom { flex-shrink: 0; }
 .theme-picker { display: flex; align-items: center; gap: 5px; padding: 12px 4px 0; }
-.theme-picker h3 { margin: 0 auto 0 0; color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
+.theme-picker h3 { margin: 0 5px 0 0; color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
 .theme-picker button { display: flex; align-items: center; justify-content: center; flex: 0 0 32px; height: 28px; padding: 4px; border: 1px solid transparent; border-radius: 6px; background: transparent; }
 .theme-picker button:hover { background: var(--hover); }
 .theme-picker button[aria-pressed=true] { border-color: var(--ink); background: var(--panel); }
