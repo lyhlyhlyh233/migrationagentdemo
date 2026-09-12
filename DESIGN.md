@@ -12,6 +12,8 @@ Slate blue identifies inputs and scale statistics in colored themes; green means
 
 ## Typography
 
+The sidebar appearance picker has a visible “界面样式” heading and four rectangular color swatches. Option names appear only in hover titles and accessible labels; a stronger outline marks the selected swatch.
+
 One native system sans-serif stack, including PingFang SC and Microsoft YaHei for Chinese. Conversation body is 14–15px with generous line height. Metadata stays subordinate; headings use modest size and weight differences. Use clear Chinese labels instead of repeated English eyebrows.
 
 ## Layout
