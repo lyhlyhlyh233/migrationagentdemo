@@ -897,3 +897,40 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 .toast, .toast button { color: var(--on-ink); }
 :root[data-theme=white] .workflow-embeds :is(.upload-card, .planning-card, .md-onboarding-card, .planning-result, .execution-summary) { background: var(--panel); border-color: var(--line); }
 :root[data-theme=white] .workflow-embeds :is(.planning-result, .execution-summary) :is(h3, strong, p) { color: var(--ink); }
+
+/* Stages select the workspace; the sidebar selects a conversation within it. */
+.stage-chat-list { display: flex; flex-direction: column; gap: 2px; }
+.stage-chat-row { display: flex; align-items: center; min-width: 0; border-radius: 7px; color: var(--muted); }
+.stage-chat-row:hover { background: var(--hover); color: var(--ink); }
+.stage-chat-row.selected { color: var(--accent-ink); background: var(--accent-soft); }
+.stage-chat-link { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; min-height: 34px; padding: 7px 10px; border: 0; background: transparent; color: inherit; text-align: left; font-size: 12px; }
+.stage-chat-link > svg { flex-shrink: 0; }
+.stage-chat-link > span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-chat-row.selected .stage-chat-link { font-weight: 550; }
+.stage-chat-row .rename-chat { flex-shrink: 0; width: 28px; height: 28px; margin-right: 3px; opacity: 0; color: inherit; }
+.stage-chat-row:is(:hover, :focus-within, .selected) .rename-chat { opacity: 1; }
+.chat-busy { display: inline-flex; margin-left: auto; color: var(--accent-ink); }
+.chat-rename-form { display: flex; align-items: center; gap: 2px; min-height: 34px; padding: 2px; }
+.chat-rename-form input { min-width: 0; width: 100%; padding: 6px; border: 1px solid var(--accent); border-radius: 5px; background: var(--panel); color: var(--ink); font-size: 12px; }
+.chat-rename-form .icon-button { width: 25px; height: 28px; flex-shrink: 0; }
+.progress-rail li.viewed-stage button { background: var(--accent-soft); color: var(--accent-ink); border-radius: 6px; }
+.stage-chat-intro { max-width: 540px; margin: clamp(28px, 8vh, 80px) auto 32px; color: var(--muted); text-align: center; }
+.stage-chat-intro > svg { display: inline-block; color: var(--accent-ink); margin-bottom: 14px; }
+.stage-chat-intro h2 { margin-bottom: 10px; color: var(--ink); font-size: 19px; font-weight: 550; }
+.stage-chat-intro p { font-size: 13px; line-height: 1.9; text-wrap: pretty; }
+.stage-work-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: var(--muted); font-size: 11px; }
+.stage-work-heading button { border: 0; background: transparent; color: var(--muted); padding: 5px 0 5px 12px; }
+.stage-work-heading button:hover { color: var(--ink); }
+.operation-log li > div { min-width: 0; }
+.operation-log li small { color: var(--muted); font-size: 11px; }
+.shared-task-note { margin-block: 12px; color: var(--muted); font-size: 12px; }
+@media (max-width: 760px) {
+  .stage-chat-link { min-height: 38px; }
+  .stage-chat-row .rename-chat { opacity: 1; width: 32px; height: 34px; }
+  .stage-chat-intro { margin-block: 32px; }
+}
+@media (hover: none) { .stage-chat-row .rename-chat { opacity: 1; } }
+
+.conversation-context { min-width: 0; }
+.conversation-context > svg, .show-execution-details { flex-shrink: 0; }
+.conversation-context > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
