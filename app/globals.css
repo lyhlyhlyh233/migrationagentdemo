@@ -517,9 +517,10 @@ strong, b { font-weight: 600; }
 .project-switcher select { appearance: none; border: 0; background: transparent; padding: 9px 19px 9px 0; font-size: 13px; font-weight: 600; width: 100%; text-overflow: ellipsis; cursor: pointer; }
 .project-switcher > svg:last-child { position: absolute; right: 4px; pointer-events: none; }
 .nav-tree-scroll { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
-.project-resources { margin-bottom: 16px; gap: 2px; }
+.project-resources { border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: 16px; gap: 2px; }
 .project-resources button { height: 34px; }
 .nav-section { border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: 16px; }
+.nav-section.nav-delivery { border-top: 0; padding-top: 0; }
 .nav-section-heading { display: flex; align-items: center; justify-content: space-between; height: 25px; padding-inline: 10px; margin-bottom: 5px; color: var(--muted); }
 .nav-section-heading h2 { font-size: 12px; font-weight: 500; }
 .nav-section-heading > span { font-size: 11px; font-variant-numeric: tabular-nums; }

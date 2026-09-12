@@ -28,7 +28,7 @@ Show distinct waiting, active, blocked and done steps with text and icons, not c
 
 ## Project navigation and entry
 
-The left header contains a native project switcher and icon actions for new project and new chat. Below it: project resources (tasks, risks, deliverables, operation log), four stage conversations, then temporary chats. Unstarted stages remain disabled placeholders; conversations become available automatically as stage gates pass. Each stage and temporary chat has its own message history. New project is a standalone form page. First entry is an empty workspace with the four-stage rail and two central entry buttons. Project state survives switching within the page session; refreshing resets this frontend demo.
+The left header contains a native project switcher and icon actions for new project and new chat. Below it: four stage conversations, project resources (tasks, risks, deliverables, operation log), then temporary chats. The first stage group has no leading divider; following groups use a thin separator and compact spacing. Unstarted stages remain disabled placeholders; conversations become available automatically as stage gates pass. Each stage and temporary chat has its own message history. New project is a standalone form page. First entry is an empty workspace with the four-stage rail and two central entry buttons. Project state survives switching within the page session; refreshing resets this frontend demo.
 
 Navigation uses 32–34px rows on desktop, 2px row gaps, and 12–16px group spacing. Mobile rows retain a 38px minimum height. The bottom-left area displays the current demo user avatar and account label.
 
