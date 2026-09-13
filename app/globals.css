@@ -988,3 +988,36 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 @media (min-width: 981px) and (max-width: 1180px) {
   .workspace.nav-collapsed:has(> .agent-inspector) { grid-template-columns: 56px minmax(0, 1fr) 250px; }
 }
+
+/* Before execution, explain the delivery sequence without empty progress metrics. */
+.stage-flow-preview .progress-caption { margin-bottom: 12px; }
+.stage-flow-preview ol { gap: 20px; }
+.stage-flow-preview li { display: flex; align-items: center; gap: 8px; }
+.stage-flow-preview li button { align-items: center; gap: 10px; padding: 4px 0; min-width: 0; width: auto; flex: 1; color: var(--secondary); }
+.stage-flow-preview li button:disabled { opacity: 1; cursor: default; }
+.preview-stage-icon { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 7px; background: var(--surface); color: var(--muted); }
+.preview-stage-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.preview-stage-copy strong { color: var(--ink); font-size: 13px; line-height: 20px; font-weight: 500; white-space: nowrap; }
+.preview-stage-copy > span { font-size: 11px; line-height: 16px; color: var(--muted); white-space: nowrap; }
+.preview-stage-next { margin-left: auto; color: var(--muted); }
+.preview-current .preview-stage-icon { color: var(--accent-ink); background: var(--accent-soft); }
+.preview-current .preview-stage-copy strong { color: var(--accent-ink); font-weight: 600; }
+.stage-flow-preview li button:not(:disabled):hover .preview-stage-copy strong { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 1180px) {
+  .stage-flow-preview ol { gap: 12px; }
+  .stage-flow-preview li { gap: 4px; }
+  .stage-flow-preview li button { gap: 6px; }
+  .preview-stage-copy > span { display: none; }
+  .preview-stage-copy strong { font-size: 12px; }
+}
+@media (max-width: 760px) {
+  .stage-flow-preview ol { gap: 8px; }
+  .stage-flow-preview li { position: relative; justify-content: center; }
+  .stage-flow-preview li button { flex-direction: column; justify-content: center; gap: 6px; padding-block: 4px; text-align: center; }
+  .preview-stage-next { position: absolute; right: -11px; top: 12px; }
+  .preview-stage-copy strong { font-size: 11px; }
+  .stage-flow-preview .progress-caption { font-size: 11px; }
+}
+
+/* Empty workspaces explain the prerequisite without washing out navigation. */
+.project-resources button:disabled, .project-resources button:disabled:hover { opacity: 1; color: var(--ink); background: transparent; cursor: default; }

@@ -54,3 +54,19 @@ export function StageHandoff({ from, to, checks, reviewing, onReview, onCancel, 
     {reviewing && <div className="stage-handoff-review"><ul>{checks.map((check) => <li key={check}><Icon name="check" size={13} />{check}</li>)}</ul><p>确认后，系统会保留现有记录，并创建新的{to}会话。</p><div><button onClick={onCancel}>暂不进入</button><button className="primary" onClick={onConfirm}>确认进入{to}</button></div></div>}
   </section>;
 }
+
+
+export function StageFlowPreview({ hasProject, ready, onOpenAssessment }: { hasProject: boolean; ready: boolean; onOpenAssessment: () => void }) {
+  const descriptions: Record<StageId, string> = { research: '梳理资产与风险', planning: '制定批次与方案', migration: '执行迁移与割接', validation: '核验结果与交付' };
+  const icons: Record<StageId, string> = { research: 'search', planning: 'file', migration: 'tasks', validation: 'check' };
+  return <section className="progress-rail stage-flow-preview" aria-label="四阶交付流程预览">
+    <div className="progress-caption"><span>四阶交付</span><span>{hasProject ? ready ? '资料已就绪，等待启动评估' : '从准备评估资料开始' : '创建项目后开启'}</span></div>
+    <ol>{(Object.keys(stageTitles) as StageId[]).map((stageId, index) => <li key={stageId} className={hasProject && stageId === 'research' ? 'preview-current' : ''}>
+      <button disabled={!hasProject || stageId !== 'research'} onClick={onOpenAssessment} aria-current={hasProject && stageId === 'research' ? 'step' : undefined}>
+        <span className="preview-stage-icon"><Icon name={icons[stageId]} size={17} /></span>
+        <span className="preview-stage-copy"><strong>{stageTitles[stageId]}</strong><span>{descriptions[stageId]}</span></span>
+      </button>
+      {index < 3 && <span className="preview-stage-next" aria-hidden="true"><Icon name="right" size={14} /></span>}
+    </li>)}</ol>
+  </section>;
+}
