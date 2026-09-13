@@ -5,6 +5,7 @@ import { ThemePicker } from './theme-picker';
 import { Icon } from './workspace-ui';
 import { backgrounds, readPreference, selectPreference, subscribePreferences, type Language } from './preferences';
 import { useTranslation } from './i18n';
+import { Select } from './select';
 import { AccountSettings, NexentSettings, type NexentConfiguration } from './nexent-settings';
 
 export function SettingsDrawer({ open, onClose, onSignOut }: { open: boolean; onClose: () => void; onSignOut: () => void }) {
@@ -48,7 +49,7 @@ export function SettingsDrawer({ open, onClose, onSignOut }: { open: boolean; on
             </button>)}
           </div>
         </section>
-        <section className="settings-section language-setting" aria-labelledby="language-title"><div><h3 id="language-title">{t('语言')}</h3><p>{t('更改界面语言，保留项目与对话原文。')}</p></div><select aria-labelledby="language-title" value={language} onChange={(event) => selectPreference('language', event.target.value as Language)}><option value="zh-CN">简体中文</option><option value="en">English</option></select></section>
+        <section className="settings-section language-setting" aria-labelledby="language-title"><div><h3 id="language-title">{t('语言')}</h3><p>{t('更改界面语言，保留项目与对话原文。')}</p></div><Select aria-labelledby="language-title" value={language} onValueChange={(value) => selectPreference('language', value as Language)}><option value="zh-CN">简体中文</option><option value="en">English</option></Select></section>
         </div>
         <div role="tabpanel" id="settings-panel-account" aria-labelledby="settings-tab-account" hidden={tab !== 'account'}>
           {open && tab === 'account' && <><AccountSettings onSignOut={onSignOut} /><NexentSettings configuration={configuration} onChange={setConfiguration} /></>}
