@@ -1079,3 +1079,6 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 
 :root[data-background=architecture]:not([data-theme=dark]) :is(.conversation-workspace,.project-setup-page)::before { opacity: .6; }
 :root[data-background=graphite][data-theme=dark] :is(.conversation-workspace,.project-setup-page)::before { opacity: .8; }
+:root[data-background=mist]:not([data-theme=dark]) :is(.conversation-workspace,.project-setup-page) { --secondary: oklch(.4 0 0); --muted: oklch(.4 0 0); }
+:root[data-background=mist] :is(.conversation-workspace,.project-setup-page)::before { opacity: .4; }
+:root[data-background=mist][data-theme=dark] :is(.conversation-workspace,.project-setup-page)::before { opacity: .18; }
