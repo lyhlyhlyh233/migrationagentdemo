@@ -202,6 +202,12 @@ strong, b { font-weight: 600; }
 .chat-composer textarea:focus-visible { outline: none; }
 .composer-bottom { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .composer-bottom>span { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+.composer-model-picker { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--secondary); font-size: 12px; }
+.composer-model-control { display: flex; position: relative; min-width: 0; }
+.composer-model-control select { appearance: none; width: auto; max-width: 180px; min-height: 32px; padding: 5px 25px 5px 8px; border: 0; background: transparent; color: var(--ink); cursor: pointer; font-size: 12px; }
+.composer-model-control select:hover { background: var(--hover); }
+.composer-model-control > svg { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+@media (max-width: 760px) { .composer-model-control select { min-height: 44px; max-width: 155px; font-size: 13px; } }
 .send-button { margin-left: auto; width: 31px; height: 31px; border: 0; border-radius: 50%; background: var(--ink); color: var(--on-accent); padding: 0; display: grid; place-items: center; }
 .send-button:hover { background: var(--accent-hover); }
 .send-button:disabled { background: var(--hover); color: var(--muted); opacity: 1; }

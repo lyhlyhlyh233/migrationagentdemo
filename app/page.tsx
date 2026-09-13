@@ -5,10 +5,11 @@ import { useTranslation } from './i18n';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AgentPanel, Icon, ProjectResourceButton, ShortcutMenu, type QuickGroup, type WorkStep } from './workspace-ui';
 import { SettingsDrawer } from './settings-drawer';
+import { ConversationModelPicker, defaultConversationModel, type ConversationModelId } from './conversation-model-picker';
 
 import { StageConversationList, StageFlowPreview, StageHandoff, createStageConversation, initialStageConversations, mainConversationId, type StageConversation, type StageId } from './stage-conversations';
 
-interface ConversationView { draft?: string; typing?: boolean; workOpen?: boolean; panel?: PanelId }
+interface ConversationView { draft?: string; typing?: boolean; workOpen?: boolean; panel?: PanelId; modelId?: ConversationModelId }
 type PanelId = 'risk' | 'tasks' | 'creation' | 'cutover' | 'sync' | 'validation' | 'deliverables' | 'logs' | null;
 type AssessmentStatus = 'idle' | 'ready' | 'running' | 'completed';
 type PlanningStatus = 'locked' | 'scope-review' | 'details-pending' | 'generating' | 'completed';
@@ -45,6 +46,7 @@ interface ChatMessage {
   conversationId: string;
   stageId?: StageId;
   operation?: boolean;
+  modelId?: ConversationModelId;
 }
 
 interface StageView {
@@ -353,6 +355,7 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
   const [conversationViews, setConversationViews] = useState<Record<string, ConversationView>>({});
   const view = conversationViews[conversationId] || {};
   const question = view.draft || '';
+  const conversationModel = view.modelId ?? defaultConversationModel;
   const agentTyping = Boolean(view.typing);
   const showWorkflow = currentStageChat.kind === 'main' || Boolean(view.workOpen);
   const panel = managementPanel || view.panel || null;
@@ -603,10 +606,10 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
     return () => window.clearTimeout(delivery);
   }, [batchTasks, executionMetrics, executionApprovals.creation, todayCutoverTasks, t]);
 
-  function appendMessage(role: ChatMessage['role'], text: string, target = conversationId, operation = role === 'system', stageOverride?: StageId) {
+  function appendMessage(role: ChatMessage['role'], text: string, target = conversationId, operation = role === 'system', stageOverride?: StageId, modelId?: ConversationModelId) {
     const targetStage = stageMeta.find((stage) => stage.id === target)?.id;
     const resolvedTarget = targetStage ? mainConversationId(targetStage) : target;
-    setMessages((items) => [...items, { id: Date.now() + Math.random(), role, text: role === 'user' ? text : t(text), time: now(), conversationId: resolvedTarget, stageId: stageOverride || targetStage || (resolvedTarget.startsWith('chat-') ? undefined : activeStage), operation }]);
+    setMessages((items) => [...items, { id: Date.now() + Math.random(), role, text: role === 'user' ? text : t(text), time: now(), conversationId: resolvedTarget, stageId: stageOverride || targetStage || (resolvedTarget.startsWith('chat-') ? undefined : activeStage), operation, modelId }]);
   }
   function appendOperation(role: ChatMessage['role'], text: string, target = conversationId, stageOverride?: StageId) {
     appendMessage(role, text, target, true, stageOverride);
@@ -750,9 +753,10 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
     if (!text.trim() || agentTyping || replyLocks.current.has(conversationId)) return;
     replyLocks.current.add(conversationId);
     const target = conversationId;
+    const requestModel = conversationModel;
     if (temporaryChat) setTemporaryChats((items) => items.map((chat) => chat.id === temporaryChat && !messages.some((message) => message.conversationId === temporaryChat && message.role === 'user') ? { ...chat, title: text.trim().slice(0, 22) } : chat));
     if (!temporaryChat && currentStageChat.kind === 'child' && !currentStageChat.manuallyNamed && !messages.some((message) => message.conversationId === target && message.role === 'user' && !message.operation)) setStageConversations((items) => items.map((chat) => chat.id === target ? { ...chat, title: text.trim().slice(0, 22) } : chat));
-    appendMessage('user', text.trim(), target);
+    appendMessage('user', text.trim(), target, false, undefined, requestModel);
     setQuestion('');
     setAgentTyping(true);
     window.setTimeout(() => {
@@ -769,7 +773,7 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
       else if (/范围|多少|概况|scope|how many|overview/i.test(text)) answer = t('当前项目为「{0}」，属于{1}行业、{2}，迁移类型为{3}。示例范围包含 {4} 台虚拟机。\n\n进入规划阶段后，可以下载范围清单并确认需要迁移的资产。', projectName, t(project.industry), project.office, t(project.migrationType), vmCount);
       else if (/下一步|进度|当前|待办|next|progress|current|status/i.test(text)) answer = ({ research: assessed ? '评估结果已生成。下一步请查看风险清单，关闭未处理的高风险，再确认迁移范围。' : (files.rvtools && files.presales ? '资料已准备好。下一步启动评估，我会核对资产清单和兼容性，并把进度同步到右侧。' : '请先准备 RVTools 采集表和售前调用表，也可以使用示例资料，再启动评估。'), planning: planned ? '计划已经生成。请先闭环规划高风险，再确认批次和实施窗口。' : '先确认虚拟机范围，再补充业务属性、依赖关系和迁移约束。我会据此展示分批实施计划。', migration: mdStatus === 'ready' ? 'MD 检查已通过。新建、割接、增量同步可以分别查看并确认，已确认的任务会独立执行。' : '先检查近端 MD 的连接、源端发现、目标资源和端口组映射。全部通过后再确认实施任务。', validation: `已经有 ${validationTasks.length} 台虚拟机进入验证，${confirmedValidationCount} 台已确认。请逐项查看配置对比并完成人工验收。` })[activeStage];
       else answer = ({ research: '我会先整理资产范围与兼容性风险。你可以继续补充源端平台、业务高峰时间或特殊约束，也可以先使用示例资料完成一次评估。', planning: '规划时需要重点确认业务分级、集群关系和允许迁移窗口。请把这些信息补充到规划模板中，再生成批次。', migration: '实施任务按类别分别确认。你可以打开任务清单查看目标配置、同步窗口和割接状态；最终执行前仍需要你的确认。', validation: '验收分为配置对比与人工确认两步。当前演示展示 25 项源端和目标端配置，确认一致后再标记虚拟机迁移完成。' })[activeStage];
-      appendMessage('agent', answer, target);
+      appendMessage('agent', answer, target, false, undefined, requestModel);
       replyLocks.current.delete(target);
       setAgentTyping(false);
     }, 550);
@@ -1013,7 +1017,7 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
           <div className={`conversation-content ${panel ? 'has-inline-panel' : ''}`}>
             {!isManagement && (project || temporaryChat) && <div className="conversation-date"><span>{t("今天")}</span><span>·</span><span>{t(temporaryChat ? '临时对话' : '项目协作')}</span></div>}
             {project && !temporaryChat && !isManagement && handoffTarget && <StageHandoff from={stageName[workflowStage]} to={stageName[handoffTarget]} checks={handoffChecks[handoffTarget]} reviewing={transitionReview === handoffTarget} onReview={() => setTransitionReview(handoffTarget)} onCancel={() => setTransitionReview(null)} onConfirm={() => confirmStageTransition(handoffTarget)} />}
-            {!isManagement && <div className="message-history" role="log" aria-label={t("迁移对话记录")} aria-live="polite">{visibleMessages.map((message) => <article className={`message message-${message.role}`} key={message.id}>{message.role === 'agent' && <div className="message-author"><Icon name="agent" size={14} /><time>{t(message.time)}</time></div>}{message.role === 'system' ? <p className="system-event"><Icon name="check" size={13} />{message.text}</p> : <div className="message-body"><p>{message.text}</p></div>}</article>)}</div>}
+            {!isManagement && <div className="message-history" role="log" aria-label={t("迁移对话记录")} aria-live="polite">{visibleMessages.map((message) => <article className={`message message-${message.role}`} key={message.id}>{message.role === 'agent' && <div className="message-author"><Icon name="agent" size={14} /></div>}{message.role === 'system' ? <p className="system-event"><Icon name="check" size={13} />{message.text}</p> : <div className="message-body"><p>{message.text}</p></div>}</article>)}</div>}
             {(!project && !temporaryChat) && <div className="workspace-welcome"><Icon name="brand" size={32} /><h2>{t("从这里开始迁移交付")}</h2><p>{t("创建项目，按四个阶段推进。")}<br />{t("也可以先开一段聊天，理清思路。")}</p><div><button className="primary" onClick={startNewProject}><Icon name="plus" size={17} />{t("新建项目")}</button><button onClick={newChat}><Icon name="chat" size={17} />{t("新建聊天")}</button></div></div>}
             {temporaryChat && !visibleMessages.length && <div className="workspace-welcome chat-welcome"><Icon name="chat" size={28} /><h2>{t("这次想讨论什么？")}</h2><p>{project ? t('这段对话关联「{0}」。', projectName) : t('可以先讨论迁移需求，再创建项目。')}<br />{t("讨论内容会单独保留。")}</p></div>}
             {project && !temporaryChat && <div className="inline-work" ref={inlineWork} key={conversationId}>
@@ -1089,7 +1093,7 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
             {!agentTyping && !panel && project && !temporaryChat && (currentStageChat.kind === 'main' || visibleMessages.length > 0) && <div className="follow-up-prompts"><button onClick={() => sendPrompt(t('告诉我下一步该做什么'))}>{t("下一步该做什么？")}<Icon name="right" size={14} /></button><button onClick={() => sendPrompt(t('总结当前项目进度'))}>{t("总结当前进度")}<Icon name="right" size={14} /></button></div>}
           </div>
         </div>
-        {!isManagement && (project || temporaryChat) && <footer className="composer-area">{project && !temporaryChat && <div className="composer-shortcuts"><ShortcutMenu groups={quickGroups[activeStage]} /></div>}<form className="chat-composer" onSubmit={submitQuestion}><textarea ref={composer} value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (question.trim()) sendPrompt(question); } }} rows={2} placeholder={t(temporaryChat ? '发送消息，开始讨论…' : `与${active.agent}一起推进，或选择上方快捷对话…`)} aria-label={t("向迁移智能体提问")} /><div className="composer-bottom"><button type="button" className="icon-button" disabled={Boolean(temporaryChat)} aria-label={t("查看当前阶段资料")} onClick={() => { showStageWork(); setToast('可在对话中的资料区域选择文件'); inlineWork.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}><Icon name="plus" size={21} /></button><span><Icon name="agent" size={14} />{t(temporaryChat ? '对话' : active.title)}</span><button className="send-button" type="submit" disabled={!question.trim() || agentTyping} aria-label={t("发送消息")}><Icon name="arrow" size={18} /></button></div></form><p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p></footer>}
+        {!isManagement && (project || temporaryChat) && <footer className="composer-area">{project && !temporaryChat && <div className="composer-shortcuts"><ShortcutMenu groups={quickGroups[activeStage]} /></div>}<form className="chat-composer" onSubmit={submitQuestion}><textarea ref={composer} value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (question.trim()) sendPrompt(question); } }} rows={2} placeholder={t(temporaryChat ? '发送消息，开始讨论…' : `与${active.agent}一起推进，或选择上方快捷对话…`)} aria-label={t("向迁移智能体提问")} /><div className="composer-bottom"><button type="button" className="icon-button" disabled={Boolean(temporaryChat)} aria-label={t("查看当前阶段资料")} onClick={() => { showStageWork(); setToast('可在对话中的资料区域选择文件'); inlineWork.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}><Icon name="plus" size={21} /></button><ConversationModelPicker value={conversationModel} onChange={(modelId) => updateConversationView({ modelId })} /><button className="send-button" type="submit" disabled={!question.trim() || agentTyping} aria-label={t("发送消息")}><Icon name="arrow" size={18} /></button></div></form><p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p></footer>}
       </section>
       {showInspector && <AgentPanel running={runningStages[activeStage]} status={currentStatus} steps={currentSteps} stats={stageStats} artifacts={artifacts} events={visibleMessages.filter((m) => m.operation).map((m) => ({ text: m.text, time: m.time }))} onClose={() => { setInspectorOpen(false); setCompactInspectorOpen(false); }} />}
       {toast && <div className="toast" role="status"><Icon name="info" size={17} />{t(toast)}<button aria-label={t("关闭提示")} onClick={() => setToast('')}><Icon name="close" size={14} /></button></div>}

@@ -24,6 +24,8 @@ Desktop: 256px navigation (240px on compact desktops), flexible conversation, 28
 
 Controls share neutral borders, 7px radii and visible keyboard focus. Embedded workflow surfaces use 10px radii and a single border. Chat input uses a 15px radius. Buttons use verb-first actions. Line icons share one stroke weight. Shortcut categories use native disclosure controls with one open menu and Escape/outside-click dismissal.
 
+The composer footer has a compact native model selector next to the attachment action. GLM 5.1 (default) and DeepSeek v4 are user-specified preview options, with the menu explicitly indicating that no model service is connected. Each stage or temporary conversation keeps its own choice in page memory; new conversations use the default. Sending captures the selected model in that turn's message metadata, so changing the selection while a reply is pending applies to later messages. The existing frontend reply simulation remains unchanged.
+
 Planning inputs, MD setup, task configuration and verification live inside compact conversation embeds. Tasks, risks, deliverables and operation logs use dedicated management surfaces. Large tables scroll inside their own containers. Risk details progressively disclose secondary metadata; closure is an inline form.
 
 ## State and accessibility
@@ -42,7 +44,7 @@ Resource, delivery and temporary navigation share 14px text, 16px leading icons,
 
 ## Workspace refinement
 
-Use MigrationDirector Plus as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon and their recorded timestamp, without repeating the platform name. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
+Use MigrationDirector Plus as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon, without per-message timestamps or the platform name. Timestamps remain available in operation logs and inspector activity. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
 
 The platform name and mark sit at the top of the left navigation, above the project switcher and creation actions. A desktop toggle collapses navigation into a 56px rail with expand, new project, new chat and settings actions. The conversation takes the freed width; inspector visibility is independent. Collapse state is shared across projects during the page session. Narrow screens retain their drawer, regardless of desktop collapse state. Toggling moves keyboard focus to the corresponding expand/collapse button and preserves conversation state. The main canvas starts directly with stage progress; its redundant branding toolbar is removed. Narrow layouts retain a small navigation launcher. When execution details are hidden, a text action in the conversation context restores them.
 
