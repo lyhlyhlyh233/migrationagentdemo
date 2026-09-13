@@ -34,7 +34,7 @@ export function SettingsDrawer({ open, onClose }: { open: boolean; onClose: () =
       <header className="settings-header"><h2 id="settings-title">{t('设置')}</h2><button className="icon-button" aria-label={t('关闭设置')} title={t('关闭设置')} onClick={onClose}><Icon name="close" size={20} /></button></header>
       <div className="settings-body" ref={body}>
         <section className="settings-section" aria-labelledby="appearance-title"><h3 id="appearance-title">{t('外观')}</h3><ThemePicker /></section>
-        <section className="settings-section" aria-labelledby="background-title"><div className="settings-section-heading"><h3 id="background-title">{t('背景')}</h3><span>{t('首页与对话区')}</span></div>
+        <section className="settings-section" aria-labelledby="background-title"><div className="settings-section-heading"><h3 id="background-title">{t('背景')}</h3><span>{t('整个工作台')}</span></div>
           <div className="background-picker" role="group" aria-label={t('背景')}>
             {backgrounds.map((item) => <button key={item.id} className="background-option" aria-label={t(`${item.label}背景`)} aria-pressed={background === item.id} onClick={() => selectPreference('background', item.id)}>
               <span className={`background-preview background-preview-${item.id}`} style={item.image ? { backgroundImage: `url("${item.image}")` } : undefined} aria-hidden="true">{!item.image && <Icon name="minus" size={24} />}{background === item.id && <span className="background-selected"><Icon name="check" size={13} /></span>}</span>

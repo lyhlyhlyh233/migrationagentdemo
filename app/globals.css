@@ -1056,15 +1056,24 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 .language-setting p { font-size: 12px; line-height: 1.65; color: var(--muted); margin-top: 7px; max-width: 205px; }
 .language-setting select { max-width: 150px; font-size: 13px; }
 .settings-footer { display: flex; align-items: center; gap: 7px; padding: 18px 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
-:root { --workspace-photo: none; }
+:root { --workspace-photo: none; --workspace-photo-opacity: .14; }
+:root[data-theme=dark] { --workspace-photo-opacity: .09; }
 :root[data-background=architecture] { --workspace-photo: url('/backgrounds/architecture.jpg'); }
 :root[data-background=mist] { --workspace-photo: url('/backgrounds/mist.jpg'); }
 :root[data-background=graphite] { --workspace-photo: url('/backgrounds/graphite.jpg'); }
-.conversation-workspace, .project-setup-page { position: relative; isolation: isolate; background: var(--canvas); }
-.conversation-workspace::before, .project-setup-page::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: var(--workspace-photo); background-size: cover; background-position: center; opacity: .14; }
-:root[data-theme=dark] .conversation-workspace::before, :root[data-theme=dark] .project-setup-page::before { opacity: .09; }
-:root[data-background]:not([data-background=none]) .composer-area { background: transparent; }
-.management-view .conversation-workspace::before { display: none; }
+/* One viewport-sized backdrop stays aligned across navigation, content and inspector. */
+body { isolation: isolate; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: var(--workspace-photo); background-size: cover; background-position: center; opacity: var(--workspace-photo-opacity); }
+:root[data-background]:not([data-background=none]) :where(.workspace-nav, .workspace.nav-collapsed > .nav-rail, .agent-inspector, .conversation-workspace, .project-setup-page, .composer-area) { background: transparent; }
+:root[data-background]:not([data-background=none]) .archive-panel table { background: var(--panel); }
+/* Floating mobile panels need an opaque surface so underlying content does not bleed through. */
+@media (max-width: 980px) {
+  :root[data-background]:not([data-background=none]) .workspace > .agent-inspector { background: var(--panel); }
+}
+@media (max-width: 760px) {
+  :root[data-background]:not([data-background=none]) .workspace.nav-open > .workspace-nav { background: var(--sidebar); }
+}
+@media print { body::before { display: none; } }
 @media (max-width: 760px) {
   .account-settings, .settings-header .icon-button { width: 44px; height: 44px; }
   .settings-header { padding: 14px 20px; }
@@ -1077,8 +1086,8 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 :root[lang=en] .nav-section-heading h2 { white-space: normal; }
 :root[lang=en] .progress-rail li button > span:not(.stage-sequence) { min-width: 0; }
 
-:root[data-background=architecture]:not([data-theme=dark]) :is(.conversation-workspace,.project-setup-page)::before { opacity: .6; }
-:root[data-background=graphite][data-theme=dark] :is(.conversation-workspace,.project-setup-page)::before { opacity: .8; }
-:root[data-background=mist]:not([data-theme=dark]) :is(.conversation-workspace,.project-setup-page) { --secondary: oklch(.4 0 0); --muted: oklch(.4 0 0); }
-:root[data-background=mist] :is(.conversation-workspace,.project-setup-page)::before { opacity: .4; }
-:root[data-background=mist][data-theme=dark] :is(.conversation-workspace,.project-setup-page)::before { opacity: .18; }
+:root[data-background=architecture]:not([data-theme=dark]) { --workspace-photo-opacity: .6; }
+:root[data-background=graphite][data-theme=dark] { --workspace-photo-opacity: .8; }
+:root[data-background=mist]:not([data-theme=dark]) :is(.workspace,.project-setup-page) { --secondary: oklch(.4 0 0); --muted: oklch(.4 0 0); }
+:root[data-background=mist] { --workspace-photo-opacity: .4; }
+:root[data-background=mist][data-theme=dark] { --workspace-photo-opacity: .18; }
