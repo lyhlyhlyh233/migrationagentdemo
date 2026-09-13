@@ -1021,11 +1021,15 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 .user-profile > div { min-width: 0; }
 .settings-modal { inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: hidden; }
 .settings-modal::backdrop { background: oklch(.12 0 0 / .24); }
-.settings-drawer { display: flex; flex-direction: column; width: min(440px, 100%); height: 100%; margin-left: auto; background: var(--panel); border-left: 1px solid var(--line); }
+.settings-drawer { display: flex; flex-direction: column; width: min(560px, 100%); height: 100%; margin-left: auto; background: var(--panel); border-left: 1px solid var(--line); }
 .settings-modal[open] .settings-drawer { animation: settings-enter 220ms cubic-bezier(.16,1,.3,1); }
 @keyframes settings-enter { from { transform: translateX(100%); } to { transform: translateX(0); } }
 .settings-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 24px 18px; border-bottom: 1px solid var(--line); }
 .settings-header h2 { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+.settings-tabs { display: flex; gap: 24px; padding: 0 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.settings-tabs button { padding: 14px 0 12px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--secondary); font-size: 13px; }
+.settings-tabs button:hover { color: var(--ink); }
+.settings-tabs button[aria-selected=true] { border-bottom-color: var(--accent); color: var(--ink); font-weight: 600; }
 .settings-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 28px 24px; }
 .settings-section + .settings-section { margin-top: 32px; }
 .settings-section h3 { font-size: 14px; line-height: 20px; font-weight: 600; }
@@ -1056,6 +1060,50 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 .language-setting p { font-size: 12px; line-height: 1.65; color: var(--muted); margin-top: 7px; max-width: 205px; }
 .language-setting select { max-width: 150px; font-size: 13px; }
 .settings-footer { display: flex; align-items: center; gap: 7px; padding: 18px 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.settings-header, .settings-footer { flex-shrink: 0; }
+.settings-description { margin-top: 8px; color: var(--secondary); font-size: 12px; line-height: 1.65; }
+.settings-account-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.settings-avatar { display: grid; place-items: center; width: 40px; height: 40px; background: var(--surface); border-radius: 50%; flex-shrink: 0; }
+.settings-account-row > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.settings-account-row strong { font-size: 13px; }
+.settings-account-row > div > span { color: var(--muted); font-size: 12px; }
+.settings-account-row > button { display: flex; align-items: center; gap: 7px; margin-left: auto; font-size: 12px; }
+.sign-out-review { margin-top: 16px; padding: 14px; background: var(--surface); border-radius: 8px; }
+.sign-out-review p { color: var(--secondary); font-size: 12px; line-height: 1.7; }
+.sign-out-review > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.sign-out-review button { font-size: 12px; }
+.settings-section.nexent-settings { padding-top: 26px; border-top: 1px solid var(--line); margin-top: 26px; }
+.nexent-settings form { margin-top: 22px; }
+.settings-field { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.settings-field > label, .authentication-method legend { font-size: 13px; font-weight: 500; }
+.settings-field input { width: 100%; min-height: 42px; font-size: 13px; }
+.settings-field input[aria-invalid=true] { border-color: var(--warning); }
+.settings-field-error { color: var(--warning); font-size: 12px; line-height: 1.6; }
+.settings-field-hint { color: var(--secondary); font-size: 12px; line-height: 1.65; }
+.authentication-tip { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: 12px; line-height: 1.7; color: var(--secondary); }
+.authentication-tip svg { margin-top: 3px; }
+.authentication-method { padding: 0; border: 0; margin: 20px 0 0; min-width: 0; }
+.authentication-options { display: flex; gap: 10px; margin-top: 9px; }
+.authentication-options > label { position: relative; display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 11px 8px; cursor: pointer; font-size: 13px; color: var(--secondary); }
+.authentication-options input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; }
+.authentication-options > label:hover { background: var(--hover); }
+.authentication-options > label[data-selected=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.authentication-options > label:has(:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.settings-secret { position: relative; }
+.settings-secret input { padding-right: 48px; }
+.settings-secret > button { position: absolute; right: 1px; top: 1px; bottom: 1px; width: 42px; height: auto; border-radius: 6px; }
+.settings-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.settings-form-actions button { font-size: 13px; }
+.settings-form-actions button:first-child { margin-right: auto; }
+.settings-save-status { min-height: 20px; margin-top: 12px; font-size: 12px; line-height: 1.65; color: var(--secondary); }
+.signed-out-page { min-height: 100dvh; display: flex; flex-direction: column; }
+.signed-out-page > header { display: flex; align-items: center; gap: 10px; padding: 24px 32px; font-size: 15px; font-weight: 500; }
+.signed-out-page > section { width: min(480px, 100%); margin: auto; padding: 40px 24px 100px; text-align: center; }
+.signed-out-icon { display: inline-flex; padding: 14px; border-radius: 12px; background: var(--panel); }
+.signed-out-page h1 { margin: 24px 0 12px; font-size: 28px; font-weight: 600; }
+.signed-out-page p { font-size: 14px; color: var(--secondary); line-height: 1.8; }
+.signed-out-page .signed-out-note { margin-top: 8px; font-size: 12px; }
+.signed-out-page button { display: inline-flex; align-items: center; gap: 10px; margin-top: 28px; }
 :root { --workspace-photo: none; --workspace-photo-opacity: .14; }
 :root[data-theme=dark] { --workspace-photo-opacity: .09; }
 :root[data-background=architecture] { --workspace-photo: url('/backgrounds/architecture.jpg'); }
@@ -1079,6 +1127,10 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
   .account-settings, .settings-header .icon-button { width: 44px; height: 44px; }
   .settings-header { padding: 14px 20px; }
   .settings-body { padding: 24px 20px; }
+  .settings-tabs { padding-inline: 20px; }
+  .settings-account-row > button, .settings-form-actions > button, .sign-out-review button { min-height: 44px; }
+  .settings-field input { min-height: 46px; font-size: 16px; }
+  .signed-out-page > header { padding: 20px; }
   .settings-footer { padding: 16px 20px max(16px,env(safe-area-inset-bottom)); }
   .theme-picker { gap: 9px; }
   .language-setting { flex-wrap: wrap; }

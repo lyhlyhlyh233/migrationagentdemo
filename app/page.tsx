@@ -268,13 +268,28 @@ const getServerViewport = () => true;
 interface ProjectEntry { id: string; info: ProjectInfo }
 
 export default function Home() {
+  const [signedOut, setSignedOut] = useState(false);
+  return signedOut ? <SignedOutScreen onReturn={() => setSignedOut(false)} /> : <WorkspaceSession onSignOut={() => setSignedOut(true)} />;
+}
+
+function SignedOutScreen({ onReturn }: { onReturn: () => void }) {
+  const t = useTranslation();
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { heading.current?.focus(); }, []);
+  return <main className="signed-out-page">
+    <header><span className="huawei-symbol" role="img" aria-label={t('华为')} /><span>MigrationDirector Plus</span></header>
+    <section><span className="signed-out-icon"><Icon name="logout" size={26} /></span><h1 ref={heading} tabIndex={-1}>{t('已退出登录')}</h1><p>{t('本次页面的项目、会话和认证配置已清除。')}</p><p className="signed-out-note">{t('当前为前端预览，重新进入无需登录验证。')}</p><button className="primary" onClick={onReturn}>{t('重新进入工作台')}<Icon name="right" size={16} /></button></section>
+  </main>;
+}
+
+function WorkspaceSession({ onSignOut }: { onSignOut: () => void }) {
   const [projects, setProjects] = useState<ProjectEntry[]>([]);
   const [selected, setSelected] = useState('lobby');
   const [creating, setCreating] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   return <>
-    <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} onSignOut={onSignOut} />
     {creating && <ProjectSetup onCancel={() => setCreating(false)} onCreate={(info) => {
       const id = crypto.randomUUID();
       setProjects((items) => [...items, { id, info }]);
@@ -982,7 +997,7 @@ function ProjectWorkspace({ onOpenSettings, navCollapsed, onNavCollapsedChange, 
         <div className="project-switcher-row"><div className="project-switcher"><Icon name="folder" size={18} /><select aria-label={t("切换当前项目")} title={project ? projectName : t('工作空间')} value={projectId} onChange={(e) => onSelectProject(e.target.value)}><option value="lobby">{t("工作空间")}</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.info.siteName}</option>)}</select><Icon name="chevron" size={13} /></div><button className="icon-button" title={t("新建项目")} aria-label={t("新建项目")} onClick={startNewProject}><Icon name="plus" size={18} /></button><button className="icon-button" title={t("新建聊天")} aria-label={t("新建聊天")} onClick={newChat}><Icon name="chat" size={18} /></button></div>
         <div className="nav-tree-scroll">
           <nav className="primary-nav project-resources" aria-label={t("项目资料")}>
-            {([{ id: 'tasks', label: '迁移任务', icon: 'tasks' }, { id: 'risk', label: '迁移风险', icon: 'shield' }, { id: 'deliverables', label: '迁移交付件', icon: 'file' }, { id: 'logs', label: '操作日志', icon: 'clock' }] as const).map((item) => <button key={item.id} className={panel === item.id ? 'selected' : ''} disabled={!project} title={t(!project ? `${item.label} · 请先新建项目` : undefined)} onClick={() => setPanel(item.id)}><Icon name={item.icon} size={17} /><span>{t(item.label)}</span>{item.id === 'risk' && risks.some((risk) => !risk.closed) && <span className="nav-count">{t(risks.filter((risk) => !risk.closed).length)}</span>}</button>)}
+            {([{ id: 'tasks', label: '迁移任务', icon: 'tasks' }, { id: 'risk', label: '迁移风险', icon: 'shield' }, { id: 'deliverables', label: '迁移交付件', icon: 'file' }, { id: 'logs', label: '操作日志', icon: 'clock' }] as const).map((item) => <button key={item.id} className={panel === item.id ? 'selected' : ''} disabled={!project} title={!project ? t('创建或选择项目后开启') : undefined} onClick={() => setPanel(item.id)}><Icon name={item.icon} size={17} /><span>{t(item.label)}</span>{item.id === 'risk' && risks.some((risk) => !risk.closed) && <span className="nav-count">{t(risks.filter((risk) => !risk.closed).length)}</span>}</button>)}
           </nav>
           <StageConversationList title={t(active.title)} conversations={stageConversations} selectedId={!temporaryChat && !isManagement ? conversationId : null} disabled={!project} busyIds={Object.entries(conversationViews).filter(([, item]) => item.typing).map(([id]) => id)} onCreate={newStageChat} onSelect={openStageChat} onRename={renameStageChat} />
           <section className="nav-section"><div className="nav-section-heading"><h2>{t("临时对话")}</h2><button className="icon-button" aria-label={t("添加临时对话")} onClick={newChat}><Icon name="plus" size={15} /></button></div><nav className="temporary-conversations" aria-label={t("临时对话")}>{temporaryChats.map((chat) => <button key={chat.id} title={chat.title} className={temporaryChat === chat.id ? 'selected' : ''} onClick={() => openChat(chat.id)}><Icon name="chat" size={15} /><span>{chat.title}</span></button>)}</nav>{!temporaryChats.length && <p className="nav-empty">{t("随时开启一段讨论")}</p>}</section>

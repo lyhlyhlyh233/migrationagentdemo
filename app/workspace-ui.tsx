@@ -6,6 +6,10 @@ import { useEffect, useRef } from 'react';
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, string> = {
+    key: 'M15.5 14a5.5 5.5 0 1 0-5.3-4L3 17v4h4v-3h3l2.2-2.2M16 7h.01',
+    eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
+    'eye-off': 'm3 3 18 18M10.5 5.1 12 5c6.5 0 10 7 10 7a19 19 0 0 1-3.1 4M6.2 6.2A20 20 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.8M10 10a3 3 0 0 0 4 4',
+    logout: 'M9 4H4v16h5M10 12h11m-4-4 4 4-4 4',
     settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2-5h4l.7 2.3 2 .9 2.3-.6 2 3.4-1.6 1.7v2.6L21 15l-2 3.4-2.3-.6-2 .9L14 21h-4l-.7-2.3-2-.9-2.3.6L3 15l1.6-1.7v-2.6L3 9l2-3.4 2.3.6 2-.9L10 3Z',
     minus: 'M6 12h12',
     user: 'M20 21v-2a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
