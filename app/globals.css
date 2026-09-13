@@ -595,7 +595,7 @@ strong, b { font-weight: 600; }
 .nav-section { margin: 0; }
 .nav-section.nav-delivery { border-top: 0; padding-top: 0; }
 .nav-section-heading { display: flex; align-items: center; justify-content: space-between; height: 28px; padding-inline: 10px; margin-bottom: 4px; color: var(--muted); }
-.nav-section-heading h2 { font-size: 12px; line-height: 20px; font-weight: 550; }
+.nav-section-heading h2 { font-size: 14px; line-height: 20px; font-weight: 550; }
 .nav-section-heading > span { font-size: 11px; font-variant-numeric: tabular-nums; }
 .nav-section-heading .icon-button { height: 28px; width: 28px; margin-right: -6px; }
 .stage-conversations, .temporary-conversations { display: flex; flex-direction: column; gap: 2px; }
