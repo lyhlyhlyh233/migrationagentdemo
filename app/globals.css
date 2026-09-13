@@ -35,6 +35,7 @@
   --z-backdrop: 30;
   --z-drawer: 40;
   --z-toast: 50;
+  --z-tooltip: 60;
 }
 :root[data-theme=teal], :root[data-theme=burgundy] {
   --info: oklch(.45 .065 265);
@@ -1012,7 +1013,8 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 }
 
 /* Empty workspaces explain the prerequisite without washing out navigation. */
-.project-resources button:disabled, .project-resources button:disabled:hover { opacity: 1; color: var(--ink); background: transparent; cursor: default; }
+.project-resources button[aria-disabled=true], .project-resources button[aria-disabled=true]:hover { opacity: 1; color: var(--ink); background: transparent; cursor: default; }
+.project-resource-tooltip { position: fixed; z-index: var(--z-tooltip); width: max-content; padding: 9px 12px; border-radius: 7px; background: var(--ink); color: var(--on-ink); font-size: 12px; line-height: 1.65; pointer-events: none; }
 
 
 /* Account settings use the native modal layer, above project drawers. */
