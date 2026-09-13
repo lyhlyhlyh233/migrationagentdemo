@@ -1065,6 +1065,7 @@ button.primary:hover:not(:disabled), .project-form-foot button:hover:not(:disabl
 body { isolation: isolate; }
 body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: var(--workspace-photo); background-size: cover; background-position: center; opacity: var(--workspace-photo-opacity); }
 :root[data-background]:not([data-background=none]) :where(.workspace-nav, .workspace.nav-collapsed > .nav-rail, .agent-inspector, .conversation-workspace, .project-setup-page, .composer-area) { background: transparent; }
+:root[data-background]:not([data-background=none]) :is(.workspace-nav, .nav-rail) { border-right: 1px solid var(--line-strong); }
 :root[data-background]:not([data-background=none]) .archive-panel table { background: var(--panel); }
 /* Floating mobile panels need an opaque surface so underlying content does not bleed through. */
 @media (max-width: 980px) {
