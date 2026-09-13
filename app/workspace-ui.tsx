@@ -1,9 +1,13 @@
 'use client';
 
+import { useTranslation } from './i18n';
+
 import { useEffect, useRef } from 'react';
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, string> = {
+    settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2-5h4l.7 2.3 2 .9 2.3-.6 2 3.4-1.6 1.7v2.6L21 15l-2 3.4-2.3-.6-2 .9L14 21h-4l-.7-2.3-2-.9-2.3.6L3 15l1.6-1.7v-2.6L3 9l2-3.4 2.3.6 2-.9L10 3Z',
+    minus: 'M6 12h12',
     user: 'M20 21v-2a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
     edit: 'm15 5 4 4M4 20l4-1L20 7a2 2 0 0 0-4-4L4 15v5Z',
     plus: 'M12 5v14M5 12h14', chat: 'M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9H13a8.5 8.5 0 0 1 8 8v.5Z',
@@ -29,6 +33,7 @@ export interface WorkStep { label: string; detail: string; state: StepState }
 export interface QuickGroup { label: string; icon: string; options: { label: string; description: string; onClick: () => void }[] }
 
 export function ShortcutMenu({ groups }: { groups: QuickGroup[] }) {
+  const t = useTranslation();
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const close = (event: MouseEvent | KeyboardEvent) => {
@@ -40,7 +45,7 @@ export function ShortcutMenu({ groups }: { groups: QuickGroup[] }) {
     document.addEventListener('keydown', close);
     return () => { document.removeEventListener('click', close); document.removeEventListener('keydown', close); };
   }, []);
-  return <div className="shortcut-groups" ref={root}>{groups.map((group) => <details key={group.label} name="stage-shortcuts" className="shortcut-menu"><summary><Icon name={group.icon} size={15} /><span>{group.label}</span><Icon name="chevron" size={13} /></summary><div className="shortcut-options">{group.options.map((option) => <button key={option.label} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); option.onClick(); }}><strong>{option.label}</strong><small>{option.description}</small></button>)}</div></details>)}</div>;
+  return <div className="shortcut-groups" ref={root}>{groups.map((group) => <details key={group.label} name="stage-shortcuts" className="shortcut-menu"><summary><Icon name={group.icon} size={15} /><span>{t(group.label)}</span><Icon name="chevron" size={13} /></summary><div className="shortcut-options">{group.options.map((option) => <button key={option.label} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); option.onClick(); }}><strong>{t(option.label)}</strong><small>{t(option.description)}</small></button>)}</div></details>)}</div>;
 }
 
 export function AgentPanel({ running, status, steps, stats, artifacts, events, onClose }: {
@@ -49,15 +54,16 @@ export function AgentPanel({ running, status, steps, stats, artifacts, events, o
   artifacts: { label: string; meta: string; href?: string; download?: string; onClick?: () => void }[];
   events: { text: string; time: string }[]; onClose: () => void;
 }) {
+  const t = useTranslation();
   const completed = steps.filter((step) => step.state === 'done').length;
-  return <aside className="agent-inspector" data-running={running} aria-label="子智能体执行详情">
-    <header className="inspector-header"><span>执行详情</span><button className="icon-button" aria-label="收起执行详情" onClick={onClose}><Icon name="panel" size={17} /></button></header>
+  return <aside className="agent-inspector" data-running={running} aria-label={t("子智能体执行详情")}>
+    <header className="inspector-header"><span>{t("执行详情")}</span><button className="icon-button" aria-label={t("收起执行详情")} onClick={onClose}><Icon name="panel" size={17} /></button></header>
     <div className="inspector-scroll">
-      <div className={`state-label inspector-status ${running ? 'is-active' : ''}`}><Icon name="agent" size={16} /><span>{status}</span></div>
-      <section className="inspector-section"><header><h3>执行步骤</h3><span>{completed} / {steps.length}</span></header><div className="step-overview" aria-hidden="true">{steps.map((step) => <span key={step.label} className={step.state} />)}</div><ol className="work-steps">{steps.map((step) => <li key={step.label} className={step.state}><span className="step-indicator">{step.state === 'done' ? <Icon name="check" size={12} /> : step.state === 'blocked' ? '!' : <i />}</span><div><strong>{step.label}</strong><p>{step.detail}</p></div></li>)}</ol></section>
-      <section className="inspector-section"><header><h3>当前统计</h3><span>随任务更新</span></header><dl className="inspector-stats">{stats.map((stat) => <div key={stat.label} data-tone={stat.tone}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl></section>
-      <section className="inspector-section"><header><h3>文件与产物</h3><span>{artifacts.length}</span></header>{artifacts.length ? <div className="artifact-list">{artifacts.map((item) => item.href ? <a href={item.href} download={item.download} key={item.label}><Icon name="file" /><span><strong>{item.label}</strong><small>{item.meta}</small></span><Icon name="download" size={15} /></a> : <button key={item.label} onClick={item.onClick}><Icon name="file" /><span><strong>{item.label}</strong><small>{item.meta}</small></span><Icon name="right" size={15} /></button>)}</div> : <p className="inspector-empty">完成当前步骤后，产物会保存在这里。</p>}</section>
-      <section className="inspector-section activity-section"><header><h3>本会话活动</h3><Icon name="clock" size={14} /></header>{events.length ? events.slice(-3).reverse().map((event, index) => <div className="activity-event" key={`${index}-${event.text}`}><time>{event.time}</time><p>{event.text}</p></div>) : <p className="inspector-empty">等待开始当前任务。</p>}</section>
+      <div className={`state-label inspector-status ${running ? 'is-active' : ''}`}><Icon name="agent" size={16} /><span>{t(status)}</span></div>
+      <section className="inspector-section"><header><h3>{t("执行步骤")}</h3><span>{t(completed)} / {t(steps.length)}</span></header><div className="step-overview" aria-hidden="true">{steps.map((step) => <span key={step.label} className={step.state} />)}</div><ol className="work-steps">{steps.map((step) => <li key={step.label} className={step.state}><span className="step-indicator">{step.state === 'done' ? <Icon name="check" size={12} /> : step.state === 'blocked' ? '!' : <i />}</span><div><strong>{t(step.label)}</strong><p>{t(step.detail)}</p></div></li>)}</ol></section>
+      <section className="inspector-section"><header><h3>{t("当前统计")}</h3><span>{t("随任务更新")}</span></header><dl className="inspector-stats">{stats.map((stat) => <div key={stat.label} data-tone={stat.tone}><dt>{t(stat.label)}</dt><dd>{t(stat.value)}</dd></div>)}</dl></section>
+      <section className="inspector-section"><header><h3>{t("文件与产物")}</h3><span>{t(artifacts.length)}</span></header>{artifacts.length ? <div className="artifact-list">{artifacts.map((item) => item.href ? <a href={item.href} download={item.download} key={item.label}><Icon name="file" /><span><strong>{t(item.label)}</strong><small>{t(item.meta)}</small></span><Icon name="download" size={15} /></a> : <button key={item.label} onClick={item.onClick}><Icon name="file" /><span><strong>{t(item.label)}</strong><small>{t(item.meta)}</small></span><Icon name="right" size={15} /></button>)}</div> : <p className="inspector-empty">{t("完成当前步骤后，产物会保存在这里。")}</p>}</section>
+      <section className="inspector-section activity-section"><header><h3>{t("本会话活动")}</h3><Icon name="clock" size={14} /></header>{events.length ? events.slice(-3).reverse().map((event, index) => <div className="activity-event" key={`${index}-${event.text}`}><time>{t(event.time)}</time><p>{event.text}</p></div>) : <p className="inspector-empty">{t("等待开始当前任务。")}</p>}</section>
     </div>
   </aside>;
 }

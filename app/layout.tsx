@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { themeBootstrap } from './theme-config';
+import { preferencesBootstrap } from './preferences';
 
 export const metadata: Metadata = {
   title: 'MigrationDirector Plus',
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" data-theme="white" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrap }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: preferencesBootstrap }} /></head>
       <body>
         {children}
       </body>

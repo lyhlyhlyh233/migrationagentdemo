@@ -6,13 +6,13 @@ A quiet, light workspace for migration delivery. The conversation is the primary
 
 ## Surfaces and color
 
-Four user-selectable appearances sit below the account in the sidebar: white (default), neutral charcoal dark, teal (#167D7F), and burgundy (#934352), in that order. The choice applies across projects, standalone setup, conversations, management pages and diagrams; it is stored locally and restored before first paint. An absent or invalid saved value falls back to white. White uses the original quiet neutral surfaces; teal and burgundy retain restrained module tints. Dark uses separate canvas, panel and raised surface tokens, light text and adjusted semantic colors. All components use theme tokens rather than hard-coded light backgrounds.
+A settings button to the right of the current user opens a right-side modal drawer. Its appearance section offers white (default), neutral charcoal dark, teal (#167D7F), and burgundy (#934352), in that order. The choice applies across projects, standalone setup, conversations, management pages and diagrams; it is stored locally and restored before first paint. An absent or invalid saved value falls back to white. White uses the original quiet neutral surfaces; teal and burgundy retain restrained module tints. Dark uses separate canvas, panel and raised surface tokens, light text and adjusted semantic colors. All components use theme tokens rather than hard-coded light backgrounds.
 
 Slate blue identifies inputs and scale statistics in colored themes; green means completion and amber means risk. Compact step segments and risk closure bars use actual project state; labels and counts provide the same information without color. No gradients, decorative glow, or agent-specific color palettes.
 
 ## Typography
 
-The sidebar appearance picker places “外观” and four compact interface thumbnails on one row below the account. Each thumbnail previews a sidebar and content in its theme colors, with space between buttons. Option names appear only in hover titles and accessible labels; an outline marks the selected thumbnail.
+The settings drawer uses a 20px title and 14px section labels. Four compact interface thumbnails preview the appearances, with labels and a check marking the current choice. The sidebar footer contains only the avatar, account name and settings icon.
 
 One native system sans-serif stack, including PingFang SC and Microsoft YaHei for Chinese. Conversation body is 14–15px with generous line height. Metadata stays subordinate; headings use modest size and weight differences. Use clear Chinese labels instead of repeated English eyebrows.
 
@@ -44,8 +44,17 @@ Resource, delivery and temporary navigation share 14px text, 16px leading icons,
 
 Use MigrationDirector Plus as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon and their recorded timestamp, without repeating the platform name. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
 
-The platform name and mark sit at the top of the left navigation, above the project switcher and creation actions. A desktop toggle collapses navigation into a 56px rail with expand, new project, new chat and account actions. The conversation takes the freed width; inspector visibility is independent. Collapse state is shared across projects during the page session. Narrow screens retain their drawer, regardless of desktop collapse state. Toggling moves keyboard focus to the corresponding expand/collapse button and preserves conversation state. The main canvas starts directly with stage progress; its redundant branding toolbar is removed. Narrow layouts retain a small navigation launcher. When execution details are hidden, a text action in the conversation context restores them.
+The platform name and mark sit at the top of the left navigation, above the project switcher and creation actions. A desktop toggle collapses navigation into a 56px rail with expand, new project, new chat and settings actions. The conversation takes the freed width; inspector visibility is independent. Collapse state is shared across projects during the page session. Narrow screens retain their drawer, regardless of desktop collapse state. Toggling moves keyboard focus to the corresponding expand/collapse button and preserves conversation state. The main canvas starts directly with stage progress; its redundant branding toolbar is removed. Narrow layouts retain a small navigation launcher. When execution details are hidden, a text action in the conversation context restores them.
 
 ## Header logo
 
 The upper-left navigation and project setup header use the Huawei flower symbol before MigrationDirector Plus. The browser favicon uses the same symbol, centered in a square viewport. Preserve its official red and proportions across all themes. The local `public/huawei-symbol.svg` contains the symbol path from the [Huawei website logo](https://consumer.huawei.com/.resources/huawei-cbg-site-lm-basic/webresources/mkt/etc/designs/huawei-cbg-site/clientlib-campaign-v4/common-v4/images/logo.svg).
+
+
+## Settings drawer and localization
+
+The native modal dialog slides in from the right, 440px wide on desktop and bounded by the viewport on mobile. It traps keyboard focus, closes with Escape or a backdrop click, and restores focus to its trigger. Its scrollable body contains appearance, background and language sections; a fixed footer explains local saving. Reduced-motion users receive no slide animation.
+
+Background choices use bundled images referenced in the background-selection conversation: white curves, misty mountains and graphite waves, plus the default solid canvas. They apply to the lobby, conversation workspace and project setup. Sidebars, input surfaces and management tables remain legible and opaque. Photo opacity is controlled by theme and image; no external image host is needed at runtime. Credits live in `public/backgrounds/README.md`.
+
+Simplified Chinese and English share the same layout and state. A local string catalog translates rendered labels, controls, statuses, shortcuts and system-authored templates. Select values and business enums retain their canonical values. Assistant replies use the language active when issued; existing messages, user questions, project names and renamed conversations retain their original content. Changing language does not remount projects or discard drafts. The HTML language attribute and saved preferences update immediately.

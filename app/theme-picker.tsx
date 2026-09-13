@@ -1,41 +1,18 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { isTheme, themes, themeStorageKey, type Theme } from './theme-config';
-
-const changeEvent = 'migration-theme-change';
-
-function getTheme(): Theme {
-  const value = document.documentElement.dataset.theme;
-  return isTheme(value) ? value : 'white';
-}
-
-function subscribe(onChange: () => void) {
-  function onStorage(event: StorageEvent) {
-    if (event.key !== themeStorageKey && event.key !== null) return;
-    document.documentElement.dataset.theme = isTheme(event.newValue) ? event.newValue : 'white';
-    onChange();
-  }
-  window.addEventListener(changeEvent, onChange);
-  window.addEventListener('storage', onStorage);
-  return () => {
-    window.removeEventListener(changeEvent, onChange);
-    window.removeEventListener('storage', onStorage);
-  };
-}
-
-function selectTheme(theme: Theme) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem(themeStorageKey, theme); } catch { /* Appearance still works when storage is unavailable. */ }
-  window.dispatchEvent(new Event(changeEvent));
-}
+import { themes } from './theme-config';
+import { readPreference, selectPreference, subscribePreferences } from './preferences';
+import { useTranslation } from './i18n';
+import { Icon } from './workspace-ui';
 
 export function ThemePicker() {
-  const selected = useSyncExternalStore(subscribe, getTheme, () => 'white' as const);
-  return <div className="theme-picker" role="group" aria-label="外观">
-    <h3>外观</h3>
-    {themes.map((theme) => <button key={theme.id} type="button" aria-pressed={selected === theme.id} aria-label={`${theme.label}样式`} title={`${theme.label}样式`} onClick={() => selectTheme(theme.id)}>
-      <span className={`theme-swatch swatch-${theme.id}`} aria-hidden="true" />
+  const t = useTranslation();
+  const selected = useSyncExternalStore(subscribePreferences, () => readPreference('theme'), () => 'white' as const);
+  return <div className="theme-picker" role="group" aria-label={t('外观')}>
+    {themes.map((theme) => <button key={theme.id} type="button" aria-pressed={selected === theme.id} aria-label={t(`${theme.label}样式`)} title={t(`${theme.label}样式`)} onClick={() => selectPreference('theme', theme.id)}>
+      <span className={`theme-swatch swatch-${theme.id}`} aria-hidden="true"><i /><b /></span>
+      <span className="theme-option-label">{t(theme.label)}{selected === theme.id && <Icon name="check" size={13} />}</span>
     </button>)}
   </div>;
 }
