@@ -102,6 +102,7 @@ export interface MigrationService {
     file: File,
     options?: RequestOptions,
   ): Promise<void>;
+  // "research-template" identifies the migration survey input template.
   download(
     projectId: string,
     artifactId: Artifact["id"],

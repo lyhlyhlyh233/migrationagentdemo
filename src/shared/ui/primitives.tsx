@@ -1,7 +1,8 @@
-import type {
-  ButtonHTMLAttributes,
-  InputHTMLAttributes,
-  ReactNode,
+import {
+  useId,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
 } from "react";
 import styles from "./primitives.module.css";
 export function Button({
@@ -22,16 +23,23 @@ export function FileField({
   filename,
   onFile,
   disabled = false,
+  labelAction,
 }: {
   label: string;
   filename?: string;
   onFile: (file: File) => void;
   disabled?: boolean;
+  labelAction?: ReactNode;
 }) {
+  const id = useId();
   return (
-    <label className={styles.file}>
-      <span>{label}</span>
+    <div className={styles.file}>
+      <div className={styles.fileHeading}>
+        <label htmlFor={id}>{label}</label>
+        {labelAction}
+      </div>
       <input
+        id={id}
         type="file"
         accept=".xlsx,.xls,.csv"
         disabled={disabled}
@@ -42,7 +50,7 @@ export function FileField({
         }}
       />
       <small>{filename || "XLSX / XLS / CSV"}</small>
-    </label>
+    </div>
   );
 }
 export function Field({

@@ -45,6 +45,12 @@
   max-width: 100%;
   color: var(--muted);
 }
+.fileHeading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
 .file input::file-selector-button {
   border: 1px solid var(--line);
   border-radius: 6px;

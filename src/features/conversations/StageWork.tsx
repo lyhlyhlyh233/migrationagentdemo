@@ -29,6 +29,7 @@ export function StageWork({
           snapshot={snapshot}
           onCommand={onCommand}
           onUpload={onUpload}
+          onDownload={onDownload}
         />
       ) : stage === "planning" ? (
         <PlanningForm

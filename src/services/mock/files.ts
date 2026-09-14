@@ -2,6 +2,8 @@ import type { Artifact, ProjectSnapshot, StageId } from "@/domain/models";
 import { migrationScope, migrationMethod } from "@/domain/assessment";
 import { migrationMethodLabels } from "@/shared/i18n/risks";
 import type { MockRuntime } from "./runtime";
+import researchTemplateUrl from "./templates/migration-survey-template.xlsx?url";
+import { ServiceError } from "../errors";
 export function addArtifact(
   rt: MockRuntime,
   s: ProjectSnapshot,
@@ -85,4 +87,21 @@ export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
     "planning",
     "xls",
   );
+}
+export async function researchTemplate(signal: AbortSignal) {
+  const response = await fetch(researchTemplateUrl, { signal });
+  if (!response.ok)
+    throw new ServiceError("HTTP", "模板下载失败，请重试。", response.status);
+  const bytes = await response.arrayBuffer();
+  const signature = new Uint8Array(bytes, 0, Math.min(bytes.byteLength, 4));
+  // A static server may return its HTML fallback for a missing asset.
+  if (signature.join(",") !== "80,75,3,4")
+    throw new ServiceError("VALIDATION", "模板文件不可用，请重试或联系管理员。");
+  const mediaType =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  return {
+    filename: "迁移调研表模板.xlsx",
+    mediaType,
+    blob: new Blob([bytes], { type: mediaType }),
+  };
 }

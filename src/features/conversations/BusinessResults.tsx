@@ -89,6 +89,7 @@ function BusinessResultBlock({
           snapshot={s}
           onCommand={onCommand}
           onUpload={onUpload}
+          onDownload={onDownload}
           disabled={!!Object.keys(s.pending).length}
         />
       </div>

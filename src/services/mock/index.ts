@@ -19,7 +19,7 @@ import { ServiceError, requireCondition } from "../errors";
 import { command } from "./commands";
 import { reply } from "./conversations";
 import { assessmentWelcome } from "./assessment-knowledge";
-import { scopeArtifacts } from "./files";
+import { researchTemplate, scopeArtifacts } from "./files";
 import { plan } from "./planning";
 import { MockRuntime } from "./runtime";
 const catalog: Catalog = {
@@ -39,6 +39,7 @@ const catalog: Catalog = {
 };
 export class MockMigrationService implements MigrationService {
   readonly runtime = new MockRuntime();
+  private readonly downloads = new AbortController();
   constructor() {
     this.initialize("lobby", null, "zh-CN");
   }
@@ -275,8 +276,28 @@ export class MockMigrationService implements MigrationService {
     );
     this.runtime.publish(s);
   }
-  async download(projectId: string, artifactId: string) {
+  async download(
+    projectId: string,
+    artifactId: string,
+    options: RequestOptions = {},
+  ) {
+    this.active(options);
     const s = this.runtime.state(projectId);
+    if (artifactId === "research-template") {
+      requireCondition(s.info, "请先创建或选择项目");
+      const signal = options.signal
+        ? AbortSignal.any([options.signal, this.downloads.signal])
+        : this.downloads.signal;
+      try {
+        const file = await researchTemplate(signal);
+        this.active(options);
+        return file;
+      } catch (error) {
+        this.active(options);
+        if (error instanceof ServiceError) throw error;
+        throw new ServiceError("NETWORK", "模板下载失败，请重试。");
+      }
+    }
     if (artifactId.startsWith("task-log:")) {
       const ids = artifactId.slice(9).split(",");
       const tasks = s.vmTasks.filter((v) => ids.includes(v.id));
@@ -336,6 +357,7 @@ export class MockMigrationService implements MigrationService {
     };
   }
   dispose() {
+    this.downloads.abort();
     this.runtime.dispose();
   }
 }

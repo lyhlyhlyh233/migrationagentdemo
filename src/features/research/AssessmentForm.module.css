@@ -3,17 +3,37 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
-.files > label {
+.files > div {
   border-bottom: 0;
   padding: 10px 0;
   gap: 6px;
 }
+.files > div > div {
+  min-height: 28px;
+}
+.download {
+  min-height: 28px;
+  padding: 3px 6px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent-ink);
+}
+.templateHint {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 @media (max-width: 600px) {
+  .download {
+    min-height: 36px;
+    padding: 6px 8px;
+  }
   .files {
     grid-template-columns: 1fr;
     gap: 0;
   }
-  .files > label + label {
+  .files > div + div {
     border-top: 1px solid var(--line);
   }
 }
