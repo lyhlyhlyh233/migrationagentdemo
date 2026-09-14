@@ -1817,8 +1817,7 @@
     margin-top: 8px;
     height: 4px;
   }
-  .root :global(.stage-connector),
-  .root :global(.preview-stage-next) {
+  .root :global(.stage-connector) {
     display: grid;
     place-items: center;
     position: absolute;
@@ -1827,6 +1826,28 @@
     width: 20px;
     height: 20px;
     color: var(--muted);
+    pointer-events: none;
+  }
+  /* Preview labels do not fill their columns. Center arrows in the space
+     between the actual content groups, rather than at column boundaries. */
+  .root :global(.stage-flow-preview > ol) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) max-content;
+    gap: 0;
+  }
+  .root :global(.stage-flow-preview li) {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0;
+  }
+  .root :global(.stage-flow-preview li button) {
+    width: max-content;
+    flex: none;
+  }
+  .root :global(.preview-stage-next) {
+    display: grid;
+    place-items: center;
+    position: static;
+    margin: 0;
     pointer-events: none;
   }
   .root :global(.preview-stage-next svg) {
