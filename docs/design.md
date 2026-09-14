@@ -74,11 +74,13 @@ dataReducer → 当前工作区和共享结果状态
 
 ## 风险界面与定位
 
-`RiskDrawer` 与 `RiskPanel` 分别负责抽屉和独立页外壳，复用 `RiskWorkspace` 的筛选及局部编辑状态。`CategoryRiskTable` 按规则与影响呈现分组，`RiskVmDetails` 复用虚拟机明细与核验证据，`RiskStrategyEditor` 负责策略表单。`presentation.ts` 只计算展示分组，不执行业务命令。
+`RiskDrawer` 与 `RiskPanel` 分别负责抽屉和独立页外壳，复用 `RiskWorkspace` 的筛选、选择及局部编辑状态。`CategoryRiskTable` 按规则与影响呈现分组；`RiskVmTable` 用于虚拟机子表和独立页列表，`RiskVmDetails` 保留证据、策略和核验操作。`RiskBulkActions` 提供工具栏与快捷确认，`RiskStrategyEditor` 保留完整策略表单。`presentation.ts` 只计算分组和 ID 选择，不执行业务命令。
 
 `ProjectUi.riskLocation` 保存类别／虚拟机模式及定位键。抽屉跳转把虚拟机定位交给管理页面，仍与当前项目隔离；不引入 URL 路由或刷新持久化。相同规则、阶段、类别、影响才能合并；缺失规则按记录独立展示，虚拟机优先以 ID 区分。
 
-`risk.decide` 和 `risk.recommend` 支持可选的 `onlyUndecided`。类别及规则批量操作设置为 true，Mock 在执行时基于最新状态排除已有选择或已核验项；全部已有选择时明确失败，不假装保存成功。单台页面主动修改保持原有覆盖语义。未来 HTTP 适配器必须保留此语义，避免客户端旧快照覆盖新策略。
+大类、小类和可编辑虚拟机表通过风险 ID 共用选择集合；选择跨页、跨类别保留，搜索/筛选或查看模式变化时清空。无选择的快捷操作针对当前筛选结果全部评估风险。小类和独立虚拟机列表默认 20 条/页，子表默认 10 条/页，支持 10/20/50 条；分页复用 `shared/ui/Pagination`。子表页码保存在类别视图中，收起和重新展开不会重置；过滤变化重置页码。虚拟机定位按所在位置初始化页码。工作区按项目 ID 挂载，选择和草稿不跨项目。
+
+`risk.decide`、`risk.recommend` 和新增 `risk.ignoreOrExclude` 支持可选的 `onlyUndecided`。批量操作默认 true，确认区可主动启用覆盖。`domain/risk-decisions.ts` 供预览和 Mock 共用：忽略约束项，对需整改/不支持项设置不迁；推荐逐项应用。服务按最新状态再次过滤、完整校验后整体写入，只追加一条助手结果并更新共享范围与产物。默认保护已有选择和核验记录；主动覆盖会重置被覆盖记录的核验状态。失败不清空选择、草稿和位置。真实 HTTP 适配器必须保留这些语义，不新增界面端接口地址。
 
 ## 评估范围与可选风险策略
 

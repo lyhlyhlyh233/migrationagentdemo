@@ -1,30 +1,44 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import type { ProjectSnapshot } from "@/domain/models";
+import { useRef, useState } from "react";
+import type { ProjectSnapshot, RiskItem } from "@/domain/models";
 import {
   canChangeAssessmentDecision,
   hasRiskDecision,
   migrationScope,
   riskReadyForExecution,
 } from "@/domain/assessment";
+import type { BulkRiskAction } from "@/domain/risk-decisions";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { Select } from "@/shared/ui/Select";
-import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
-import { CategoryRiskTable } from "./CategoryRiskTable";
+import type { PageState } from "@/shared/ui/pagination-state";
+import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
+import {
+  CategoryRiskTable,
+  initialCategoryView,
+  type CategoryTableView,
+} from "./CategoryRiskTable";
 import { RiskStrategyEditor } from "./RiskStrategyEditor";
-import { RiskVmDetails, type RiskInteractions } from "./RiskVmDetails";
+import type { RiskInteractions } from "./RiskVmDetails";
+import { RiskVmTable } from "./RiskVmTable";
+import { RiskBulkToolbar, RiskBulkConfirmation } from "./RiskBulkActions";
 import {
   categoryGroups,
+  selectionState,
+  toggleRiskSelection,
   undecidedRisks,
   vmCount,
   vmGroups,
-  vmKey,
   type RiskLocation,
 } from "./presentation";
 import styles from "./RiskPanel.module.css";
 
-type Editing = { key: string; ids: number[]; onlyUndecided: boolean };
+type Editing = {
+  key: string;
+  ids: number[];
+  onlyUndecided: boolean;
+  quick?: BulkRiskAction;
+};
 export interface RiskWorkspaceProps {
   snapshot: ProjectSnapshot;
   location: RiskLocation;
@@ -32,7 +46,7 @@ export interface RiskWorkspaceProps {
   onCommand: (command: ProjectCommand) => Promise<boolean>;
 }
 
-/** Category handling is shared; only the management surface exposes per-VM editing. */
+/** Local interaction state only. Business decisions and execution remain in the service. */
 export function RiskWorkspace({
   snapshot: s,
   location,
@@ -48,6 +62,20 @@ export function RiskWorkspace({
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("all");
   const [status, setStatus] = useState("all");
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [categoryViews, setCategoryViews] = useState<
+    Record<string, CategoryTableView>
+  >({});
+  const [vmPage, setVmPage] = useState<PageState>(() => ({
+    page:
+      Math.floor(
+        Math.max(
+          0,
+          vmGroups(s.risks).findIndex((row) => row.key === location.vmKey),
+        ) / 20,
+      ) + 1,
+    size: 20,
+  }));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -64,7 +92,17 @@ export function RiskWorkspace({
           : status === "excluded"
             ? !riskReadyForExecution(risk)
             : hasRiskDecision(risk))) &&
-      `${risk.description} ${t(risk.description)} ${risk.vmName} ${risk.vmId} ${risk.rule ?? ""}`
+      (
+        risk.description +
+        " " +
+        t(risk.description) +
+        " " +
+        risk.vmName +
+        " " +
+        risk.vmId +
+        " " +
+        (risk.rule ?? "")
+      )
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   );
@@ -73,21 +111,32 @@ export function RiskWorkspace({
     categories.find((c) => c.key === location.category) ?? categories[0];
   const mode = drawer ? "category" : location.mode;
   const filtersActive = !!query || level !== "all" || status !== "all";
-  const selectedVmRow = useRef<HTMLTableRowElement>(null);
-  useEffect(() => {
-    if (mode === "vm" && location.vmKey) {
-      selectedVmRow.current?.scrollIntoView({
-        block: "nearest",
-        behavior: "instant",
-      });
-    }
-  }, [mode, location.vmKey]);
+  const available = visible.filter((r) => r.stage === "research");
+  const selectedRisks = available.filter((r) => selected.has(r.id));
 
+  function clearSelection() {
+    setSelected(new Set());
+    setEditing(null);
+    setFeedback("");
+  }
+  function resetFilters() {
+    clearSelection();
+    setCategoryViews({});
+    setVmPage({ ...vmPage, page: 1 });
+    onLocationChange({ ...location, vmKey: undefined });
+  }
   function navigate(next: RiskLocation) {
     if (saving) return;
     setEditing(null);
     setFeedback("");
+    if (next.mode !== mode) setSelected(new Set());
     onLocationChange(next);
+  }
+  function select(risks: RiskItem[], checked: boolean) {
+    if (saving || !editable) return;
+    setSelected((current) => toggleRiskSelection(current, risks, checked));
+    setEditing(null);
+    setFeedback("");
   }
   async function submit(cmd: ProjectCommand) {
     if (submitting.current) return false;
@@ -110,7 +159,10 @@ export function RiskWorkspace({
         ? "已保存，处置说明已同步到发起会话。"
         : "保存失败，请检查最新风险状态或稍后重试。输入已保留。",
     );
-    if (ok) setEditing(null);
+    if (ok) {
+      setEditing(null);
+      setSelected(new Set());
+    }
     return ok;
   }
   const interactions: RiskInteractions = {
@@ -130,16 +182,29 @@ export function RiskWorkspace({
     },
     editorFor: (key) => {
       if (!editing || editing.key !== key || !editable) return null;
+      const risks = s.risks.filter((r) => editing.ids.includes(r.id));
       return (
         <div className={styles.inlineEditor}>
-          <RiskStrategyEditor
-            key={`${key}:${editing.ids.join(",")}`}
-            risks={s.risks.filter((r) => editing.ids.includes(r.id))}
-            onlyUndecided={editing.onlyUndecided}
-            saving={saving}
-            onSubmit={(cmd) => void submit(cmd)}
-            onCancel={() => setEditing(null)}
-          />
+          {editing.quick ? (
+            <RiskBulkConfirmation
+              key={key + ":" + editing.quick + ":" + editing.ids.join(",")}
+              snapshot={s}
+              risks={risks}
+              action={editing.quick}
+              saving={saving}
+              onSubmit={(cmd) => void submit(cmd)}
+              onCancel={() => setEditing(null)}
+            />
+          ) : (
+            <RiskStrategyEditor
+              key={key + ":" + editing.ids.join(",")}
+              risks={risks}
+              onlyUndecided={editing.onlyUndecided}
+              saving={saving}
+              onSubmit={(cmd) => void submit(cmd)}
+              onCancel={() => setEditing(null)}
+            />
+          )}
           {failed && (
             <p role="alert" className={styles.error}>
               {t(feedback)}
@@ -149,6 +214,7 @@ export function RiskWorkspace({
       );
     },
   };
+
   return (
     <div className={styles.workspace} data-drawer={drawer}>
       <div className={styles.overview}>
@@ -197,7 +263,7 @@ export function RiskWorkspace({
             disabled={saving}
             onChange={(e) => {
               setQuery(e.target.value);
-              setEditing(null);
+              resetFilters();
             }}
             placeholder={t("搜索风险、规则或虚拟机")}
             aria-label={t("搜索风险、规则或虚拟机")}
@@ -208,14 +274,14 @@ export function RiskWorkspace({
           disabled={saving}
           onValueChange={(value) => {
             setLevel(value);
-            setEditing(null);
+            resetFilters();
           }}
           aria-label={t("风险级别")}
         >
           <option value="all">{t("全部级别")}</option>
-          {(["high", "medium", "low"] as const).map((v) => (
-            <option key={v} value={v}>
-              {t(v)}
+          {(["high", "medium", "low"] as const).map((value) => (
+            <option key={value} value={value}>
+              {t(value)}
             </option>
           ))}
         </Select>
@@ -224,7 +290,7 @@ export function RiskWorkspace({
           disabled={saving}
           onValueChange={(value) => {
             setStatus(value);
-            setEditing(null);
+            resetFilters();
           }}
           aria-label={t("处置状态")}
         >
@@ -243,6 +309,26 @@ export function RiskWorkspace({
           )}
         </p>
       )}
+      <RiskBulkToolbar
+        selected={selectedRisks}
+        available={available}
+        saving={saving}
+        editable={editable}
+        onClear={clearSelection}
+        onAction={(action) => {
+          setFeedback("");
+          setFailed(false);
+          setEditing({
+            key: "bulk",
+            ids: (selectedRisks.length ? selectedRisks : available).map(
+              (r) => r.id,
+            ),
+            onlyUndecided: true,
+            quick: action === "custom" ? undefined : action,
+          });
+        }}
+      />
+      {interactions.editorFor("bulk")}
       {feedback && !editing && (
         <p
           role={failed ? "alert" : "status"}
@@ -262,25 +348,53 @@ export function RiskWorkspace({
       ) : mode === "category" ? (
         <div className={styles.categoryLayout}>
           <nav className={styles.categories} aria-label={t("风险类别")}>
-            {categories.map((group) => (
-              <button
-                key={group.key}
-                disabled={saving}
-                aria-current={category?.key === group.key ? "true" : undefined}
-                onClick={() =>
-                  navigate({ mode: "category", category: group.key })
-                }
-              >
-                <strong>{t(group.label)}</strong>
-                <small>
-                  {t(
-                    "{0} 台 · 未选 {1} 项",
-                    vmCount(group.risks),
-                    undecidedRisks(group.risks).length,
-                  )}
-                </small>
-              </button>
-            ))}
+            <label className={styles.selectAllCategories}>
+              <SelectionCheckbox
+                label={t("全选所有大类")}
+                {...selectionState(available, selected)}
+                disabled={!editable || saving || !available.length}
+                onChange={(checked) => select(available, checked)}
+              />
+              {t("全选所有大类")}
+            </label>
+            <div className={styles.categoryItems}>
+              {categories.map((group) => (
+                <div
+                  className={styles.categoryItem}
+                  key={group.key}
+                  data-current={category?.key === group.key}
+                >
+                  <SelectionCheckbox
+                    label={t("选择大类 {0}", t(group.label))}
+                    {...selectionState(group.risks, selected)}
+                    disabled={
+                      !editable ||
+                      saving ||
+                      !group.risks.some((r) => r.stage === "research")
+                    }
+                    onChange={(checked) => select(group.risks, checked)}
+                  />
+                  <button
+                    disabled={saving}
+                    aria-current={
+                      category?.key === group.key ? "true" : undefined
+                    }
+                    onClick={() =>
+                      navigate({ mode: "category", category: group.key })
+                    }
+                  >
+                    <strong>{t(group.label)}</strong>
+                    <small>
+                      {t(
+                        "{0} 台 · 未选 {1} 项",
+                        vmCount(group.risks),
+                        undecidedRisks(group.risks).length,
+                      )}
+                    </small>
+                  </button>
+                </div>
+              ))}
+            </div>
           </nav>
           {category && (
             <section
@@ -296,134 +410,53 @@ export function RiskWorkspace({
                       category.risks.length,
                       vmCount(category.risks),
                     )}
-                    {filtersActive && ` · ${t("当前筛选结果")}`}
+                    {filtersActive && " · " + t("当前筛选结果")}
                   </p>
                 </div>
-                <Button
-                  disabled={
-                    !editable ||
-                    saving ||
-                    !undecidedRisks(category.risks).length
-                  }
-                  onClick={() =>
-                    interactions.onEdit(
-                      `category:${category.key}`,
-                      category.risks,
-                      true,
-                    )
-                  }
-                >
-                  {t("批量设置策略")}
-                </Button>
               </div>
-              {!undecidedRisks(category.risks).length && (
-                <p className={styles.hint}>
-                  {t("本类没有未选策略的评估风险，已有选择已保留。")}
-                </p>
-              )}
-              {interactions.editorFor(`category:${category.key}`)}
               <CategoryRiskTable
                 key={category.key}
                 risks={category.risks}
+                allRisks={s.risks}
                 drawer={drawer}
+                selected={selected}
+                onSelect={select}
+                view={categoryViews[category.key] ?? initialCategoryView()}
+                onView={(view) =>
+                  setCategoryViews((current) => ({
+                    ...current,
+                    [category.key]: view,
+                  }))
+                }
                 {...interactions}
               />
             </section>
           )}
         </div>
       ) : (
-        <div
-          className={styles.tableScroll}
-          role="region"
-          tabIndex={0}
-          aria-label={t("虚拟机风险列表")}
-        >
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{t("虚拟机")}</th>
-                <th>{t("风险数")}</th>
-                <th>{t("迁移资格")}</th>
-                <th>{t("处理状态")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vmGroups(visible).map(({ key, risks }) => {
-                const open = location.vmKey === key;
-                const all = s.risks.filter((r) => vmKey(r) === key);
-                const eligible = all.every(riskReadyForExecution);
-                return (
-                  <Fragment key={key}>
-                    <tr
-                      data-selected={open}
-                      ref={open ? selectedVmRow : undefined}
-                    >
-                      <th scope="row">
-                        <button
-                          className={styles.textAction}
-                          disabled={saving}
-                          aria-expanded={open}
-                          onClick={() =>
-                            navigate({
-                              ...location,
-                              mode: "vm",
-                              vmKey: open ? undefined : key,
-                            })
-                          }
-                        >
-                          <Icon name={open ? "chevron" : "right"} size={13} />
-                          {risks[0].vmName}
-                        </button>
-                        <small>{risks[0].vmId}</small>
-                      </th>
-                      <td>{risks.length}</td>
-                      <td>
-                        <span
-                          className={styles.impact}
-                          data-impact={eligible ? "constraint" : "blocked"}
-                        >
-                          {t(eligible ? "可纳入" : "暂时排除")}
-                        </span>
-                      </td>
-                      <td>
-                        {t(
-                          "已选 {0} / {1}",
-                          risks.filter(hasRiskDecision).length,
-                          risks.length,
-                        )}
-                      </td>
-                    </tr>
-                    {open && (
-                      <tr className={styles.expandedRow}>
-                        <td colSpan={4}>
-                          <div className={styles.sectionHeading}>
-                            <p>
-                              {t("批量调整将更新这台虚拟机的所选风险策略。")}
-                              {filtersActive && ` ${t("仅针对当前筛选结果。")}`}
-                            </p>
-                            <Button
-                              disabled={
-                                !editable ||
-                                saving ||
-                                !risks.some((r) => r.stage === "research")
-                              }
-                              onClick={() =>
-                                interactions.onEdit(`vm:${key}`, risks)
-                              }
-                            >
-                              {t("批量调整策略")}
-                            </Button>
-                          </div>
-                          {interactions.editorFor(`vm:${key}`)}
-                          <RiskVmDetails risks={risks} {...interactions} />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+        <div>
+          <div className={styles.tableSelection}>
+            <span>{t("当前筛选结果")}</span>
+            <button
+              className={styles.textAction}
+              disabled={!editable || saving || !available.length}
+              onClick={() => select(available, true)}
+            >
+              {t("选择全部 {0} 台虚拟机（含所有页）", vmCount(available))}
+            </button>
+          </div>
+          <RiskVmTable
+            risks={visible}
+            allRisks={s.risks}
+            selected={selected}
+            onSelect={select}
+            label={t("虚拟机风险列表")}
+            pagination={vmPage}
+            onPage={setVmPage}
+            expandedVm={location.vmKey}
+            onExpandVm={(vmKey) => navigate({ ...location, mode: "vm", vmKey })}
+            {...interactions}
+          />
         </div>
       )}
     </div>

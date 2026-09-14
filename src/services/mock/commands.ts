@@ -37,6 +37,7 @@ export async function command(
   switch (cmd.type) {
     case "risk.decide":
     case "risk.recommend":
+    case "risk.ignoreOrExclude":
       decideRisks(rt, c, cmd);
       break;
     case "assessment.choosePlan":

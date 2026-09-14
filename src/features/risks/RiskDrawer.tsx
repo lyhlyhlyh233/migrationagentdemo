@@ -63,6 +63,7 @@ export function RiskDrawer({
         </header>
         <div className={styles.body}>
           <RiskWorkspace
+            key={snapshot.id}
             snapshot={snapshot}
             onCommand={onCommand}
             drawer

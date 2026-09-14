@@ -20,6 +20,32 @@ export const strategyLabel = (risk: RiskItem) =>
       ? riskStrategyLabels[risk.decision.strategy]
       : "未选策略";
 
+export function selectionState(
+  risks: RiskItem[],
+  selected: ReadonlySet<number>,
+) {
+  const ids = risks.filter((r) => r.stage === "research").map((r) => r.id);
+  const count = ids.filter((id) => selected.has(id)).length;
+  return {
+    checked: ids.length > 0 && count === ids.length,
+    mixed: count > 0 && count < ids.length,
+    disabled: !ids.length,
+  };
+}
+export function toggleRiskSelection(
+  selected: ReadonlySet<number>,
+  risks: RiskItem[],
+  checked: boolean,
+) {
+  const next = new Set(selected);
+  for (const risk of risks)
+    if (risk.stage === "research") {
+      if (checked) next.add(risk.id);
+      else next.delete(risk.id);
+    }
+  return next;
+}
+
 export function categoryGroups(risks: RiskItem[]) {
   const groups = new Map<
     string,

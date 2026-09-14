@@ -9,11 +9,15 @@ import type { ProjectCommand } from "../contracts";
 import { requireCondition } from "../errors";
 import { riskStrategyLabels } from "@/shared/i18n/risks";
 import { scopeArtifacts, addArtifact } from "./files";
+import { riskDecisionUpdates } from "@/domain/risk-decisions";
 import type { MockRuntime } from "./runtime";
 export function decideRisks(
   rt: MockRuntime,
   c: OperationContext,
-  cmd: Extract<ProjectCommand, { type: "risk.decide" | "risk.recommend" }>,
+  cmd: Extract<
+    ProjectCommand,
+    { type: "risk.decide" | "risk.recommend" | "risk.ignoreOrExclude" }
+  >,
 ) {
   const s = rt.context(c);
   requireCondition(
@@ -36,22 +40,15 @@ export function decideRisks(
     selected.length > 0,
     "这些风险已有策略，本次未覆盖任何选择。请查看最新状态。",
   );
-  const updates = selected.map((r) => ({
-    risk: r,
-    decision:
-      cmd.type === "risk.recommend"
-        ? {
-            strategy: r.recommendedStrategy!,
-            method: r.recommendedMethod!,
-            note: r.recommendation!,
-            selectedAt: new Date().toISOString(),
-          }
-        : {
-            ...cmd.decision,
-            note: cmd.decision.note.trim(),
-            selectedAt: new Date().toISOString(),
-          },
-  }));
+  const updates = riskDecisionUpdates(
+    selected,
+    cmd.type === "risk.recommend"
+      ? "recommended"
+      : cmd.type === "risk.ignoreOrExclude"
+        ? "ignore-or-exclude"
+        : cmd.decision,
+    false,
+  );
   for (const { risk, decision: d } of updates) {
     requireCondition(
       ["ignore", "remediate", "exclude", "custom"].includes(d.strategy) &&
@@ -72,7 +69,7 @@ export function decideRisks(
     );
   }
   updates.forEach(({ risk, decision }) => {
-    risk.decision = decision;
+    risk.decision = { ...decision, selectedAt: new Date().toISOString() };
     // Replacing a plan does not carry over verification of a different plan.
     risk.closed = false;
     risk.closedAt = "—";
@@ -83,13 +80,19 @@ export function decideRisks(
     "user",
     cmd.type === "risk.recommend"
       ? `采用所选 ${selected.length} 条风险的建议处置方案。`
-      : `为 ${selected.length} 条风险选择“${riskStrategyLabels[cmd.decision.strategy]}”：${cmd.decision.note.trim()}`,
+      : cmd.type === "risk.ignoreOrExclude"
+        ? `批量处理 ${selected.length} 条风险：可接受约束项设为忽略，其余设为本次不迁。`
+        : `为 ${selected.length} 条风险选择“${riskStrategyLabels[cmd.decision.strategy]}”：${cmd.decision.note.trim()}`,
     { operation: true },
   );
   const preserved = requested.length - selected.length;
+  const split =
+    cmd.type === "risk.ignoreOrExclude"
+      ? `其中 ${updates.filter(({ decision }) => decision.strategy === "ignore").length} 条接受约束，${updates.filter(({ decision }) => decision.strategy === "exclude").length} 条设为本次不迁。`
+      : "";
   rt.result(
     c,
-    `已保存 ${selected.length} 条风险策略${preserved ? `，保留 ${preserved} 条已有选择` : ""}。当前工具迁移范围为 ${migrationScope(s).length} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。`,
+    `已保存 ${selected.length} 条风险策略${preserved ? `，保留 ${preserved} 条已有选择` : ""}。${split}当前工具迁移范围为 ${migrationScope(s).length} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。`,
     [],
   );
   scopeArtifacts(rt, s);

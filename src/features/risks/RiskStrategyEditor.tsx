@@ -30,7 +30,9 @@ export function RiskStrategyEditor({
 }) {
   const t = useTranslation();
   const uid = useId();
-  const targets = risks.filter((r) => !onlyUndecided || !hasRiskDecision(r));
+  const [overwrite, setOverwrite] = useState(false);
+  const preserveExisting = onlyUndecided && !overwrite;
+  const targets = risks.filter((r) => !preserveExisting || !hasRiskDecision(r));
   const single = targets.length === 1 ? targets[0] : undefined;
   const [choice, setChoice] = useState<RiskStrategy | "recommended">(
     (!onlyUndecided && single?.decision?.strategy) || "recommended",
@@ -73,12 +75,12 @@ export function RiskStrategyEditor({
             ? {
                 type: "risk.recommend",
                 riskIds: risks.map((r) => r.id),
-                onlyUndecided,
+                onlyUndecided: preserveExisting,
               }
             : {
                 type: "risk.decide",
                 riskIds: risks.map((r) => r.id),
-                onlyUndecided,
+                onlyUndecided: preserveExisting,
                 decision: {
                   strategy: choice,
                   method: choice === "exclude" ? "manual" : method,
@@ -93,9 +95,33 @@ export function RiskStrategyEditor({
         <span>
           {t("{0} 条风险 · {1} 台虚拟机", targets.length, vmCount(targets))}
           {onlyUndecided &&
-            ` · ${t("保留 {0} 条已有选择", risks.length - targets.length)}`}
+            ` · ${t("本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。", targets.length, risks.length - targets.length, targets.filter(hasRiskDecision).length)}`}
         </span>
       </header>
+      {onlyUndecided && (
+        <label className={styles.overwrite}>
+          <input
+            type="checkbox"
+            checked={overwrite}
+            disabled={saving}
+            onChange={(e) => setOverwrite(e.target.checked)}
+          />
+          {t("覆盖已有策略")}
+        </label>
+      )}
+      {!!targets.filter((r) => r.closed).length && (
+        <p className={styles.note}>
+          {t(
+            "将重置 {0} 条已验证记录的验证状态，需按新策略重新核验。",
+            targets.filter((r) => r.closed).length,
+          )}
+        </p>
+      )}
+      {!targets.length && (
+        <p className={styles.note}>
+          {t("没有待处理项。已有策略默认保留，可勾选覆盖或取消操作。")}
+        </p>
+      )}
       <fieldset
         className={styles.options}
         disabled={saving || !targets.length}

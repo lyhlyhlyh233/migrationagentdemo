@@ -2,6 +2,18 @@
   color: var(--text);
   font-size: 13px;
 }
+.overwrite {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  font-size: 13px;
+}
+.overwrite input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
 .root header {
   margin-bottom: 12px;
 }

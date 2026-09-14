@@ -9,7 +9,7 @@ export function RiskPanel(props: RiskWorkspaceProps) {
       <header className={styles.heading}>
         <h2>{t("迁移风险与策略")}</h2>
       </header>
-      <RiskWorkspace {...props} />
+      <RiskWorkspace key={props.snapshot.id} {...props} />
     </section>
   );
 }
