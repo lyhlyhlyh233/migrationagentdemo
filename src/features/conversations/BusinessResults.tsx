@@ -47,7 +47,11 @@ export function BusinessResults({
           role="group"
           aria-label={t("评估结果快捷操作")}
         >
-          <button type="button" onClick={() => actions.onPanel("risk")}>
+          <button
+            type="button"
+            className={styles.riskAction}
+            onClick={() => actions.onPanel("risk")}
+          >
             <Icon name="shield" size={15} />
             {t("查看&处理风险")}
           </button>
@@ -56,7 +60,10 @@ export function BusinessResults({
             disabled={!planningEntered && !stageEligibility(snapshot).planning}
             onClick={() => actions.onNavigateStage("planning")}
           >
-            {t(planningEntered ? "打开规划设计" : "继续下一步规划设计")}
+            {t(
+              planningEntered ? "打开{0}" : "继续下一阶段：{0}",
+              t("规划设计"),
+            )}
             <Icon name="right" size={15} />
           </button>
         </div>

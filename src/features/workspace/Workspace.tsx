@@ -258,7 +258,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             nextLabel={
               next
                 ? t(
-                    s.enteredStages.includes(next) ? "打开{0}" : "继续{0}",
+                    s.enteredStages.includes(next)
+                      ? "打开{0}"
+                      : "继续下一阶段：{0}",
                     t(stageName[next]),
                   )
                 : undefined

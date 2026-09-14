@@ -173,16 +173,16 @@ export function Sidebar({
           />
           <section className="nav-section">
             <div className="nav-section-heading">
-              <h2>{t("临时对话")}</h2>
+              <h2>{t("临时会话")}</h2>
               <button
                 className="icon-button"
-                aria-label={t("添加临时对话")}
+                aria-label={t("添加临时会话")}
                 onClick={() => onNewChat()}
               >
                 <Icon name="plus" size={15} />
               </button>
             </div>
-            <nav className="temporary-conversations" aria-label={t("临时对话")}>
+            <nav className="temporary-conversations" aria-label={t("临时会话")}>
               {s.conversations
                 .filter((c) => c.kind === "temporary")
                 .map((c) => (

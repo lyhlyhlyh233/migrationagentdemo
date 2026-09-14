@@ -313,8 +313,8 @@
   "切换当前项目": "Switch project",
   "工作空间": "Workspace",
   "项目资料": "Project resources",
-  "临时对话": "Temporary chats",
-  "添加临时对话": "Add temporary chat",
+  "临时会话": "Temporary sessions",
+  "添加临时会话": "Add temporary session",
   "随时开启一段讨论": "Start a discussion anytime",
   "当前用户": "Current user",
   "个人账户": "Personal account",
@@ -1071,7 +1071,7 @@
   "RVTools 待提供": "RVTools file not provided",
   "调研表待提供": "Survey not provided",
   "确认范围并继续": "Confirm scope and continue",
-  "继续{0}": "Continue to {0}",
+  "继续下一阶段：{0}": "Next stage: {0}",
   "打开{0}": "Open {0}",
   "当前为最终验证阶段": "Final validation stage",
   "可纳入工具迁移": "Eligible for tool migration",
@@ -1318,6 +1318,5 @@
   "按各项建议分别处理": "Apply each finding’s recommendation",
   "评估结果快捷操作": "Assessment result actions",
   "查看&处理风险": "Review & handle risks",
-  "继续下一步规划设计": "Continue to planning",
   "打开规划设计": "Open planning"
 }

@@ -17,7 +17,7 @@ export function OperationLog({ snapshot: s }: { snapshot: ProjectSnapshot }) {
               <time>{m.time}</time>
               <div>
                 <small>
-                  {t(m.stageId ? stageTitles[m.stageId] : "临时对话")} ·{" "}
+                  {t(m.stageId ? stageTitles[m.stageId] : "临时会话")} ·{" "}
                   {t(
                     s.conversations.find((c) => c.id === m.conversationId)
                       ?.title ?? "项目会话",
