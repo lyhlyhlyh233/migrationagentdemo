@@ -3,18 +3,23 @@ import type { ProjectSnapshot } from "@/domain/models";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
-import { RiskPanel } from "./RiskPanel";
+import { RiskWorkspace } from "./RiskWorkspace";
+import type { RiskLocation } from "./presentation";
 import styles from "./RiskDrawer.module.css";
 export function RiskDrawer({
   snapshot,
   onCommand,
   onClose,
   onManage,
+  location,
+  onLocationChange,
 }: {
   snapshot: ProjectSnapshot;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onClose: () => void;
-  onManage: () => void;
+  onManage: (location: RiskLocation) => void;
+  location: RiskLocation;
+  onLocationChange: (location: RiskLocation) => void;
 }) {
   const t = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
@@ -35,8 +40,16 @@ export function RiskDrawer({
     >
       <div className={styles.drawer}>
         <header>
-          <span>{snapshot.info?.siteName}</span>
-          <button type="button" onClick={onManage}>
+          <div>
+            <h2>{t("迁移风险与策略")}</h2>
+            <span>{snapshot.info?.siteName}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onManage({ mode: "category", category: location.category })
+            }
+          >
             {t("打开迁移风险页面")}
           </button>
           <button
@@ -49,9 +62,15 @@ export function RiskDrawer({
           </button>
         </header>
         <div className={styles.body}>
-          <RiskPanel snapshot={snapshot} onCommand={onCommand} />
+          <RiskWorkspace
+            snapshot={snapshot}
+            onCommand={onCommand}
+            drawer
+            location={location}
+            onLocationChange={onLocationChange}
+            onManage={onManage}
+          />
         </div>
-        <footer>{t("无需全部处理。关闭抽屉后，可以直接继续下一阶段。")}</footer>
       </div>
     </dialog>
   );

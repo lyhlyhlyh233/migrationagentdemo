@@ -1,15 +1,43 @@
 .root {
-  max-width: 660px;
+  max-width: 740px;
+  padding-block: 10px;
+  font-size: 14px;
+}
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+.summary strong {
+  font-weight: 600;
+}
+.summary button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  font: inherit;
+  padding: 3px 0;
+}
+.summary button:hover {
+  text-decoration: underline;
+}
+.hint {
+  font-size: 13px;
+  color: var(--secondary);
+  line-height: 1.55;
+  margin: 4px 0 0;
 }
 .plan {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  max-width: 620px;
 }
-.plan label {
-  font-size: 12px;
-  color: var(--secondary);
+.plan > label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
 }
 .selection {
   display: flex;
@@ -20,53 +48,32 @@
   flex: 1;
   min-width: 0;
 }
-.hint,
-.plan small {
-  font-size: 12px;
-  color: var(--secondary);
-  line-height: 1.6;
-}
 .plan textarea {
-  min-height: 80px;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px;
+  margin-top: 8px;
   resize: vertical;
   font: inherit;
 }
-.questions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+.plan [role="alert"] {
+  color: var(--danger);
+  font-size: 13px;
 }
-.questions button {
-  border: 0;
-  background: transparent;
-  color: var(--accent-ink);
-  text-align: left;
-  padding: 5px 0;
-  font-size: 12px;
-}
-.questions button:hover {
-  text-decoration: underline;
+@media (min-width: 1920px) {
+  .root {
+    font-size: 15px;
+  }
+  .hint,
+  .plan > label {
+    font-size: 14px;
+  }
 }
 @media (max-width: 600px) {
   .selection {
     flex-wrap: wrap;
   }
-  .questions button {
+  .summary button {
     min-height: 36px;
-  }
-}
-@media (min-width: 1920px) {
-  .root {
-    max-width: 740px;
-    font-size: 15px;
-  }
-  .plan label,
-  .hint,
-  .plan small,
-  .questions button {
-    font-size: 14px;
   }
 }

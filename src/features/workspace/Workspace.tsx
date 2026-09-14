@@ -186,6 +186,14 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 onClose={() => setPanel(null)}
                 onNotify={a.notify}
                 onDownload={a.download}
+                riskLocation={p.riskLocation}
+                onRiskLocation={(riskLocation) =>
+                  dispatchUi({
+                    type: "project",
+                    id: s.id,
+                    patch: { riskLocation },
+                  })
+                }
               />
             ) : chat ? (
               <Conversation
@@ -313,9 +321,17 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           snapshot={s}
           onCommand={a.execute}
           onClose={() => setRiskDrawer(null)}
-          onManage={() => {
+          location={p.riskLocation}
+          onLocationChange={(riskLocation) =>
+            dispatchUi({ type: "project", id: s.id, patch: { riskLocation } })
+          }
+          onManage={(riskLocation) => {
             setRiskDrawer(null);
-            setPanel("risk");
+            dispatchUi({
+              type: "project",
+              id: s.id,
+              patch: { panel: "risk", riskLocation },
+            });
           }}
         />
       )}

@@ -6,7 +6,7 @@ import { MockMigrationService } from "@/services/mock";
 const actions = {
   onPanel: () => {},
   onDownload: () => {},
-  onCommand: () => {},
+  onCommand: async () => true,
   onStage: () => {},
 };
 describe("business result rendering", () => {

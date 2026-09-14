@@ -91,6 +91,11 @@ export function Composer({
                     onClick: () => onSend(t("解读评估报告并给出建议")),
                   },
                   {
+                    label: "应用迁移有哪些限制？",
+                    description: "了解应用兼容性与验证要求",
+                    onClick: () => onSend(t("应用迁移有哪些限制？")),
+                  },
+                  {
                     label: "为什么 RDM 要考虑有代理迁移？",
                     description: "比较迁移方式与限制",
                     onClick: () => onSend(t("为什么 RDM 要考虑有代理迁移？")),

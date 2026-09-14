@@ -2,6 +2,7 @@ import type { OperationContext } from "@/domain/models";
 import {
   assessmentRisks,
   canChangeAssessmentDecision,
+  hasRiskDecision,
   migrationScope,
 } from "@/domain/assessment";
 import type { ProjectCommand } from "../contracts";
@@ -20,12 +21,20 @@ export function decideRisks(
     "实施准备已开始，策略已锁定；仍可补充验证记录。",
   );
   const ids = [...new Set(cmd.riskIds)];
-  const selected = s.risks.filter((r) => ids.includes(r.id));
+  const requested = s.risks.filter((r) => ids.includes(r.id));
   requireCondition(
     ids.length &&
-      selected.length === ids.length &&
-      selected.every((r) => r.stage === "research"),
+      requested.length === ids.length &&
+      requested.every((r) => r.stage === "research"),
     "请选择有效的评估风险",
+  );
+  // Recheck the live snapshot: another conversation may have saved an exception.
+  const selected = requested.filter(
+    (r) => !cmd.onlyUndecided || !hasRiskDecision(r),
+  );
+  requireCondition(
+    selected.length > 0,
+    "这些风险已有策略，本次未覆盖任何选择。请查看最新状态。",
   );
   const updates = selected.map((r) => ({
     risk: r,
@@ -77,10 +86,10 @@ export function decideRisks(
       : `为 ${selected.length} 条风险选择“${riskStrategyLabels[cmd.decision.strategy]}”：${cmd.decision.note.trim()}`,
     { operation: true },
   );
-  const remaining = assessmentRisks(s).filter((r) => !r.decision).length;
+  const preserved = requested.length - selected.length;
   rt.result(
     c,
-    `已保存这 ${selected.length} 条风险的处置方案。${remaining ? `还有 ${remaining} 条待选择。` : "所有评估风险均已选择方案。"}\n\n接受约束会保留原始发现；“整改后迁移”仍需在实施前提交验证依据。本次不迁或另行重建的虚拟机不进入工具任务，当前工具范围为 ${migrationScope(s).length} 台。`,
+    `已保存 ${selected.length} 条风险策略${preserved ? `，保留 ${preserved} 条已有选择` : ""}。当前工具迁移范围为 ${migrationScope(s).length} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。`,
     [],
   );
   scopeArtifacts(rt, s);

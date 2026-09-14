@@ -16,7 +16,7 @@
 }
 .drawer {
   margin-left: auto;
-  width: min(720px, 100%);
+  width: min(1040px, calc(100% - 48px));
   height: 100%;
   background: var(--panel);
   border-left: 1px solid var(--line);
@@ -30,7 +30,7 @@
   padding: 16px 24px;
   border-bottom: 1px solid var(--line);
 }
-.drawer > header span {
+.drawer > header > div {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -49,14 +49,18 @@
   overscroll-behavior: contain;
   padding: 24px;
 }
-.drawer > footer {
-  padding: 14px 24px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-  line-height: 1.6;
+.drawer h2 {
+  margin: 0 0 3px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.drawer > header span {
   color: var(--secondary);
 }
-@media (max-width: 600px) {
+@media (max-width: 760px) {
+  .drawer {
+    width: 100%;
+  }
   .body {
     padding: 18px;
   }
@@ -66,11 +70,10 @@
 }
 @media (min-width: 1920px) {
   .drawer {
-    width: min(820px, 100%);
+    width: min(1120px, calc(100% - 48px));
   }
   .drawer > header span,
-  .drawer > header button,
-  .drawer > footer {
+  .drawer > header button {
     font-size: 14px;
   }
 }

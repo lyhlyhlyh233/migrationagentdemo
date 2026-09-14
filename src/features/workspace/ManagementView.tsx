@@ -7,6 +7,7 @@ import { CreationTaskPanel } from "@/features/migration/CreationTaskPanel";
 import { CutoverTaskPanel } from "@/features/migration/CutoverTaskPanel";
 import { SyncTaskPanel } from "@/features/migration/SyncTaskPanel";
 import { RiskPanel } from "@/features/risks/RiskPanel";
+import type { RiskLocation } from "@/features/risks/presentation";
 import { TaskPanel } from "@/features/tasks/TaskPanel";
 import { ValidationPanel } from "@/features/validation/ValidationPanel";
 import type { ProjectCommand } from "@/services/contracts";
@@ -18,6 +19,8 @@ export function ManagementView({
   onClose,
   onNotify,
   onDownload,
+  riskLocation,
+  onRiskLocation,
 }: {
   panel: PanelId;
   snapshot: ProjectSnapshot;
@@ -25,6 +28,8 @@ export function ManagementView({
   onClose: () => void;
   onNotify: (s: string) => void;
   onDownload: (id: string) => void;
+  riskLocation: RiskLocation;
+  onRiskLocation: (location: RiskLocation) => void;
 }) {
   const completed = completedBatches(s);
   return (
@@ -34,7 +39,12 @@ export function ManagementView({
       ) : panel === "logs" ? (
         <OperationLog snapshot={s} />
       ) : panel === "risk" ? (
-        <RiskPanel snapshot={s} onCommand={onCommand} />
+        <RiskPanel
+          snapshot={s}
+          onCommand={onCommand}
+          location={riskLocation}
+          onLocationChange={onRiskLocation}
+        />
       ) : panel === "tasks" ? (
         <TaskPanel
           projectId={s.id}

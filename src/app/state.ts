@@ -1,4 +1,5 @@
 import type { Catalog, ProjectSnapshot, StageId } from "@/domain/models";
+import type { RiskLocation } from "@/features/risks/presentation";
 export type PanelId =
   | "tasks"
   | "risk"
@@ -17,6 +18,7 @@ export interface ProjectUi {
   panel: PanelId;
   notice: string;
   handoff: StageId | null;
+  riskLocation: RiskLocation;
 }
 export const projectUi = (): ProjectUi => ({
   activeStage: "research",
@@ -25,6 +27,7 @@ export const projectUi = (): ProjectUi => ({
   panel: null,
   notice: "",
   handoff: null,
+  riskLocation: { mode: "category" },
 });
 export interface UiState {
   selected: string;

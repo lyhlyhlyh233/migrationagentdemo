@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
 import type { MigrationMethod, RiskItem, RiskStrategy } from "@/domain/models";
+import { vmCount } from "./presentation";
+import { hasRiskDecision } from "@/domain/assessment";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { migrationMethodLabels, riskStrategyLabels } from "@/shared/i18n/risks";
@@ -18,24 +20,26 @@ export function RiskStrategyEditor({
   saving,
   onSubmit,
   onCancel,
+  onlyUndecided = false,
 }: {
   risks: RiskItem[];
   saving: boolean;
   onSubmit: (command: ProjectCommand) => void;
   onCancel: () => void;
+  onlyUndecided?: boolean;
 }) {
   const t = useTranslation();
   const uid = useId();
-  const single = risks.length === 1 ? risks[0] : undefined;
+  const targets = risks.filter((r) => !onlyUndecided || !hasRiskDecision(r));
+  const single = targets.length === 1 ? targets[0] : undefined;
   const [choice, setChoice] = useState<RiskStrategy | "recommended">(
-    single?.decision?.strategy ?? "recommended",
+    (!onlyUndecided && single?.decision?.strategy) || "recommended",
   );
   const [method, setMethod] = useState<MigrationMethod>(
     single?.decision?.method ?? single?.recommendedMethod ?? "agentless",
   );
   const [note, setNote] = useState(single?.decision?.note ?? "");
-  const canIgnore = risks.every((r) => r.impact === "constraint");
-  const vmNames = [...new Set(risks.map((r) => r.vmName))];
+  const canIgnore = targets.every((r) => r.impact === "constraint");
   const options = [
     {
       value: "recommended" as const,
@@ -69,10 +73,12 @@ export function RiskStrategyEditor({
             ? {
                 type: "risk.recommend",
                 riskIds: risks.map((r) => r.id),
+                onlyUndecided,
               }
             : {
                 type: "risk.decide",
                 riskIds: risks.map((r) => r.id),
+                onlyUndecided,
                 decision: {
                   strategy: choice,
                   method: choice === "exclude" ? "manual" : method,
@@ -85,18 +91,14 @@ export function RiskStrategyEditor({
       <header>
         <strong>{t("如何处理所选风险？")}</strong>
         <span>
-          {t("{0} 条风险 · {1} 台虚拟机", risks.length, vmNames.length)}
+          {t("{0} 条风险 · {1} 台虚拟机", targets.length, vmCount(targets))}
+          {onlyUndecided &&
+            ` · ${t("保留 {0} 条已有选择", risks.length - targets.length)}`}
         </span>
-        <p>
-          {single
-            ? t(single.description)
-            : vmNames.slice(0, 3).join("、") +
-              (vmNames.length > 3 ? t("等 {0} 台", vmNames.length) : "")}
-        </p>
       </header>
       <fieldset
         className={styles.options}
-        disabled={saving}
+        disabled={saving || !targets.length}
         aria-label={t("处置方式")}
       >
         {options.map((option) => (
@@ -166,6 +168,7 @@ export function RiskStrategyEditor({
           type="submit"
           disabled={
             saving ||
+            !targets.length ||
             (choice !== "recommended" && note.trim().length < 4) ||
             (choice === "ignore" && !canIgnore)
           }

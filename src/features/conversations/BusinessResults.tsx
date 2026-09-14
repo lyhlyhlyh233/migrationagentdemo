@@ -13,7 +13,7 @@ import styles from "./BusinessResults.module.css";
 export interface ResultActions {
   onPanel: (panel: PanelId) => void;
   onDownload: (id: string) => void;
-  onCommand: (cmd: ProjectCommand) => void;
+  onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onStage: (stage: StageId) => void;
   onUpload?: (purpose: FilePurpose, file: File) => void;
   onAsk?: (text: string) => void;
@@ -45,7 +45,6 @@ function BusinessResultBlock({
   onCommand,
   onStage,
   onUpload,
-  onAsk,
   activeInput = false,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
   const t = useTranslation();
@@ -79,7 +78,6 @@ function BusinessResultBlock({
         snapshot={s}
         onCommand={onCommand}
         onRisks={() => onPanel("risk")}
-        onAsk={onAsk}
       />
     );
   if (r.kind === "summary")

@@ -31,9 +31,10 @@ export type ProjectCommand =
   | {
       type: "risk.decide";
       riskIds: number[];
+      onlyUndecided?: boolean;
       decision: Omit<RiskDecision, "selectedAt">;
     }
-  | { type: "risk.recommend"; riskIds: number[] }
+  | { type: "risk.recommend"; riskIds: number[]; onlyUndecided?: boolean }
   | {
       type: "tasks.action";
       action: "sync" | "pause" | "delete" | "schedule" | "cancel-schedule";

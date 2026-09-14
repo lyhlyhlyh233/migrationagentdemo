@@ -1,81 +1,106 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { AssessmentPlan, ProjectSnapshot } from "@/domain/models";
-import {
-  assessmentCounts,
-  canChangeAssessmentDecision,
-  migrationScope,
-} from "@/domain/assessment";
+import { canChangeAssessmentDecision } from "@/domain/assessment";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
-import { Button, ResultFrame } from "@/shared/ui/primitives";
+import { Button } from "@/shared/ui/primitives";
 import { Select } from "@/shared/ui/Select";
 import styles from "./AssessmentDecision.module.css";
+
+const names = {
+  hybrid: "混合迁移",
+  agentless: "免代理优先",
+  custom: "自定义方案",
+};
+const hints = {
+  hybrid: "可迁对象优先免代理；受限对象单独验证有代理或重建方案。",
+  agentless: "优先免代理，未满足条件的对象先整改验证。",
+  custom: "具体对象的迁移方式与条件仍以风险策略为准。",
+};
 export function AssessmentDecision({
   snapshot: s,
   onCommand,
   onRisks,
-  onAsk,
 }: {
   snapshot: ProjectSnapshot;
-  onCommand: (cmd: ProjectCommand) => void;
+  onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onRisks: () => void;
-  onAsk?: (text: string) => void;
 }) {
   const t = useTranslation();
   const id = useId();
+  const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<AssessmentPlan["mode"]>(
     s.assessmentPlan?.mode ?? "hybrid",
   );
   const [note, setNote] = useState(s.assessmentPlan?.note ?? "");
-  const n = assessmentCounts(s);
-  const included = migrationScope(s).length;
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+  const submitting = useRef(false);
   const editable = canChangeAssessmentDecision(s);
+  const current = s.assessmentPlan?.mode ?? "hybrid";
   return (
-    <div className={styles.root}>
-      <ResultFrame
-        title={t("迁移方案与范围")}
-        actions={
-          <>
-            <Button onClick={onRisks}>
-              {t("查看风险与策略")} · {n.undecided}
-            </Button>
-            {!s.enteredStages.includes("planning") && (
-              <Button
-                primary
-                onClick={() =>
-                  onCommand({ type: "stage.review", target: "planning" })
-                }
-              >
-                {t("暂不处理，继续规划")}
-              </Button>
-            )}
-          </>
-        }
-      >
-        <p>
+    <section className={styles.root} aria-label={t("迁移方案与范围")}>
+      <div className={styles.summary}>
+        <strong>
           {t(
-            "可纳入 {0} 台，暂时排除 {1} 台。无需逐项确认，受阻对象不会进入实施。",
-            included,
-            s.scopeRows.length - included,
+            s.assessmentPlan ? "当前方案：{0}" : "建议方案：{0}",
+            t(names[current]),
           )}
-        </p>
-        <form
-          className={styles.plan}
-          onSubmit={(e) => {
-            e.preventDefault();
-            onCommand({
-              type: "assessment.choosePlan",
-              plan: { mode, note: note.trim() },
-            });
+        </strong>
+        <button
+          type="button"
+          disabled={saving}
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => {
+            if (!open) {
+              setMode(s.assessmentPlan?.mode ?? "hybrid");
+              setNote(s.assessmentPlan?.note ?? "");
+              setError(false);
+            }
+            setOpen(!open);
           }}
         >
-          <label htmlFor={id}>{t("总体方案（可选）")}</label>
+          {t(open ? "收起" : editable ? "调整方案" : "查看方案")}
+        </button>
+        <button type="button" onClick={onRisks}>
+          {t("查看风险")}
+        </button>
+      </div>
+      <p className={styles.hint}>{t(hints[current])}</p>
+      {open && (
+        <form
+          id={id}
+          className={styles.plan}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (submitting.current) return;
+            submitting.current = true;
+            setSaving(true);
+            setError(false);
+            let ok = false;
+            try {
+              ok = await onCommand({
+                type: "assessment.choosePlan",
+                plan: { mode, note: note.trim() },
+              });
+            } catch {
+              ok = false;
+            } finally {
+              submitting.current = false;
+              setSaving(false);
+            }
+            if (ok) setOpen(false);
+            else setError(true);
+          }}
+        >
+          <label htmlFor={`${id}-mode`}>{t("总体方案（可选）")}</label>
           <div className={styles.selection}>
             <Select
-              id={id}
+              id={`${id}-mode`}
               aria-label={t("总体迁移方案")}
               value={mode}
-              disabled={!editable}
+              disabled={!editable || saving}
               onValueChange={(value) =>
                 setMode(value as AssessmentPlan["mode"])
               }
@@ -87,21 +112,14 @@ export function AssessmentDecision({
             <Button
               type="submit"
               disabled={
-                !editable || (mode === "custom" && note.trim().length < 4)
+                !editable ||
+                saving ||
+                (mode === "custom" && note.trim().length < 4)
               }
             >
-              {t("采用方案")}
+              {t(saving ? "保存中…" : "采用方案")}
             </Button>
           </div>
-          <p className={styles.hint}>
-            {t(
-              mode === "hybrid"
-                ? "可迁对象优先免代理；磁盘或应用限制单独验证有代理或重建方案。"
-                : mode === "agentless"
-                  ? "优先统一免代理方式，需调整的对象先整改验证；未满足条件的对象暂不迁移。"
-                  : "写明迁移方式、例外对象与验证要求，具体对象仍以风险策略为准。",
-            )}
-          </p>
           {mode === "custom" && (
             <textarea
               aria-label={t("自定义迁移方案")}
@@ -113,38 +131,15 @@ export function AssessmentDecision({
               minLength={4}
               maxLength={500}
               required
-              disabled={!editable}
+              disabled={!editable || saving}
             />
           )}
-          {s.assessmentPlan && (
-            <small role="status">
-              {t(
-                "已采用：{0}",
-                t(
-                  s.assessmentPlan.mode === "hybrid"
-                    ? "混合迁移"
-                    : s.assessmentPlan.mode === "agentless"
-                      ? "免代理优先"
-                      : "自定义方案",
-                ),
-              )}
-            </small>
+          <p className={styles.hint}>{t(hints[mode])}</p>
+          {error && (
+            <p role="alert">{t("保存失败，请稍后重试。输入已保留。")}</p>
           )}
         </form>
-        {onAsk && (
-          <div className={styles.questions}>
-            {[
-              "解读评估报告并给出建议",
-              "为什么 RDM 要考虑有代理迁移？",
-              "应用迁移有哪些限制？",
-            ].map((q) => (
-              <button type="button" key={q} onClick={() => onAsk(t(q))}>
-                {t(q)}
-              </button>
-            ))}
-          </div>
-        )}
-      </ResultFrame>
-    </div>
+      )}
+    </section>
   );
 }

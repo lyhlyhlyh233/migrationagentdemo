@@ -2,6 +2,20 @@ import { conversationReducer } from "@/features/conversations/state";
 import { describe, expect, it } from "vitest";
 import { initialUi, uiReducer } from "../state";
 describe("workspace UI isolation", () => {
+  it("keeps risk navigation targets scoped to their project", () => {
+    const a = uiReducer(initialUi, {
+      type: "project",
+      id: "a",
+      patch: { panel: "risk", riskLocation: { mode: "vm", vmKey: "id:vm-1" } },
+    });
+    const b = uiReducer(a, {
+      type: "project",
+      id: "b",
+      patch: { panel: "risk" },
+    });
+    expect(b.projects.a.riskLocation).toEqual({ mode: "vm", vmKey: "id:vm-1" });
+    expect(b.projects.b.riskLocation).toEqual({ mode: "category" });
+  });
   it("stale handoff completion cannot replace a subsequently selected conversation", () => {
     const next = uiReducer(initialUi, {
       type: "conversation",

@@ -72,6 +72,14 @@ dataReducer → 当前工作区和共享结果状态
 
 当前 `ServiceEvent` 使用完整项目快照，规模适合原型。未来可由适配器聚合聊天增量与任务进度，再发布版本化快照；无需让组件识别 SSE、WebSocket 或轮询格式。本轮没有流式字符动画或网络传输实现。
 
+## 风险界面与定位
+
+`RiskDrawer` 与 `RiskPanel` 分别负责抽屉和独立页外壳，复用 `RiskWorkspace` 的筛选及局部编辑状态。`CategoryRiskTable` 按规则与影响呈现分组，`RiskVmDetails` 复用虚拟机明细与核验证据，`RiskStrategyEditor` 负责策略表单。`presentation.ts` 只计算展示分组，不执行业务命令。
+
+`ProjectUi.riskLocation` 保存类别／虚拟机模式及定位键。抽屉跳转把虚拟机定位交给管理页面，仍与当前项目隔离；不引入 URL 路由或刷新持久化。相同规则、阶段、类别、影响才能合并；缺失规则按记录独立展示，虚拟机优先以 ID 区分。
+
+`risk.decide` 和 `risk.recommend` 支持可选的 `onlyUndecided`。类别及规则批量操作设置为 true，Mock 在执行时基于最新状态排除已有选择或已核验项；全部已有选择时明确失败，不假装保存成功。单台页面主动修改保持原有覆盖语义。未来 HTTP 适配器必须保留此语义，避免客户端旧快照覆盖新策略。
+
 ## 评估范围与可选风险策略
 
 `domain/assessment.ts` 集中计算工具可迁范围与风险处置状态。风险等级、阻塞性质和用户策略是不同字段；不以“是否已读”推断可迁。未确认风险不阻塞阶段交接，受阻/未验证/显式不迁对象按虚拟机排除，约束项继续携带到规划。`policies.ts` 仅检查阶段必要工作与顺序；`planning.ts` 和 `execution.ts` 使用同一范围计算。
@@ -119,7 +127,7 @@ dataReducer → 当前工作区和共享结果状态
 | 聊天排版和业务结果       | conversations/Conversation、ConversationAnswer、BusinessResults    |
 | Agent/模型目录           | services 的 catalog；选择框只呈现返回选项                          |
 | 阶段表单                 | research、planning、migration、validation 对应模块                 |
-| 表格和风险策略           | tasks/TaskPanel、risks/RiskPanel / RiskStrategyEditor / RiskDrawer |
+| 表格和风险策略           | tasks/TaskPanel、risks/RiskWorkspace / CategoryRiskTable / RiskVmDetails / RiskStrategyEditor |
 | 主题/字号/语义颜色       | styles/tokens.css 和 styles/index.css                              |
 | 界面翻译                 | shared/i18n/en.json、status-labels、stages                         |
 
@@ -133,4 +141,4 @@ Mock 文件上传只验证文件名后缀并接收 File，不解析真实 Excel�
 
 ## 验证范围
 
-针对性服务测试覆盖自动首轮对话、可跳过风险的交接、受阻对象过滤、策略与整改分离、项目/会话隔离、失败重试及退出清理。界面检查覆盖对话输入、分类策略抽屉、跳过全部风险的人工交接，以及四主题、中英文、窄屏和 2K 布局。类型检查、Lint、18 项针对性测试与生产构建通过。本轮不执行完整迁移流程回归，不验证真实后端。
+针对性服务测试覆盖自动首轮对话、可跳过风险的交接、受阻对象过滤、策略与整改分离、项目/会话隔离、失败重试及退出清理。风险分组测试检查同规则同影响合并、缺失规则不合并及虚拟机 ID 去重。`npm run check` 与 `npm run build` 为代码验收入口；浏览器检查覆盖分类抽屉、虚拟机定位、四主题、中英文、窄屏和 2K。不执行完整迁移流程回归，不验证真实后端。

@@ -79,7 +79,7 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-  padding: 0 0 9px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -1008,6 +1008,7 @@
   border-color: var(--accent);
 }
 .root :global(.stage-track) {
+  margin-top: 5px;
   height: 3px;
   border-radius: 9px;
   background: var(--hover);

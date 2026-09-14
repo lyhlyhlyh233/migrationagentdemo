@@ -145,6 +145,63 @@ describe("project service boundaries", () => {
       )?.conversationId,
     ).toBe(m.conversationId);
   });
+  it("preserves newer per-VM exceptions when a category command uses onlyUndecided", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const original = await service.getProject(c.projectId);
+    const targets = original.risks.filter((r) => r.category === "disk");
+    const child = await service.createConversation(
+      c.projectId,
+      "research",
+      "zh-CN",
+    );
+    const other = { ...c, conversationId: child.id };
+    await service.execute(other, {
+      type: "risk.decide",
+      riskIds: [targets[0].id],
+      decision: {
+        strategy: "exclude",
+        method: "manual",
+        note: "这台虚拟机保留单独处置方案",
+      },
+    });
+    const saved = (await service.getProject(c.projectId)).risks.find(
+      (r) => r.id === targets[0].id,
+    )!;
+    await service.execute(c, {
+      type: "risk.recommend",
+      riskIds: targets.map((r) => r.id),
+      onlyUndecided: true,
+    });
+    const result = await service.getProject(c.projectId);
+    expect(result.risks.find((r) => r.id === saved.id)?.decision).toEqual(
+      saved.decision,
+    );
+    expect(
+      result.risks
+        .filter((r) => targets.some((t) => t.id === r.id) && r.id !== saved.id)
+        .every((r) => r.decision?.strategy === r.recommendedStrategy),
+    ).toBe(true);
+    expect(result.messages.at(-1)?.conversationId).toBe(c.conversationId);
+    expect(result.messages.at(-1)?.text).toContain("保留 1 条已有选择");
+    const beforeNoop = result.messages.length;
+    await expect(
+      service.execute(c, {
+        type: "risk.recommend",
+        riskIds: targets.map((r) => r.id),
+        onlyUndecided: true,
+      }),
+    ).rejects.toThrow("已有策略");
+    expect((await service.getProject(c.projectId)).messages.length).toBe(
+      beforeNoop,
+    );
+    expect(
+      result.risks
+        .filter((r) => r.decision?.strategy === "remediate")
+        .every((r) => !riskReadyForExecution(r)),
+    ).toBe(true);
+  });
   it("shares batch strategies, rejects invalid ignores atomically, and distinguishes remediation from verification", async () => {
     const c = await project();
     await service.execute(c, { type: "assessment.useSamples" });
