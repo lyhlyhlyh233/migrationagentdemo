@@ -93,6 +93,26 @@
   background: transparent;
   text-align: left;
 }
+.root :global(.swatch-white) {
+  --preview-canvas: oklch(1 0 0);
+  --preview-accent: oklch(0.45 0 0);
+  --preview-line: oklch(0.68 0 0);
+}
+.root :global(.swatch-dark) {
+  --preview-canvas: oklch(0.19 0 0);
+  --preview-accent: oklch(0.78 0 0);
+  --preview-line: oklch(0.55 0 0);
+}
+.root :global(.swatch-teal) {
+  --preview-canvas: oklch(0.95938 0.01068 189.82);
+  --preview-accent: oklch(0.53714 0.08638 196.96);
+  --preview-line: oklch(0.71 0.06 197);
+}
+.root :global(.swatch-burgundy) {
+  --preview-canvas: oklch(0.95476 0.01146 357);
+  --preview-accent: oklch(0.49034 0.10857 10.24);
+  --preview-line: oklch(0.68 0.06 10);
+}
 .root :global(.theme-swatch) {
   display: block;
   position: relative;
