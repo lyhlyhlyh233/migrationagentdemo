@@ -1,17 +1,12 @@
 import type { ExecutionTaskKind, ProjectSnapshot, StageId } from "./models";
 export function stageEligibility(s: ProjectSnapshot): Record<StageId, boolean> {
-  const high = (stage: StageId) =>
-    s.risks.some((r) => r.stage === stage && r.level === "high" && !r.closed);
   return {
     research: !!s.info,
     planning:
       s.enteredStages.includes("research") &&
-      s.assessmentStatus === "completed" &&
-      !high("research"),
+      s.assessmentStatus === "completed",
     migration:
-      s.enteredStages.includes("planning") &&
-      s.planningStatus === "completed" &&
-      !high("planning"),
+      s.enteredStages.includes("planning") && s.planningStatus === "completed",
     validation:
       s.enteredStages.includes("migration") && s.validationTasks.length > 0,
   };

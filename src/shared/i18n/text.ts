@@ -37,6 +37,13 @@ export function translateText(
           translateText(match[Number(index) + 1], language, depth + 1),
         );
     }
+  if (depth < 4 && text.includes("\n")) {
+    const separator = text.includes("\n\n") ? "\n\n" : "\n";
+    return text
+      .split(separator)
+      .map((part) => translateText(part, language, depth + 1))
+      .join(separator);
+  }
   return text;
 }
 

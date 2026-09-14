@@ -1,20 +1,21 @@
 .results {
   display: grid;
-  gap: 12px;
-  margin: 15px 0 10px;
-  max-width: 740px;
+  gap: 10px;
+  margin: 12px 0 8px;
+  max-width: 100%;
   font-size: 13px;
 }
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
-  padding: 10px 0;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 8px 18px;
+  padding: 8px 0;
   margin: 0;
 }
 .metrics div {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 .metrics dt {
   font-size: 12px;
@@ -22,7 +23,7 @@
 }
 .metrics dd {
   margin: 0;
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -68,4 +69,99 @@
 }
 .checks svg {
   color: var(--success);
+}
+
+.input {
+  max-width: 640px;
+}
+.inputHistory {
+  font-size: 12px;
+  color: var(--secondary);
+}
+.inputHistory summary {
+  cursor: pointer;
+  padding-block: 6px;
+}
+.inputHistory p {
+  margin-block: 4px;
+}
+
+.summary {
+  border-block: 1px solid var(--line);
+  padding: 2px 0;
+}
+.summaryActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding-bottom: 6px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.summaryActions details {
+  margin-right: auto;
+}
+.summaryActions summary {
+  cursor: pointer;
+}
+.summaryActions button,
+.files button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  padding: 3px 0;
+  font-size: inherit;
+}
+.summaryActions button:hover,
+.files button:hover {
+  text-decoration: underline;
+}
+.files {
+  border-block: 1px solid var(--line);
+  padding: 8px 0;
+  font-size: 12px;
+}
+.fileHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--secondary);
+}
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 7px;
+}
+.fileRow > svg {
+  color: var(--info);
+  flex-shrink: 0;
+}
+.fileRow > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileRow button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.expandFiles {
+  margin-top: 5px;
+}
+@media (min-width: 1920px) {
+  .metrics dt,
+  .summaryActions,
+  .files {
+    font-size: 14px;
+  }
+  .metrics dd {
+    font-size: 18px;
+  }
 }

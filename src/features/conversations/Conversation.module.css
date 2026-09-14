@@ -5,7 +5,7 @@
   color: var(--text);
 }
 .answer {
-  margin: 0 0 24px;
+  margin: 0 0 20px;
 }
 .answer p {
   margin: 8px 0;
@@ -25,7 +25,7 @@
 .user {
   display: flex;
   justify-content: flex-end;
-  margin: 12px 0 28px;
+  margin: 14px 0 16px;
 }
 .user p {
   max-width: min(82%, 760px);
@@ -72,5 +72,31 @@
   }
   .answer {
     margin-bottom: 20px;
+  }
+}
+
+.preparation {
+  margin: 10px 0 18px;
+  color: var(--secondary);
+  font-size: var(--meta-size);
+}
+.preparation summary {
+  cursor: pointer;
+  padding-block: 5px;
+}
+.preparation p {
+  white-space: pre-wrap;
+  margin-block: 8px;
+  line-height: 1.6;
+}
+@media (min-width: 1920px) {
+  .root {
+    font-size: var(--body-size);
+  }
+  .answer {
+    margin-bottom: 22px;
+  }
+  .system {
+    font-size: var(--meta-size);
   }
 }

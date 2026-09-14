@@ -10,7 +10,11 @@ import { Button } from "@/shared/ui/primitives";
 import { useEffect, useRef } from "react";
 import { BusinessResults, type ResultActions } from "./BusinessResults";
 import styles from "./Conversation.module.css";
-import { ConversationAnswer, ThinkingIndicator } from "./ConversationAnswer";
+import {
+  ConversationAnswer,
+  CopyAnswer,
+  ThinkingIndicator,
+} from "./ConversationAnswer";
 import { StageWork } from "./StageWork";
 export function Conversation({
   snapshot: s,
@@ -28,42 +32,100 @@ export function Conversation({
 } & ResultActions) {
   const t = useTranslation();
   const end = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
   const messages = s.messages.filter((m) => m.conversationId === chat.id);
+  const preparation = messages.filter(
+    (m) => m.activity === "assessment-preparation",
+  );
+  const collapsePreparation =
+    s.assessmentStatus === "completed" && preparation.length > 0;
+  const displayed = collapsePreparation
+    ? messages.filter((m) => !m.activity)
+    : messages;
+  const preparationRecord = collapsePreparation ? (
+    <details className={styles.preparation}>
+      <summary>{t("资料准备记录")}</summary>
+      {preparation.map((m) => (
+        <p key={m.id}>
+          {m.role === "user" ? t("你") : t("助手")}：{m.text}
+        </p>
+      ))}
+    </details>
+  ) : null;
+  const historyIndex = displayed[0]?.role === "user" ? 1 : 0;
+  const copyId = displayed.findLast(
+    (m) =>
+      m.role === "agent" &&
+      ((m.requestId && !m.operation) ||
+        m.results?.some((r) =>
+          ["summary", "tasks", "artifacts"].includes(r.kind),
+        )),
+  )?.id;
+  const latestInputId = messages.findLast((m) =>
+    m.results?.some((r) => r.kind === "assessment-input"),
+  )?.id;
   const pending = s.pending[chat.id];
   const busy = !!pending;
+  const lastRole = messages.at(-1)?.role;
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end", behavior: "instant" });
-  }, [chat.id, messages.length, busy]);
+    if (!busy && lastRole === "agent") {
+      log.current?.lastElementChild?.scrollIntoView({
+        block: "start",
+        behavior: "instant",
+      });
+    } else end.current?.scrollIntoView({ block: "end", behavior: "instant" });
+  }, [chat.id, messages.length, busy, lastRole]);
   return (
     <div className={styles.root}>
-      <div role="log" aria-label={t("迁移对话记录")} aria-live="polite">
-        {messages.map((message) => (
-          <article
-            className={
-              message.role === "user"
-                ? styles.user
-                : message.role === "system"
-                  ? styles.system
-                  : styles.answer
-            }
-            key={message.id}
-          >
-            {message.role === "agent" ? (
-              <>
-                <ConversationAnswer text={message.text} reply={message.reply} />
-                {message.results && (
-                  <BusinessResults
-                    results={message.results}
-                    snapshot={s}
-                    {...actions}
-                  />
-                )}
-              </>
-            ) : (
-              <p>{message.text}</p>
-            )}
-          </article>
+      <div
+        ref={log}
+        role="log"
+        aria-label={t("迁移对话记录")}
+        aria-live="polite"
+      >
+        {displayed.map((message, index) => (
+          <div key={message.id}>
+            {index === historyIndex && preparationRecord}
+
+            <article
+              className={
+                message.role === "user"
+                  ? styles.user
+                  : message.role === "system"
+                    ? styles.system
+                    : styles.answer
+              }
+              key={message.id}
+            >
+              {message.role === "agent" ? (
+                <>
+                  <ConversationAnswer
+                    text={message.text}
+                    reply={
+                      message.reply?.durationMs ? message.reply : undefined
+                    }
+                  >
+                    {message.results && (
+                      <BusinessResults
+                        results={message.results}
+                        snapshot={s}
+                        onUpload={onUpload}
+                        activeInput={message.id === latestInputId}
+                        {...actions}
+                      />
+                    )}
+                    {message.id === copyId && (
+                      <CopyAnswer text={message.text} />
+                    )}
+                  </ConversationAnswer>
+                </>
+              ) : (
+                <p>{message.text}</p>
+              )}
+            </article>
+          </div>
         ))}
+        {displayed.length <= historyIndex && preparationRecord}
       </div>
       {!messages.length && (
         <EmptyState
@@ -76,13 +138,12 @@ export function Conversation({
         />
       )}
       {chat.stageId &&
+        chat.stageId !== "research" &&
         (view.workOpen ??
           (chat.kind === "main" &&
-            (chat.stageId === "research"
-              ? s.assessmentStatus !== "completed"
-              : chat.stageId === "planning"
-                ? s.planningStatus !== "completed"
-                : true))) && (
+            (chat.stageId === "planning"
+              ? s.planningStatus !== "completed"
+              : true))) && (
           <div className={styles.work}>
             {chat.kind === "child" && (
               <div className={styles.workHeader}>

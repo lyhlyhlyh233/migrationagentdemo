@@ -1,4 +1,5 @@
 import { createStageConversation, type StageId } from "@/domain/models";
+import { migrationScope, riskReadyForExecution } from "@/domain/assessment";
 import { canExecute, stageEligibility } from "@/domain/policies";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MockMigrationService } from "../mock";
@@ -21,6 +22,7 @@ afterEach(() => {
 });
 async function project() {
   const s = await service.createProject(info, "zh-CN");
+  await vi.runAllTimersAsync();
   return {
     projectId: s.id,
     conversationId: s.conversations[0].id,
@@ -57,22 +59,14 @@ async function migration() {
   return m;
 }
 describe("project service boundaries", () => {
-  it("requires risk closure and explicit handoff; handoff creates a new main chat once", async () => {
+  it("allows optional risk decisions while keeping an explicit, single stage handoff", async () => {
     const c = await project();
     await service.execute(c, { type: "assessment.useSamples" });
     await finish(service.execute(c, { type: "assessment.start" }));
     let s = await service.getProject(c.projectId);
     expect(s.enteredStages).toEqual(["research"]);
-    expect(stageEligibility(s).planning).toBe(false);
-    await expect(
-      service.execute(c, { type: "stage.confirm", target: "planning" }),
-    ).rejects.toThrow();
-    for (const r of s.risks.filter((r) => r.level === "high"))
-      await service.execute(c, {
-        type: "risk.close",
-        riskId: r.id,
-        description: "已验证兼容性",
-      });
+    expect(s.risks.every((r) => !r.decision)).toBe(true);
+    expect(migrationScope(s).length).toBeLessThan(s.vmCount);
     s = await service.getProject(c.projectId);
     expect(stageEligibility(s).planning).toBe(true);
     expect(s.enteredStages).toEqual(["research"]);
@@ -88,6 +82,120 @@ describe("project service boundaries", () => {
         (v) => v.stageId === "planning",
       ),
     ).toHaveLength(1);
+  });
+  it("starts with an automatic user message, thinking and an input result in the first chat", async () => {
+    const s = await service.createProject(info, "zh-CN");
+    expect(
+      s.messages.some(
+        (m) => m.role === "user" && m.text === "开始虚拟化迁移项目的调研评估",
+      ),
+    ).toBe(true);
+    expect(s.pending[s.conversations[0].id]).toBeDefined();
+    await vi.runAllTimersAsync();
+    const ready = await service.getProject(s.id);
+    const answer = ready.messages.find((m) =>
+      m.results?.some((r) => r.kind === "assessment-input"),
+    );
+    expect(answer?.reply?.durationMs).toBeGreaterThanOrEqual(1000);
+    expect(answer?.conversationId).toBe(s.conversations[0].id);
+  });
+  it("skipping all assessment risk decisions never sends blocked VMs to implementation", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const assessment = await service.getProject(c.projectId);
+    const excluded = new Set(
+      assessment.risks
+        .filter((r) => !riskReadyForExecution(r))
+        .map((r) => r.vmName),
+    );
+    const constrained = assessment.risks.find(
+      (r) => r.impact === "constraint",
+    )!.vmName;
+    await service.execute(c, { type: "stage.review", target: "planning" });
+    await service.execute(c, { type: "stage.confirm", target: "planning" });
+    const p = {
+      ...c,
+      stageId: "planning" as const,
+      conversationId: "stage-planning-main",
+    };
+    await service.execute(p, { type: "planning.confirmScope" });
+    await finish(service.execute(p, { type: "planning.useSample" }));
+    await service.execute(p, { type: "stage.confirm", target: "migration" });
+    const m = {
+      ...c,
+      stageId: "migration" as const,
+      conversationId: "stage-migration-main",
+    };
+    await finish(service.execute(m, { type: "md.check" }));
+    const ready = await service.getProject(c.projectId);
+    expect(ready.vmTasks.every((v) => !excluded.has(v.name))).toBe(true);
+    expect(ready.creationTasks.every((v) => !excluded.has(v.vmName))).toBe(
+      true,
+    );
+    expect(ready.batchTasks.flatMap((b) => b.vmNames)).toContain(constrained);
+    expect(
+      ready.risks
+        .filter((r) => r.stage === "research")
+        .every((r) => !r.decision),
+    ).toBe(true);
+    expect(
+      ready.messages.findLast((m) =>
+        m.results?.some((r) => r.kind === "approval"),
+      )?.conversationId,
+    ).toBe(m.conversationId);
+  });
+  it("shares batch strategies, rejects invalid ignores atomically, and distinguishes remediation from verification", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const before = await service.getProject(c.projectId);
+    const blocked = before.risks.find((r) => r.impact === "blocked")!;
+    const change = before.risks.find((r) => r.impact === "change")!;
+    const child = await service.createConversation(
+      c.projectId,
+      "research",
+      "zh-CN",
+    );
+    const from = { ...c, conversationId: child.id };
+    await expect(
+      service.execute(from, {
+        type: "risk.decide",
+        riskIds: [blocked.id, change.id],
+        decision: {
+          strategy: "ignore",
+          method: "agentless",
+          note: "忽略全部风险",
+        },
+      }),
+    ).rejects.toThrow();
+    expect(
+      (await service.getProject(c.projectId)).risks.every((r) => !r.decision),
+    ).toBe(true);
+    await service.execute(from, {
+      type: "risk.recommend",
+      riskIds: [blocked.id, change.id],
+    });
+    let s = await service.getProject(c.projectId);
+    expect(s.risks.find((r) => r.id === change.id)?.closed).toBe(false);
+    expect(migrationScope(s).some((row) => row[0] === change.vmName)).toBe(
+      false,
+    );
+    await service.execute(from, {
+      type: "risk.close",
+      riskId: change.id,
+      description: "已补采版本并人工核对两份兼容性清单。",
+    });
+    s = await service.getProject(c.projectId);
+    expect(migrationScope(s).some((row) => row[0] === change.vmName)).toBe(
+      true,
+    );
+    expect(migrationScope(s).some((row) => row[0] === blocked.vmName)).toBe(
+      false,
+    );
+    expect(s.messages.at(-1)?.conversationId).toBe(child.id);
+    const other = await project();
+    expect((await service.getProject(other.projectId)).risks).toEqual([]);
   });
   it("isolates asynchronous responses and auto titles by project and initiating chat", async () => {
     const c = await project();
@@ -227,19 +335,15 @@ describe("project service boundaries", () => {
     await service.execute(c, { type: "assessment.useSamples" });
     await finish(service.execute(c, { type: "assessment.start" }));
     const before = await service.getProject(c.projectId);
-    const risk = before.risks.find((r) => r.level === "high")!;
-    await service.execute(c, {
-      type: "risk.close",
-      riskId: risk.id,
-      description: "确认闭环",
-    });
+    const risk = before.risks.find((r) => r.impact === "change")!;
+    await service.execute(c, { type: "risk.recommend", riskIds: [risk.id] });
     const s = await service.getProject(c.projectId);
     expect(s.messages.find((m) => m.results)?.results).toEqual(
       before.messages.find((m) => m.results)?.results,
     );
     const file = await service.download(c.projectId, "assessment-report");
     expect(file.filename).toContain(info.siteName);
-    expect(await file.blob.text()).toContain("高风险：2");
+    expect(await file.blob.text()).toContain("CPU 架构检查");
     const another = await project();
     await expect(
       service.download(another.projectId, "assessment-report"),

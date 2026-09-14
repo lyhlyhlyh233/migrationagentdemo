@@ -1,4 +1,6 @@
 import type { Artifact, ProjectSnapshot, StageId } from "@/domain/models";
+import { migrationScope, migrationMethod } from "@/domain/assessment";
+import { migrationMethodLabels } from "@/shared/i18n/risks";
 import type { MockRuntime } from "./runtime";
 export function addArtifact(
   rt: MockRuntime,
@@ -41,6 +43,7 @@ export function workbook(
   return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${sheets.map((s) => `<Worksheet ss:Name="${escape(s.name)}"><Table>${s.rows.map((r) => `<Row>${r.map((v) => `<Cell><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${escape(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`).join("")}</Workbook>`;
 }
 export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
+  const rows = migrationScope(s);
   addArtifact(
     rt,
     s,
@@ -49,7 +52,13 @@ export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
     workbook([
       {
         name: "虚拟机清单",
-        rows: [["虚拟机名称", "IP", "CPU", "内存", "资源池"], ...s.scopeRows],
+        rows: [
+          ["虚拟机名称", "IP", "CPU", "内存", "资源池", "迁移方式"],
+          ...rows.map((row) => [
+            ...row,
+            migrationMethodLabels[migrationMethod(s, String(row[0]))],
+          ]),
+        ],
       },
     ]),
     "template",
@@ -66,7 +75,7 @@ export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
         name: "虚拟机清单",
         rows: [
           ["虚拟机名称", "业务系统", "业务等级", "集群类型", "集群角色"],
-          ...s.scopeRows.map((r) => [r[0], "", "", "", ""]),
+          ...rows.map((r) => [r[0], "", "", "", ""]),
         ],
       },
       { name: "业务依赖关系", rows: [["源业务", "目标业务", "依赖说明"]] },

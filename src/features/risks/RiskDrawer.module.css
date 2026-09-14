@@ -1,0 +1,76 @@
+.root {
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: hidden;
+  color: var(--ink);
+}
+.root::backdrop {
+  background: oklch(0.12 0 0 / 0.24);
+}
+.drawer {
+  margin-left: auto;
+  width: min(720px, 100%);
+  height: 100%;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.drawer > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer > header span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.drawer > header button {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+}
+.drawer > footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--secondary);
+}
+@media (max-width: 600px) {
+  .body {
+    padding: 18px;
+  }
+  .drawer > header {
+    padding-inline: 18px;
+  }
+}
+@media (min-width: 1920px) {
+  .drawer {
+    width: min(820px, 100%);
+  }
+  .drawer > header span,
+  .drawer > header button,
+  .drawer > footer {
+    font-size: 14px;
+  }
+}

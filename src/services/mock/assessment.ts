@@ -1,8 +1,12 @@
 import type { OperationContext } from "@/domain/models";
 import type { RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
+import { offerHandoff } from "./handoff";
 import { addArtifact } from "./files";
-import { initialRisks } from "./fixtures";
+import {
+  buildAssessmentRisks,
+  assessmentReportReply,
+} from "./assessment-knowledge";
 import type { MockRuntime } from "./runtime";
 export async function assess(
   rt: MockRuntime,
@@ -18,6 +22,10 @@ export async function assess(
     c,
     "assessment",
     async () => {
+      rt.message(c, "user", "开始评估已准备的 RVTools 采集表和迁移调研表。", {
+        operation: true,
+        activity: "assessment-preparation",
+      });
       s.assessmentStatus = "running";
       s.pending[c.conversationId] = {
         startedAt: Date.now(),
@@ -25,31 +33,37 @@ export async function assess(
       };
       rt.publish(s);
       await rt.sleep(1600, options);
-      s.risks = structuredClone(initialRisks);
+      s.risks = buildAssessmentRisks(s);
       s.assessmentStatus = "completed";
+      const report = assessmentReportReply(s);
       addArtifact(
         rt,
         s,
         "assessment-report",
         "调研评估报告",
-        `项目：${s.info!.siteName}\n资产范围：${s.vmCount}\n风险：4 项，高风险：2 项。\n结论：闭环高风险后，人工确认进入规划。`,
+        `# ${s.info!.siteName} · 调研评估
+
+${report.text}
+
+## 规则与发现
+
+${s.risks
+  .map(
+    (r) => `### ${r.description}
+${r.rule}
+${r.evidence}
+建议：${r.recommendation}`,
+  )
+  .join("\n\n")}
+
+说明：本文件为前端 Mock 输出，未执行真实文件解析或兼容性匹配。`,
         "report",
         "research",
+        "md",
       );
-      rt.result(c, "评估已完成。资产基线已整理，进入规划前需要先闭环高风险。", [
-        {
-          kind: "summary",
-          title: "调研评估结果",
-          stageId: "research",
-          metrics: [
-            { label: "迁移范围", value: s.vmCount },
-            { label: "识别风险", value: 4, tone: "warning" },
-            { label: "高风险", value: 2, tone: "danger" },
-          ],
-        },
-        { kind: "artifacts", artifactIds: ["assessment-report"] },
-      ]);
+      rt.result(c, report.text, report.results);
       delete s.pending[c.conversationId];
+      offerHandoff(rt, c);
       rt.notice(c, "评估完成，已生成风险与评估报告");
     },
     options,

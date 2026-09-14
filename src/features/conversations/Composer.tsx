@@ -23,7 +23,11 @@ export function Composer({
   onSend,
   onWork,
   onPanel,
+  nextLabel,
+  onNext,
 }: {
+  nextLabel?: string;
+  onNext?: () => void;
   catalog: Catalog;
   draft: string;
   agentId: string;
@@ -79,11 +83,26 @@ export function Composer({
               description: "查询并处理当前风险",
               onClick: () => onPanel("risk"),
             },
-            {
-              label: "查看迁移任务",
-              description: "查看计划与迁移任务",
-              onClick: () => onPanel("tasks"),
-            },
+            ...(stage === "research"
+              ? [
+                  {
+                    label: "解读评估报告并给出建议",
+                    description: "解释可行性与推荐方案",
+                    onClick: () => onSend(t("解读评估报告并给出建议")),
+                  },
+                  {
+                    label: "为什么 RDM 要考虑有代理迁移？",
+                    description: "比较迁移方式与限制",
+                    onClick: () => onSend(t("为什么 RDM 要考虑有代理迁移？")),
+                  },
+                ]
+              : [
+                  {
+                    label: "查看迁移任务",
+                    description: "查看计划与迁移任务",
+                    onClick: () => onPanel("tasks"),
+                  },
+                ]),
             {
               label: "有哪些报告可以下载？",
               description: "查看当前阶段产物",
@@ -165,7 +184,23 @@ export function Composer({
           </div>
         </div>
       </form>
-      <p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p>
+      <div className={styles.footerRow}>
+        <p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p>
+        {onNext && (
+          <button
+            type="button"
+            disabled={busy}
+            className={styles.nextStage}
+            onClick={onNext}
+          >
+            {nextLabel}
+            <Icon name="right" size={14} />
+          </button>
+        )}
+        {stage === "validation" && (
+          <span className={styles.lastStage}>{t("当前为最终验证阶段")}</span>
+        )}
+      </div>
     </footer>
   );
 }

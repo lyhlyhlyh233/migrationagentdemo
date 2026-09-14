@@ -18,6 +18,7 @@ import type {
 import { ServiceError, requireCondition } from "../errors";
 import { command } from "./commands";
 import { reply } from "./conversations";
+import { assessmentWelcome } from "./assessment-knowledge";
 import { scopeArtifacts } from "./files";
 import { plan } from "./planning";
 import { MockRuntime } from "./runtime";
@@ -61,6 +62,7 @@ export class MockMigrationService implements MigrationService {
       pending: {},
       operations: {},
       assessmentStatus: "idle",
+      assessmentPlan: null,
       planningStatus: "locked",
       vmCount: 128,
       files: { rvtools: "", presales: "" },
@@ -103,13 +105,36 @@ export class MockMigrationService implements MigrationService {
         c,
         "system",
         `项目「${info.siteName}」已创建，评估会话已开启。`,
-        { operation: true },
+        { operation: true, activity: "assessment-preparation" },
       );
-      this.runtime.message(
-        c,
-        "agent",
-        "我们从调研评估开始。请上传 RVTools 采集表和售前调用表，也可以先使用示例资料体验流程。\n\n我会核对资产清单与兼容性，把结果汇总到项目风险和交付件中。",
-      );
+      this.runtime.message(c, "user", "开始虚拟化迁移项目的调研评估", {
+        operation: true,
+      });
+      void this.runtime
+        .run(c, "assessment-intro", async () => {
+          s.pending[c.conversationId] = {
+            startedAt: Date.now(),
+            runId: "assessment-intro",
+          };
+          this.runtime.publish(s);
+          await this.runtime.sleep(1200);
+          this.runtime.result(
+            c,
+            assessmentWelcome,
+            [{ kind: "assessment-input", files: { ...s.files } }],
+            { activity: "assessment-preparation" },
+          );
+          delete s.pending[c.conversationId];
+        })
+        .catch((error) => {
+          if (!this.runtime.disposed)
+            this.runtime.notice(
+              c,
+              error instanceof Error
+                ? error.message
+                : "启动对话失败，请重新打开评估资料",
+            );
+        });
     }
     return s;
   }
@@ -231,7 +256,23 @@ export class MockMigrationService implements MigrationService {
     } else return plan(this.runtime, c, file.name, options);
     this.runtime.message(c, "user", `已上传：${file.name}`, {
       operation: true,
+      activity: c.stageId === "research" ? "assessment-preparation" : undefined,
     });
+    this.runtime.result(
+      c,
+      purpose === "scope"
+        ? "范围修订已收到。请继续补充业务依赖和迁移窗口。"
+        : s.assessmentStatus === "ready"
+          ? "两份资料已收到。评估会检查 GuestOS、磁盘模式、应用适配和目标容量；现在可以开始评估。当前为模拟执行，上传内容尚未解析。"
+          : "资料已收到。还需要另一份资料，才能同时核对源端配置与目标端要求。",
+      purpose === "scope"
+        ? []
+        : [{ kind: "assessment-input", files: { ...s.files } }],
+      {
+        activity:
+          c.stageId === "research" ? "assessment-preparation" : undefined,
+      },
+    );
     this.runtime.publish(s);
   }
   async download(projectId: string, artifactId: string) {

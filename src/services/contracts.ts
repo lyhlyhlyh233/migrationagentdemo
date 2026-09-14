@@ -10,10 +10,14 @@ import type {
   ProjectInfo,
   ProjectSnapshot,
   StageId,
+  AssessmentPlan,
+  RiskDecision,
 } from "@/domain/models";
 export type ProjectCommand =
   | { type: "assessment.start" }
   | { type: "assessment.useSamples" }
+  | { type: "assessment.choosePlan"; plan: AssessmentPlan }
+  | { type: "stage.review"; target: StageId }
   | { type: "planning.confirmScope" }
   | { type: "planning.useSample" }
   | { type: "planning.requestAdjustment" }
@@ -24,6 +28,12 @@ export type ProjectCommand =
   | { type: "cutover.complete"; taskIds: string[] }
   | { type: "validation.confirm"; taskIds: string[] }
   | { type: "risk.close"; riskId: number; description: string }
+  | {
+      type: "risk.decide";
+      riskIds: number[];
+      decision: Omit<RiskDecision, "selectedAt">;
+    }
+  | { type: "risk.recommend"; riskIds: number[] }
   | {
       type: "tasks.action";
       action: "sync" | "pause" | "delete" | "schedule" | "cancel-schedule";

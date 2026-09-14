@@ -1,0 +1,273 @@
+.root {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.heading h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.heading p,
+.hint {
+  font-size: 12px;
+  color: var(--secondary);
+  line-height: 1.6;
+}
+.overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.overview span {
+  color: var(--secondary);
+}
+.overview strong {
+  margin-left: 6px;
+  color: var(--ink);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.overview strong[data-tone="warning"] {
+  color: var(--warning);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.filters > button {
+  flex: 1;
+  min-width: 120px;
+  font-size: 12px;
+}
+.search {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  padding: 0 10px;
+  border-radius: 6px;
+}
+.root .search input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  background: transparent;
+  border: 0;
+}
+.batch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.batch label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.root input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.editor {
+  border-block: 1px solid var(--line-strong);
+  padding: 16px 0;
+  margin-bottom: 18px;
+}
+.editorTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+.choices label {
+  display: flex;
+  flex: 1;
+  min-width: 180px;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.editor textarea,
+.verification textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  padding: 10px;
+  font: inherit;
+  margin-top: 6px;
+}
+.editor > label {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.group {
+  position: relative;
+  border-top: 1px solid var(--line);
+}
+.group > summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 16px 80px 14px 0;
+}
+.group > summary span {
+  margin-left: 6px;
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+.selectGroup {
+  position: absolute;
+  right: 0;
+  top: 12px;
+  padding: 5px 0;
+  font-size: 12px;
+  border: 0;
+  color: var(--accent-ink);
+  background: transparent;
+}
+.risk {
+  padding: 0 0 18px;
+}
+.risk + .risk {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.riskHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.riskHeading strong {
+  font-size: 13px;
+  font-weight: 550;
+  flex: 1;
+}
+.severity {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.severity[data-level="high"],
+.meta [data-impact="blocked"] {
+  color: var(--danger);
+}
+.severity[data-level="medium"],
+.meta [data-impact="change"] {
+  color: var(--warning);
+}
+.severity[data-level="low"],
+.meta [data-impact="constraint"] {
+  color: var(--info);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  font-size: 11px;
+  color: var(--secondary);
+  margin: 5px 0 9px;
+}
+.recommendation {
+  margin-block: 8px;
+  color: var(--ink);
+}
+.evidence {
+  font-size: 12px;
+  color: var(--secondary);
+  margin-top: 6px;
+}
+.evidence summary {
+  cursor: pointer;
+}
+.evidence p {
+  margin-top: 6px;
+}
+.decision {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.decision > span {
+  flex: 1;
+}
+.hint {
+  margin-block: 8px;
+}
+.verification {
+  padding-top: 12px;
+}
+.empty {
+  padding-block: 28px;
+  color: var(--secondary);
+}
+@media (max-width: 600px) {
+  .overview {
+    gap: 14px;
+  }
+  .editorTitle {
+    flex-wrap: wrap;
+  }
+  .riskHeading {
+    align-items: flex-start;
+  }
+  .filters > button {
+    min-width: 100px;
+  }
+}
+@media (min-width: 1920px) {
+  .root {
+    font-size: 15px;
+  }
+  .heading h2 {
+    font-size: 23px;
+  }
+  .heading p,
+  .hint,
+  .filters > button,
+  .batch,
+  .choices label,
+  .editor > label,
+  .evidence,
+  .decision {
+    font-size: 14px;
+  }
+  .riskHeading strong,
+  .group > summary {
+    font-size: 15px;
+  }
+  .meta,
+  .severity,
+  .selectGroup {
+    font-size: 13px;
+  }
+}

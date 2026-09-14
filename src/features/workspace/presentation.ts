@@ -3,6 +3,7 @@ import type {
   ProjectSnapshot,
   StageId,
 } from "@/domain/models";
+import { migrationScope } from "@/domain/assessment";
 import { completedBatches } from "@/domain/policies";
 import type { WorkStep } from "@/features/workspace/ExecutionInspector";
 export function workspacePresentation(s: ProjectSnapshot) {
@@ -25,14 +26,6 @@ export function workspacePresentation(s: ProjectSnapshot) {
     (v) => v.confirmed,
   ).length;
   const completedBatchIds = completedBatches(s);
-  const researchHigh = risks.filter(
-    (risk) =>
-      risk.stage === "research" && risk.level === "high" && !risk.closed,
-  ).length;
-  const planningHigh = risks.filter(
-    (risk) =>
-      risk.stage === "planning" && risk.level === "high" && !risk.closed,
-  ).length;
   const planned = planningStatus === "completed";
   const assessed = assessmentStatus === "completed";
   const step = (
@@ -69,21 +62,19 @@ export function workspacePresentation(s: ProjectSnapshot) {
         assessmentStatus === "running",
       ),
       step(
-        "确认评估结果",
-        assessed && !researchHigh
-          ? "高风险已闭环，可以进入规划"
-          : assessed
-            ? `${researchHigh} 项高风险待人工确认`
-            : "输出评估报告，确认风险",
-        assessed && !researchHigh,
+        "评估方案与迁移范围",
+        assessed
+          ? `可纳入 ${migrationScope(s).length} 台，风险可稍后处理`
+          : "解读报告与推荐方案",
+        assessed,
         false,
-        assessed && researchHigh > 0,
+        false,
       ),
     ],
     planning: [
       step(
         "确认迁移范围",
-        `${vmCount} 台虚拟机`,
+        `${migrationScope(s).length} 台虚拟机`,
         ["details-pending", "generating", "completed"].includes(planningStatus),
         planningStatus === "scope-review",
       ),
@@ -103,12 +94,10 @@ export function workspacePresentation(s: ProjectSnapshot) {
       ),
       step(
         "确认风险与批次",
-        planned && planningHigh
-          ? `${planningHigh} 项高风险待闭环`
-          : "人工确认后进入实施",
+        "受阻对象自动排除，人工确认交接",
         batchConfirmation === "confirmed",
-        planned && !planningHigh && batchConfirmation !== "confirmed",
-        planned && planningHigh > 0,
+        planned && batchConfirmation !== "confirmed",
+        false,
       ),
     ],
     migration: [

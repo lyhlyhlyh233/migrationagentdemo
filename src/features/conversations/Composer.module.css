@@ -345,3 +345,72 @@
   margin: 0 auto 8px;
   color: var(--danger);
 }
+
+.footerRow {
+  max-width: var(--reading-width);
+  margin: 7px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.footerRow :global(.composer-note) {
+  margin-top: 0;
+  text-align: left;
+  font-size: 11px;
+}
+.nextStage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  font-size: 12px;
+  color: var(--accent-ink);
+  border: 0;
+  background: transparent;
+}
+.nextStage:hover {
+  background: var(--hover);
+}
+.lastStage {
+  font-size: 11px;
+  color: var(--secondary);
+}
+@media (max-width: 600px) {
+  .nextStage {
+    min-height: 36px;
+    margin-left: auto;
+  }
+}
+@media (min-width: 1920px) {
+  .root :global(.chat-composer textarea) {
+    font-size: 17px;
+    min-height: 58px;
+  }
+  .root :global(.composer-select-control .ui-select-trigger) {
+    font-size: 15px;
+    min-height: 38px;
+  }
+  .root :global(.shortcut-menu summary) {
+    font-size: 14px;
+  }
+  .root :global(.shortcut-options strong) {
+    font-size: 14px;
+  }
+  .root :global(.shortcut-options small) {
+    font-size: 13px;
+  }
+  .root :global(.shortcut-options) {
+    width: 290px;
+  }
+  .root :global(.send-button) {
+    width: 36px;
+    height: 36px;
+  }
+  .footerRow :global(.composer-note),
+  .nextStage,
+  .lastStage {
+    font-size: 13px;
+  }
+}

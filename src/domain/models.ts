@@ -42,6 +42,27 @@ export interface ProjectInfo {
   migrationType: string;
 }
 
+export type RiskCategory =
+  | "compatibility"
+  | "disk"
+  | "specification"
+  | "application"
+  | "capacity"
+  | "hardware"
+  | "feature";
+export type RiskImpact = "constraint" | "change" | "blocked";
+export type RiskStrategy = "ignore" | "remediate" | "exclude" | "custom";
+export type MigrationMethod = "agentless" | "agent" | "manual";
+export interface RiskDecision {
+  strategy: RiskStrategy;
+  method: MigrationMethod;
+  note: string;
+  selectedAt: string;
+}
+export interface AssessmentPlan {
+  mode: "hybrid" | "agentless" | "custom";
+  note: string;
+}
 export interface RiskItem {
   id: number;
   description: string;
@@ -53,6 +74,14 @@ export interface RiskItem {
   closed: boolean;
   closedAt: string;
   closureDescription: string;
+  category?: RiskCategory;
+  impact?: RiskImpact;
+  rule?: string;
+  evidence?: string;
+  recommendation?: string;
+  recommendedStrategy?: RiskStrategy;
+  recommendedMethod?: MigrationMethod;
+  decision?: RiskDecision;
 }
 
 export interface ChatMessage {
@@ -63,6 +92,7 @@ export interface ChatMessage {
   conversationId: string;
   stageId?: StageId;
   operation?: boolean;
+  activity?: "assessment-preparation";
   operationId?: string;
   modelId?: ConversationModelId;
   agentId?: ConversationAgentId;
@@ -82,6 +112,7 @@ export interface BatchTask {
 }
 
 export interface VmTask {
+  migrationMethod?: MigrationMethod;
   id: string;
   batchId: string;
   os: string;
@@ -100,6 +131,7 @@ export interface VmTask {
 }
 
 export interface CreationTask {
+  migrationMethod?: MigrationMethod;
   sourceTaskId: string;
   id: string;
   hostName: string;
@@ -203,6 +235,8 @@ export interface Artifact {
   kind: "input" | "report" | "plan" | "template";
 }
 export type BusinessResult =
+  | { kind: "assessment-input"; files: { rvtools: string; presales: string } }
+  | { kind: "assessment-decision" }
   | {
       kind: "summary";
       title: string;
@@ -246,6 +280,7 @@ export interface ProjectSnapshot {
   pending: Record<string, PendingReply>;
   operations: Record<string, "running" | "completed">;
   assessmentStatus: AssessmentStatus;
+  assessmentPlan: AssessmentPlan | null;
   planningStatus: PlanningStatus;
   vmCount: number;
   files: { rvtools: string; presales: string };

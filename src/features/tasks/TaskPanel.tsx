@@ -1,3 +1,4 @@
+import { migrationMethodLabels } from "@/shared/i18n/risks";
 import type {
   BatchTask,
   CreationTask,
@@ -445,6 +446,16 @@ export function TaskPanel({
                     <strong>{t(selectedVm.name)}</strong>
                   </div>
                   <div>
+                    <small>{t("迁移方式")}</small>
+                    <strong>
+                      {t(
+                        migrationMethodLabels[
+                          selectedVm.migrationMethod ?? "agentless"
+                        ],
+                      )}
+                    </strong>
+                  </div>
+                  <div>
                     <small>{t("操作系统版本")}</small>
                     <strong>{t(selectedVmOs)}</strong>
                   </div>
@@ -504,6 +515,16 @@ export function TaskPanel({
                   <div>
                     <small>{t("虚拟机名称")}</small>
                     <strong>{t(selectedVm.name)}</strong>
+                  </div>
+                  <div>
+                    <small>{t("迁移方式")}</small>
+                    <strong>
+                      {t(
+                        migrationMethodLabels[
+                          selectedVm.migrationMethod ?? "agentless"
+                        ],
+                      )}
+                    </strong>
                   </div>
                   <div>
                     <small>{t("操作系统版本")}</small>

@@ -65,3 +65,15 @@ summary:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+@media (min-width: 1920px) {
+  :root {
+    --body-size: 18px;
+    --meta-size: 14px;
+  }
+  .ui-select-trigger,
+  .ui-select-option,
+  .ui-select-group {
+    font-size: 15px;
+  }
+}

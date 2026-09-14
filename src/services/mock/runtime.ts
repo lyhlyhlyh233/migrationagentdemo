@@ -53,7 +53,10 @@ export class MockRuntime {
     s.messages.push({
       id: Date.now() + Math.random(),
       role,
-      text: role === "user" ? text : translateText(text, c.language),
+      text:
+        role === "user" && !extra.operation
+          ? text
+          : translateText(text, c.language),
       time: new Date().toLocaleTimeString(c.language, {
         hour: "2-digit",
         minute: "2-digit",
@@ -64,22 +67,24 @@ export class MockRuntime {
       ...extra,
     });
   }
-  result(c: OperationContext, text: string, results: BusinessResult[]) {
+  result(
+    c: OperationContext,
+    text: string,
+    results: BusinessResult[],
+    extra: Partial<ChatMessage> = {},
+  ) {
     const pending = this.state(c.projectId).pending[c.conversationId];
     this.message(c, "agent", text, {
       operation: true,
       results,
-      ...(pending
-        ? {
-            reply: {
-              summary: translateText(
-                "已核对当前资料、阶段条件和共享任务状态，整理本次结果。",
-                c.language,
-              ),
-              durationMs: Date.now() - pending.startedAt,
-            },
-          }
-        : {}),
+      reply: {
+        summary: translateText(
+          "已核对当前资料、阶段条件和共享任务状态，整理本次结果。",
+          c.language,
+        ),
+        durationMs: pending ? Date.now() - pending.startedAt : 0,
+      },
+      ...extra,
     });
   }
   notice(c: OperationContext, text: string) {

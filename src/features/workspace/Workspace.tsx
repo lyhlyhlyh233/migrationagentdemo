@@ -8,7 +8,9 @@ import { Composer } from "@/features/conversations/Composer";
 import { Conversation } from "@/features/conversations/Conversation";
 import { AgentPanel } from "@/features/workspace/ExecutionInspector";
 import { useTranslation } from "@/shared/i18n";
-import { stageTitles } from "@/shared/i18n/stages";
+import { stageName } from "@/shared/i18n/stages";
+import { RiskDrawer } from "@/features/risks/RiskDrawer";
+import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { useState, useEffect } from "react";
@@ -16,7 +18,6 @@ import { ManagementView } from "./ManagementView";
 import { workspacePresentation } from "./presentation";
 import { ProgressRail } from "./ProgressRail";
 import { Sidebar } from "./Sidebar";
-import { StageHandoff } from "./StageNavigation";
 import { useWorkspaceActions } from "./useWorkspaceActions";
 export function Workspace({ onSettings }: { onSettings: () => void }) {
   const t = useTranslation();
@@ -32,6 +33,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+  const [riskDrawer, setRiskDrawer] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const p = { ...(ui.projects[s.id] ?? projectUi()) };
   p.conversationId ??= s.info ? mainConversationId("research") : null;
@@ -56,10 +58,20 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     if (s.enteredStages.includes(id))
       chooseChat(p.lastStages[id] ?? mainConversationId(id), id);
     else if (stageEligibility(s)[id])
-      dispatchUi({ type: "project", id: s.id, patch: { handoff: id } });
+      void a.execute({ type: "stage.review", target: id });
   }
   const agent = view.agentId ?? chat?.stageId ?? data.catalog!.defaultAgent;
   const model = view.modelId ?? data.catalog!.defaultModel;
+  const conversationPanel = (panel: PanelId) => {
+    if (panel === "risk") {
+      setRiskDrawer(`${s.id}/${chat?.id}`);
+      void a.send(t("查看迁移风险与处置建议"), agent, model);
+    } else setPanel(panel);
+  };
+  const order: StageId[] = ["research", "planning", "migration", "validation"];
+  const next = chat?.stageId
+    ? order[order.indexOf(chat.stageId) + 1]
+    : undefined;
   const newProject = () =>
     dispatchUi({ type: "global", patch: { creating: true } });
   const steps = stageSteps[stage];
@@ -165,26 +177,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           <div
             className={`conversation-content ${management ? "has-inline-panel" : ""}`}
           >
-            {!management && p.handoff && (
-              <StageHandoff
-                from={stageTitles[s.enteredStages.at(-1) ?? "research"]}
-                to={stageTitles[p.handoff]}
-                checks={
-                  s.approvals.find((v) => v.id === `enter-${p.handoff}`)
-                    ?.checks ?? []
-                }
-                reviewing
-                onReview={() => {}}
-                onCancel={() =>
-                  dispatchUi({
-                    type: "project",
-                    id: s.id,
-                    patch: { handoff: null },
-                  })
-                }
-                onConfirm={() => a.confirmStage(p.handoff!)}
-              />
-            )}
             {management ? (
               <ManagementView
                 key={`${s.id}-${p.panel}`}
@@ -201,7 +193,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 snapshot={s}
                 chat={chat}
                 view={view}
-                onPanel={setPanel}
+                onPanel={conversationPanel}
+                onAsk={(text) => a.send(text, agent, model)}
                 onDownload={a.download}
                 onCommand={a.execute}
                 onStage={a.confirmStage}
@@ -244,8 +237,31 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onAgent={(agentId) => a.view({ agentId })}
             onModel={(modelId) => a.view({ modelId })}
             onSend={(text) => a.send(text, agent, model)}
-            onWork={() => a.view({ workOpen: true })}
-            onPanel={setPanel}
+            onWork={() => {
+              if (chat.stageId === "research")
+                void a.send(t("查看评估资料"), agent, model);
+              else {
+                a.view({ workOpen: true });
+                void a.send(t("告诉我下一步该做什么"), agent, model);
+              }
+            }}
+            onPanel={conversationPanel}
+            nextLabel={
+              next
+                ? t(
+                    s.enteredStages.includes(next) ? "打开{0}" : "继续{0}",
+                    t(stageName[next]),
+                  )
+                : undefined
+            }
+            onNext={
+              next
+                ? () => {
+                    if (s.enteredStages.includes(next)) selectStage(next);
+                    else void a.execute({ type: "stage.review", target: next });
+                  }
+                : undefined
+            }
           />
         )}
       </section>
@@ -256,14 +272,18 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           steps={steps}
           stats={[
             {
-              label: "迁移范围",
-              value: s.assessmentStatus === "completed" ? s.vmCount : "待评估",
+              label: "可纳入工具迁移",
+              value:
+                s.assessmentStatus === "completed"
+                  ? migrationScope(s).length
+                  : "待评估",
               tone: "info",
             },
             {
-              label: "待闭环风险",
-              value: s.risks.filter((r) => !r.closed && r.stage === stage)
-                .length,
+              label: stage === "research" ? "未选策略" : "待处理风险",
+              value: s.risks.filter(
+                (r) => !hasRiskDecision(r) && r.stage === stage,
+              ).length,
               tone: "warning",
             },
             { label: "迁移批次", value: s.batchTasks.length, tone: "info" },
@@ -280,8 +300,23 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               meta: v.filename,
               onClick: () => a.download(v.id),
             }))}
-          events={scopedMessages.map((m) => ({ text: m.text, time: m.time }))}
+          events={scopedMessages.map((m) => ({
+            text: m.text.split("\n")[0].replace(/\*\*/g, ""),
+            time: m.time,
+          }))}
           onClose={() => setInspector(false)}
+        />
+      )}
+      {riskDrawer === `${s.id}/${chat?.id}` && !management && (
+        <RiskDrawer
+          key={riskDrawer}
+          snapshot={s}
+          onCommand={a.execute}
+          onClose={() => setRiskDrawer(null)}
+          onManage={() => {
+            setRiskDrawer(null);
+            setPanel("risk");
+          }}
         />
       )}
       {p.notice && (

@@ -1,3 +1,4 @@
+import { migrationScope, migrationMethod } from "@/domain/assessment";
 import type { OperationContext } from "@/domain/models";
 import type { RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
@@ -19,6 +20,9 @@ export async function plan(
     c,
     "planning",
     async () => {
+      rt.message(c, "user", `根据规划资料“${filename}”生成迁移批次。`, {
+        operation: true,
+      });
       s.planningWorkbook = filename;
       s.planningStatus = "generating";
       s.pending[c.conversationId] = {
@@ -27,11 +31,25 @@ export async function plan(
       };
       rt.publish(s);
       await rt.sleep(1600, options);
-      s.batchTasks = buildBatchTasks(s.scopeRows.map((r) => String(r[0])));
-      s.vmTasks = s.batchTasks.flatMap(buildVmTasks);
+      s.batchTasks = buildBatchTasks(
+        migrationScope(s).map((r) => String(r[0])),
+      ).filter((b) => b.vmNames.length);
+      s.vmTasks = s.batchTasks
+        .flatMap(buildVmTasks)
+        .map((task) => ({
+          ...task,
+          migrationMethod: migrationMethod(s, task.name),
+        }));
       s.risks = s.risks
         .filter((r) => r.stage !== "planning")
-        .concat(structuredClone(planningRisks));
+        .concat(
+          structuredClone(planningRisks).map((r, index) => ({
+            ...r,
+            vmName:
+              s.batchTasks[Math.min(index + 1, s.batchTasks.length - 1)]
+                ?.vmNames[0] ?? r.vmName,
+          })),
+        );
       s.vmTasks.forEach(
         (v) =>
           (v.riskIds = s.risks
@@ -64,13 +82,20 @@ export async function plan(
         s,
         "runbook",
         "RunBook",
-        "准备：核对配置、实施窗口和回退条件。\n执行：按批次人工确认。\n验证：对照配置和业务访问，记录验收证据。",
+        `准备：核对配置、实施窗口和回退条件。\n执行：按批次人工确认，受阻对象不创建工具任务。\n验证：对照配置和业务访问，记录验收证据。\n总体方案：${s.assessmentPlan?.note || "可迁对象免代理优先，特殊对象单独验证"}\n\n迁移约束：\n${s.risks
+          .filter((r) => r.impact === "constraint")
+          .map((r) => `${r.vmName}：${r.decision?.note || r.recommendation}`)
+          .join("\n")}\n\n暂时排除：\n${s.risks
+          .filter((r) => !migrationScope(s).some((row) => row[0] === r.vmName))
+          .map((r) => `${r.vmName}：${r.description}`)
+          .join("\n")}`,
+
         "plan",
         "planning",
       );
       rt.result(
         c,
-        "批次计划已生成。请检查业务依赖、实施窗口，并处理规划高风险。",
+        "批次计划已生成，受阻且未完成验证的对象已排除。你可以继续处理风险，也可以直接进入实施；任务创建前会再次按最新状态过滤。",
         [
           {
             kind: "summary",

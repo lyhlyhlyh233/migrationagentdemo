@@ -58,12 +58,13 @@ function AnswerBody({ text }: { text: string }) {
 export function ConversationAnswer({
   text,
   reply,
+  children,
 }: {
   text: string;
   reply?: ReplyPresentation;
+  children?: React.ReactNode;
 }) {
   const t = useTranslation();
-  const [copyStatus, setCopyStatus] = useState("");
   return (
     <div className={`${styles.root} conversation-answer`}>
       {reply ? (
@@ -78,31 +79,35 @@ export function ConversationAnswer({
           </summary>
           <p>{reply.summary}</p>
         </details>
-      ) : (
-        <div className="message-author">
-          <Icon name="agent" size={14} />
-        </div>
-      )}
+      ) : null}
       <div aria-label={t("最终结果")}>
         <AnswerBody text={text} />
       </div>
-      <div className={styles.actions}>
-        <button
-          type="button"
-          aria-label={t("复制回答正文")}
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(text);
-              setCopyStatus("已复制");
-            } catch {
-              setCopyStatus("复制失败，请选择正文复制");
-            }
-          }}
-        >
-          <Icon name="copy" size={14} />
-          <span>{t(copyStatus || "复制")}</span>
-        </button>
-      </div>
+      {children}
+    </div>
+  );
+}
+
+export function CopyAnswer({ text }: { text: string }) {
+  const t = useTranslation();
+  const [copyStatus, setCopyStatus] = useState("");
+  return (
+    <div className={styles.actions}>
+      <button
+        type="button"
+        aria-label={t("复制回答正文")}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setCopyStatus("已复制");
+          } catch {
+            setCopyStatus("复制失败，请选择正文复制");
+          }
+        }}
+      >
+        <Icon name="copy" size={14} />
+        <span>{t(copyStatus || "复制")}</span>
+      </button>
     </div>
   );
 }

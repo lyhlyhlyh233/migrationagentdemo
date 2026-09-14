@@ -1738,3 +1738,73 @@
     height: 44px;
   }
 }
+/* At 2K, size the interface for reading at 100% browser zoom. */
+@media (min-width: 1920px) {
+  .root:global(.workspace) {
+    grid-template-columns: 292px minmax(0, 1fr) 320px;
+    --conversation-width: 1120px;
+    --conversation-gutter: 40px;
+  }
+  .root:global(.workspace.inspector-collapsed),
+  .root:global(.workspace.management-view) {
+    grid-template-columns: 292px minmax(0, 1fr);
+  }
+  .root:global(.workspace.nav-collapsed) {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .root:global(.workspace.nav-collapsed:has(> .agent-inspector)) {
+    grid-template-columns: 64px minmax(0, 1fr) 320px;
+  }
+  .root :global(.project-resources button),
+  .root :global(.stage-chat-link),
+  .root :global(.temporary-conversations button),
+  .root :global(.nav-section-heading h2),
+  .root :global(.project-switcher .ui-select-trigger) {
+    font-size: 16px;
+  }
+  .root :global(.project-resources button),
+  .root :global(.stage-chat-link),
+  .root :global(.temporary-conversations button) {
+    min-height: 42px;
+  }
+  .root :global(.nav-platform h1),
+  .root :global(.nav-account strong) {
+    font-size: 15px;
+  }
+  .root :global(.nav-empty),
+  .root :global(.nav-account small),
+  .root :global(.delivery-chat-stage),
+  .root :global(.conversation-context) {
+    font-size: 14px;
+  }
+  .root :global(.progress-rail button),
+  .root :global(.stage-flow-preview strong) {
+    font-size: 15px;
+  }
+  .root :global(.progress-caption),
+  .root :global(.stage-flow-preview li span),
+  .root :global(.progress-rail button > span:last-child) {
+    font-size: 13px;
+  }
+  .root :global(.work-steps strong),
+  .root :global(.inspector-section h3),
+  .root :global(.inspector-header),
+  .root :global(.artifact-list strong) {
+    font-size: 14px;
+  }
+  .root :global(.work-steps p),
+  .root :global(.inspector-stats),
+  .root :global(.inspector-section > header > span),
+  .root :global(.activity-event p),
+  .root :global(.artifact-list small),
+  .root :global(.inspector-empty),
+  .root :global(.inspector-status) {
+    font-size: 13px;
+  }
+  .root :global(.workspace-welcome h2) {
+    font-size: 30px;
+  }
+  .root :global(.workspace-welcome p) {
+    font-size: 17px;
+  }
+}

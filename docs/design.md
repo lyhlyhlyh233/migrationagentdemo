@@ -13,12 +13,12 @@ src/
     workspace/   工作区布局、导航、进度、右侧详情和操作绑定
     projects/    项目创建表单
     conversations/ 对话正文、结果块、快捷操作、输入框与草稿
-    research/    评估资料表单
+    research/    对话内评估输入和方案选择
     planning/    范围与规划信息表单
     migration/   MD 检查、创建/同步/割接任务视图
     validation/  配置对比和人工验收
     tasks/       任务管理和批次计划
-    risks/       风险列表与闭环
+    risks/       分类策略、风险抽屉和管理列表
     deliverables/ 交付文件列表
     logs/        项目操作记录
     settings/    外观、背景、语言及 Nexent 配置
@@ -64,13 +64,23 @@ dataReducer → 当前工作区和共享结果状态
 | 文件               | upload(File)、download → Blob/文件名/媒体类型                  |
 | 评估、规划、交接   | execute 的 assessment/planning/stage 命令                      |
 | MD、创建/同步/割接 | md.check、execution.confirm、creation.update、cutover.complete |
-| 任务、风险、验证   | tasks.action、risk.close、validation.confirm                   |
+| 任务、风险、验证   | tasks.action、risk.decide/recommend/close、validation.confirm  |
 | 交付件、日志       | 项目快照内 artifacts/messages；文件内容经 download 获取        |
 | 账户与 Nexent      | getAccount、configureAccount、logout                           |
 
-`services/mock/` 按评估、规划、执行、对话和文件拆分。`runtime.ts` 负责内存状态、发布快照、可取消等待和执行锁；示例资产/风险在 `fixtures.ts`，回复文案在 `replies.ts`。这些均不进入展示组件。
+`services/mock/` 按评估、规划、执行、对话和文件拆分。`runtime.ts` 负责内存状态、发布快照、可取消等待和执行锁；通用资产/规划风险在 `fixtures.ts`，评估规则示例与报告解读在 `assessment-knowledge.ts`，策略命令在 `risk-decisions.ts`。这些均不进入展示组件。
 
 当前 `ServiceEvent` 使用完整项目快照，规模适合原型。未来可由适配器聚合聊天增量与任务进度，再发布版本化快照；无需让组件识别 SSE、WebSocket 或轮询格式。本轮没有流式字符动画或网络传输实现。
+
+## 评估范围与可选风险策略
+
+`domain/assessment.ts` 集中计算工具可迁范围与风险处置状态。风险等级、阻塞性质和用户策略是不同字段；不以“是否已读”推断可迁。未确认风险不阻塞阶段交接，受阻/未验证/显式不迁对象按虚拟机排除，约束项继续携带到规划。`policies.ts` 仅检查阶段必要工作与顺序；`planning.ts` 和 `execution.ts` 使用同一范围计算。
+
+`assessment.choosePlan` 保存总体偏好，`risk.decide` 批量保存同一策略，`risk.recommend` 为每项采用各自建议，`risk.close` 记录人工整改验证。策略保存不标记整改完成。原始发现不改变，历史结论保留快照，后续处置记录可更新。MD 准备开始后不再修改策略，避免已创建任务被静默改写；新增验证不会自动追加已生成批次。
+
+`stage.review` 在发起会话返回交接说明及 approval 引用；统一入口位于输入框下方右侧。点击确认仍调用 `stage.confirm`，而不是直接通过前端导航开启阶段。
+
+评估资料中的报告属于模板，包含占位符和互相不一致的示例数值；只借鉴报告维度与规则，不将其当成当前项目真实输出。原始 Excel/PPT 文件未纳入前端仓库。
 
 ## 接真实后端的最短路径
 
@@ -87,12 +97,14 @@ dataReducer → 当前工作区和共享结果状态
 
 `ChatMessage` 可包含纯文本、可折叠的 `reply.summary` 和 `results`。服务返回领域数据，不返回 JSX、HTML 或组件名称。
 
-| result.kind | 内容与行为                                                  |
-| ----------- | ----------------------------------------------------------- |
-| summary     | 当次结论、指标快照；提供风险/计划入口                       |
-| tasks       | 关联任务 ID；从最新项目快照读取状态和进度                   |
-| artifacts   | 关联交付件 ID；文件通过服务下载                             |
-| approval    | 关联确认项 ID；查看条件后确认，依据当前共享状态禁用重复提交 |
+| result.kind         | 内容与行为                                                         |
+| ------------------- | ------------------------------------------------------------------ |
+| assessment-input    | 输入用途及上传快照；最新一条展示可操作的资料输入，其余收为历史记录 |
+| assessment-decision | 共享迁移方案与可选风险处置入口                                     |
+| summary             | 当次结论、指标快照；提供风险/计划入口                              |
+| tasks               | 关联任务 ID；从最新项目快照读取状态和进度                          |
+| artifacts           | 关联交付件 ID；文件通过服务下载                                    |
+| approval            | 关联确认项 ID；查看条件后确认，依据当前共享状态禁用重复提交        |
 
 `BusinessResults.tsx` 选择呈现组件，列表默认三项，用户可展开。普通文字回复不强加结果块。新增结果类型只需扩展领域联合类型、服务返回内容及此呈现分支，不引入组件注册系统。
 
@@ -107,7 +119,7 @@ dataReducer → 当前工作区和共享结果状态
 | 聊天排版和业务结果       | conversations/Conversation、ConversationAnswer、BusinessResults |
 | Agent/模型目录           | services 的 catalog；选择框只呈现返回选项                       |
 | 阶段表单                 | research、planning、migration、validation 对应模块              |
-| 表格和风险闭环           | tasks/TaskPanel、risks/RiskPanel                                |
+| 表格和风险策略           | tasks/TaskPanel、risks/RiskPanel / RiskDrawer                   |
 | 主题/字号/语义颜色       | styles/tokens.css 和 styles/index.css                           |
 | 界面翻译                 | shared/i18n/en.json、status-labels、stages                      |
 
@@ -119,6 +131,6 @@ Mock 文件上传只验证文件名后缀并接收 File，不解析真实 Excel�
 
 运行与静态部署见 [README](../README.md)。检查命令和协作约定见 [AGENTS.md](../AGENTS.md)。
 
-## 本轮交接验证
+## 验证范围
 
-类型检查、Lint、14 项针对性测试及生产构建通过。根路径和 `/migration/` 子目录的 HTML/CSS 资源引用均已检查，本地开发服务可正常返回页面。早期检查过首页、新建项目、评估和子会话入口；最后一轮浏览器连接连续超时，四主题、中英文、窄屏和 2K 的最终人工复查尚未完成。本轮未做完整迁移流程回归，也未验证真实后端服务。
+针对性服务测试覆盖自动首轮对话、可跳过风险的交接、受阻对象过滤、策略与整改分离、项目/会话隔离、失败重试及退出清理。界面检查覆盖对话输入、分类策略抽屉、跳过全部风险的人工交接，以及四主题、中英文、窄屏和 2K 布局。类型检查、Lint、18 项针对性测试与生产构建通过。本轮不执行完整迁移流程回归，不验证真实后端。

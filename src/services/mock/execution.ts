@@ -1,4 +1,5 @@
 import type { ExecutionTaskKind, OperationContext } from "@/domain/models";
+import { migrationScope, migrationMethod } from "@/domain/assessment";
 import { canExecute } from "@/domain/policies";
 import type { RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
@@ -19,6 +20,12 @@ export async function checkMd(
     c,
     "md-check",
     async () => {
+      rt.message(
+        c,
+        "user",
+        "检查近端 MD 与迁移环境，排除受阻对象后准备任务。",
+        { operation: true },
+      );
       s.mdStatus = "checking-connection";
       s.pending[c.conversationId] = {
         startedAt: Date.now(),
@@ -36,7 +43,18 @@ export async function checkMd(
       rt.publish(s);
       await rt.sleep(1300, options);
       s.mdStatus = "ready";
-      s.creationTasks = buildCreationTasks(s.batchTasks);
+      const eligible = new Set(migrationScope(s).map((r) => String(r[0])));
+      s.batchTasks = s.batchTasks
+        .map((b) => ({
+          ...b,
+          vmNames: b.vmNames.filter((name) => eligible.has(name)),
+        }))
+        .filter((b) => b.vmNames.length);
+      s.vmTasks = s.vmTasks.filter((v) => eligible.has(v.name));
+      s.creationTasks = buildCreationTasks(s.batchTasks).map((task) => ({
+        ...task,
+        migrationMethod: migrationMethod(s, task.vmName),
+      }));
       const count = s.vmTasks.filter(
         (v) =>
           s.batchTasks.find((b) => b.id === v.batchId)?.stageType === "cutover",
@@ -95,6 +113,12 @@ export async function executeTasks(
     c,
     `execute-${kind}`,
     async () => {
+      rt.message(
+        c,
+        "user",
+        `确认执行${kind === "creation" ? "任务创建" : kind === "sync" ? "数据同步" : "割接任务"}。`,
+        { operation: true },
+      );
       s.executionApprovals[kind] = true;
       const a = s.approvals.find((a) => a.id === `execute-${kind}`);
       if (a) a.status = "confirmed";

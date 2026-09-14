@@ -6,57 +6,6 @@ import type {
   VmConfiguration,
   VmTask,
 } from "@/domain/models";
-export const initialRisks: RiskItem[] = [
-  {
-    id: 1,
-    description: "3 台 ESXi 主机 CPU 指令集不满足目标虚拟化平台兼容要求",
-    level: "high",
-    stage: "research",
-    batchId: "B-001",
-    vmName: "VM-APP-001",
-    vmId: "VMID-1001",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 2,
-    description: "售前调用表缺少核心业务峰值 IOPS 与时延基线",
-    level: "high",
-    stage: "research",
-    batchId: "全局",
-    vmName: "多台虚拟机",
-    vmId: "—",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 3,
-    description: "NAS ACL 映射规则与目标端权限模型存在差异",
-    level: "medium",
-    stage: "research",
-    batchId: "B-003",
-    vmName: "VM-NAS-017",
-    vmId: "VMID-1017",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 4,
-    description: "对象存储 SDK 版本低于目标平台兼容版本",
-    level: "low",
-    stage: "research",
-    batchId: "B-005",
-    vmName: "VM-APP-042",
-    vmId: "VMID-1042",
-    closed: true,
-    closedAt: "2026-08-31 16:20",
-    closureDescription: "已确认目标平台兼容 SDK 版本，并完成业务侧升级验证。",
-  },
-];
-
 export const planningRisks: RiskItem[] = [
   {
     id: 5,

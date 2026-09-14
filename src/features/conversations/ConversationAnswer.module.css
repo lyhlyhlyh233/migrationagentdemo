@@ -164,3 +164,21 @@
     font-size: 14px;
   }
 }
+@media (min-width: 1920px) {
+  .root :global(.reply-result),
+  .root :global(.reply-result p),
+  .root :global(.reply-result li) {
+    font-size: var(--body-size);
+    line-height: 1.6;
+  }
+  .root :global(.reply-thought > summary),
+  .root :global(.reply-thought > p),
+  .root :global(.reply-duration),
+  .root :global(.thinking-status),
+  .actions button {
+    font-size: var(--meta-size);
+  }
+  .root :global(.message-body p) {
+    max-width: 72ch;
+  }
+}

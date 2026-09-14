@@ -34,15 +34,7 @@ export function ManagementView({
       ) : panel === "logs" ? (
         <OperationLog snapshot={s} />
       ) : panel === "risk" ? (
-        <RiskPanel
-          projectId={s.id}
-          risks={s.risks}
-          projectExists={!!s.info}
-          onClose={onClose}
-          onCloseRisk={(riskId, description) =>
-            onCommand({ type: "risk.close", riskId, description })
-          }
-        />
+        <RiskPanel snapshot={s} onCommand={onCommand} />
       ) : panel === "tasks" ? (
         <TaskPanel
           projectId={s.id}

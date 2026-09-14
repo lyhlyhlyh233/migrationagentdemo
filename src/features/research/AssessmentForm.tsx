@@ -1,3 +1,4 @@
+import styles from "./AssessmentForm.module.css";
 import type { ProjectSnapshot } from "@/domain/models";
 import type { FilePurpose, ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
@@ -6,13 +7,16 @@ export function AssessmentForm({
   snapshot: s,
   onCommand,
   onUpload,
+  disabled = false,
 }: {
   snapshot: ProjectSnapshot;
+  disabled?: boolean;
   onCommand: (cmd: ProjectCommand) => void;
   onUpload: (purpose: FilePurpose, file: File) => void;
 }) {
   const t = useTranslation();
-  const locked = ["running", "completed"].includes(s.assessmentStatus);
+  const locked =
+    disabled || ["running", "completed"].includes(s.assessmentStatus);
   return (
     <ResultFrame
       title={t("评估资料")}
@@ -26,7 +30,7 @@ export function AssessmentForm({
           </Button>
           <Button
             primary
-            disabled={s.assessmentStatus !== "ready"}
+            disabled={disabled || s.assessmentStatus !== "ready"}
             onClick={() => onCommand({ type: "assessment.start" })}
           >
             {t(
@@ -40,18 +44,20 @@ export function AssessmentForm({
         </>
       }
     >
-      <FileField
-        label={t("RVTools 采集表")}
-        filename={s.files.rvtools}
-        disabled={locked}
-        onFile={(file) => onUpload("rvtools", file)}
-      />
-      <FileField
-        label={t("售前调用表")}
-        filename={s.files.presales}
-        disabled={locked}
-        onFile={(file) => onUpload("presales", file)}
-      />
+      <div className={styles.files}>
+        <FileField
+          label={t("RVTools 采集表")}
+          filename={s.files.rvtools}
+          disabled={locked}
+          onFile={(file) => onUpload("rvtools", file)}
+        />
+        <FileField
+          label={t("迁移调研表")}
+          filename={s.files.presales}
+          disabled={locked}
+          onFile={(file) => onUpload("presales", file)}
+        />
+      </div>
     </ResultFrame>
   );
 }

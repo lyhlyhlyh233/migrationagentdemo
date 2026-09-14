@@ -95,3 +95,18 @@
   border: 1px solid var(--line);
   border-radius: 9px;
 }
+@media (min-width: 1920px) {
+  .button,
+  .file,
+  .field,
+  .result > header {
+    font-size: 14px;
+  }
+  .button {
+    min-height: 36px;
+  }
+  .file input,
+  .file small {
+    font-size: 13px;
+  }
+}
