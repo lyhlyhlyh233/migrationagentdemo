@@ -1,0 +1,347 @@
+.root :global(.shortcut-groups) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.root :global(.shortcut-menu) {
+  position: relative;
+}
+.root :global(.shortcut-menu summary) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+.root :global(.shortcut-menu summary::-webkit-details-marker) {
+  display: none;
+}
+.root :global(.shortcut-options button) {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 5px;
+  width: 100%;
+  border: 0;
+  padding: 11px 10px;
+}
+.root :global(.shortcut-options strong) {
+  font-size: 12px;
+}
+.root :global(.shortcut-options small) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.chat-composer textarea) {
+  width: 100%;
+  display: block;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0 1px;
+  outline: none;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 41px;
+  max-height: 140px;
+  background: transparent;
+}
+.root :global(.chat-composer textarea:focus-visible) {
+  outline: none;
+}
+.root :global(.composer-bottom) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+.root :global(.composer-bottom > span) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.root :global(.composer-left) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.root :global(.composer-right) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.root :global(.composer-left > .icon-button) {
+  flex-shrink: 0;
+}
+.root :global(.composer-right > .send-button) {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.root :global(.composer-model-picker) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--secondary);
+  font-size: 12px;
+}
+.root :global(.composer-agent-picker) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--secondary);
+  font-size: 12px;
+}
+.root :global(.composer-select-control) {
+  display: flex;
+  position: relative;
+  min-width: 0;
+}
+.root :global(.composer-select-control .ui-select-trigger) {
+  appearance: none;
+  width: auto;
+  max-width: 180px;
+  min-height: 32px;
+  padding: 5px 7px 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+.root :global(.composer-agent-picker .ui-select-trigger) {
+  width: 100%;
+}
+.root :global(.composer-select-control .ui-select-trigger:hover) {
+  background: var(--hover);
+}
+@media (max-width: 760px) {
+  .root :global(.composer-bottom) {
+    gap: 6px;
+  }
+  .root :global(.composer-select-control .ui-select-trigger) {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  .root :global(.composer-agent-picker > svg) {
+    display: none;
+  }
+  .root :global(.composer-agent-picker .ui-select-trigger) {
+    max-width: 120px;
+    padding-left: 3px;
+  }
+  .root :global(.composer-model-picker .ui-select-trigger) {
+    max-width: 120px;
+  }
+  .root :global(.composer-left) {
+    gap: 2px;
+  }
+  .root :global(.composer-right) {
+    gap: 2px;
+  }
+}
+.root :global(.send-button:hover) {
+  background: var(--accent-hover);
+}
+.root :global(.composer-note) {
+  text-align: center;
+  margin-top: 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+@media (max-width: 1180px) {
+  .root :global(.shortcut-groups) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .root:global(.composer-area) {
+    padding-inline: 22px;
+  }
+}
+@media (max-width: 760px) {
+  .root :global(.shortcut-groups) {
+    gap: 3px;
+  }
+  .root :global(.shortcut-menu summary) {
+    font-size: 10px;
+    gap: 4px;
+    padding: 7px;
+  }
+  .root :global(.shortcut-menu summary > svg:first-child) {
+    display: none;
+  }
+  .root :global(.shortcut-menu:first-child .shortcut-options) {
+    left: 0;
+    right: auto;
+  }
+  .root :global(.shortcut-menu:nth-child(2) .shortcut-options) {
+    left: -65px;
+    right: auto;
+  }
+  .root:global(.composer-area) {
+    padding: 9px 13px 10px;
+  }
+  .root :global(.chat-composer) {
+    padding: 12px;
+    border-radius: 13px;
+  }
+  .root :global(.chat-composer textarea) {
+    font-size: 12px;
+  }
+  .root :global(.composer-note) {
+    font-size: 9px;
+  }
+}
+@media print {
+  .root:global(.composer-area) {
+    display: none !important;
+  }
+}
+@media (min-width: 981px) {
+  .root :global(.shortcut-menu summary) {
+    font-size: 12px;
+  }
+}
+.root :global(.composer-shortcuts .shortcut-groups) {
+  gap: 7px;
+  justify-content: flex-start;
+}
+.root :global(.composer-shortcuts .shortcut-options) {
+  top: auto;
+  bottom: calc(100% + 7px);
+  left: 0;
+  right: auto;
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+}
+@media (max-width: 760px) {
+  .root :global(.composer-shortcuts .shortcut-groups) {
+    gap: 1px;
+  }
+  .root :global(.composer-shortcuts .shortcut-menu summary) {
+    font-size: 11px;
+    padding: 7px 6px;
+  }
+  .root
+    :global(.composer-shortcuts .shortcut-menu:nth-child(2) .shortcut-options) {
+    left: -60px;
+  }
+  .root
+    :global(.composer-shortcuts .shortcut-menu:last-child .shortcut-options) {
+    left: auto;
+    right: 0;
+  }
+}
+.root :global(.composer-bottom > span > svg) {
+  color: var(--accent);
+}
+.root :global(.shortcut-menu[open] summary) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.root :global(.shortcut-menu summary:hover) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.root :global(.shortcut-options) {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 236px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 5px;
+  border-color: var(--accent-line);
+}
+.root :global(.shortcut-menu[open] .shortcut-options) {
+  animation: menu-appear 160ms ease-out;
+}
+.root :global(.shortcut-options button:hover) {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.root :global(.shortcut-options button:hover small) {
+  color: var(--accent-ink);
+}
+.root :global(.chat-composer:focus-within) {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+.root :global(.send-button) {
+  margin-left: auto;
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.root :global(.send-button:hover:not(:disabled)) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.root :global(.send-button:disabled) {
+  opacity: 1;
+  background: var(--hover);
+  border-color: transparent;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .root :global(.shortcut-menu[open] .shortcut-options) {
+    animation: none;
+    transition: none;
+  }
+}
+.root :global(.chat-composer) {
+  margin: auto;
+  padding: 14px 15px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 15px;
+  background: var(--panel);
+  border-color: var(--accent-line);
+  max-width: var(--reading-width);
+}
+.root :global(.composer-shortcuts) {
+  margin: 0 auto 7px;
+  max-width: var(--reading-width);
+}
+@media (min-width: 1920px) {
+  .root :global(.chat-composer textarea) {
+    font-size: 14px;
+  }
+}
+.root:global(.composer-area) {
+  flex-shrink: 0;
+  padding: 12px 28px 13px;
+  position: relative;
+  z-index: var(--z-dropdown);
+  padding-top: 6px;
+  background: var(--canvas);
+}
+.retry {
+  font-size: 12px;
+  max-width: var(--reading-width);
+  margin: 0 auto 8px;
+  color: var(--danger);
+}

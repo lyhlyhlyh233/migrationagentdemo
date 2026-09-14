@@ -1,0 +1,71 @@
+.results {
+  display: grid;
+  gap: 12px;
+  margin: 15px 0 10px;
+  max-width: 740px;
+  font-size: 13px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+  padding: 10px 0;
+  margin: 0;
+}
+.metrics div {
+  display: grid;
+  gap: 3px;
+}
+.metrics dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.metrics dd {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child {
+  border: 0;
+}
+.row > svg {
+  color: var(--info);
+  flex-shrink: 0;
+}
+.row > div {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+.row strong {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.row small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.checks {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+}
+.checks li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.checks svg {
+  color: var(--success);
+}

@@ -1,0 +1,166 @@
+.root :global(.message-body p) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 72ch;
+}
+.root :global(.message-author strong) {
+  font-size: 12px;
+  font-weight: 600;
+}
+.root :global(.thinking-status) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.root :global(.reply-thought) {
+  margin-bottom: 12px;
+  color: var(--secondary);
+}
+.root :global(.reply-thought > summary) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.6;
+  border-radius: 4px;
+}
+.root :global(.reply-thought > summary::-webkit-details-marker) {
+  display: none;
+}
+.root :global(.reply-thought > summary:hover) {
+  background: transparent;
+  color: var(--ink);
+}
+.root :global(.reply-thought[open] > summary > svg:last-child) {
+  transform: rotate(180deg);
+}
+.root :global(.reply-thought > p) {
+  max-width: 72ch;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.root :global(.reply-duration) {
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.reply-result) {
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.root :global(.reply-result > * + *) {
+  margin-top: 9px;
+}
+.root :global(.reply-result > :is(ul, ol)) {
+  max-width: 72ch;
+  padding-left: 22px;
+}
+.root :global(.reply-result > ul) {
+  list-style: disc;
+}
+.root :global(.reply-result > ol) {
+  list-style: decimal;
+}
+.root :global(.reply-result li + li) {
+  margin-top: 4px;
+}
+@media (max-width: 760px) {
+  .root :global(.reply-result) {
+    font-size: 13px;
+  }
+}
+@media (min-width: 1600px) {
+  .root :global(.message-body p) {
+    font-size: 15px;
+  }
+  .root :global(.reply-result) {
+    font-size: 15px;
+  }
+}
+@media (max-width: 980px) {
+  .root :global(.message-body p) {
+    font-size: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .root :global(.message-body p) {
+    font-size: 13px;
+  }
+}
+.root :global(.message-author) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.message-author > svg) {
+  color: var(--accent);
+}
+.root :global(.thinking-dot) {
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  animation: thinking 1.2s ease-in-out infinite;
+  background: var(--accent);
+}
+@media (min-width: 1920px) {
+  .root :global(.message-body p) {
+    max-width: 78ch;
+  }
+}
+.root :global(.reply-result),
+.root :global(.reply-result p),
+.root :global(.reply-result li) {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.root :global(.reply-thought > summary) {
+  font-size: 12px;
+  color: var(--muted);
+}
+.root :global(.message-author) {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.actions {
+  display: flex;
+  margin: 8px 0 0;
+  gap: 8px;
+}
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.actions button:hover {
+  color: var(--text);
+}
+@media (max-width: 720px) {
+  .root :global(.reply-result),
+  .root :global(.reply-result p),
+  .root :global(.reply-result li) {
+    font-size: 14px;
+  }
+}

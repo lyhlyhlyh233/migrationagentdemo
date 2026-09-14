@@ -1,0 +1,487 @@
+.root:global(.settings-modal) {
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: hidden;
+}
+.root:global(.settings-modal::backdrop) {
+  background: oklch(0.12 0 0 / 0.24);
+}
+.root :global(.settings-drawer) {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  height: 100%;
+  margin-left: auto;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+.root:global(.settings-modal[open] .settings-drawer) {
+  animation: settings-enter 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.root :global(.settings-header h2) {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.root :global(.settings-tabs) {
+  display: flex;
+  gap: 24px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.root :global(.settings-tabs button) {
+  padding: 14px 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 13px;
+}
+.root :global(.settings-tabs button:hover) {
+  color: var(--ink);
+}
+.root :global(.settings-tabs button[aria-selected="true"]) {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+.root :global(.settings-body) {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px 24px;
+}
+.root :global(.settings-section + .settings-section) {
+  margin-top: 32px;
+}
+.root :global(.settings-section h3) {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.root :global(.settings-section-heading) {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.root :global(.settings-section-heading > span) {
+  font-size: 12px;
+  color: var(--muted);
+}
+.root :global(.theme-picker) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.root :global(.theme-picker button) {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.root :global(.theme-swatch) {
+  display: block;
+  position: relative;
+  height: 58px;
+  width: 100%;
+  border: 1px solid var(--preview-line);
+  border-radius: 7px;
+  background: var(--preview-canvas);
+  overflow: hidden;
+}
+.root :global(.theme-swatch::before) {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 22%;
+  background: var(--preview-accent);
+  opacity: 0.22;
+}
+.root :global(.theme-swatch::after) {
+  content: "";
+  position: absolute;
+  left: 35%;
+  top: 16px;
+  height: 3px;
+  width: 48%;
+  background: var(--preview-accent);
+  opacity: 0.65;
+  border-radius: 2px;
+}
+.root :global(.theme-swatch > i) {
+  position: absolute;
+  left: 35%;
+  top: 25px;
+  width: 33%;
+  height: 3px;
+  background: var(--preview-accent);
+  opacity: 0.28;
+  border-radius: 2px;
+}
+.root :global(.theme-swatch > b) {
+  position: absolute;
+  left: 35%;
+  right: 10%;
+  bottom: 7px;
+  height: 10px;
+  border: 1px solid var(--preview-line);
+  border-radius: 3px;
+}
+.root :global(.theme-option-label) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.root :global(.theme-picker button[aria-pressed="true"] .theme-swatch) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.root :global(.theme-picker button[aria-pressed="true"] .theme-option-label) {
+  color: var(--ink);
+}
+.root :global(.theme-picker button:hover .theme-swatch) {
+  border-color: var(--ink);
+}
+.root :global(.background-picker) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px 12px;
+  margin-top: 14px;
+}
+.root :global(.background-option) {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  min-width: 0;
+}
+.root :global(.background-option:hover) {
+  background: transparent;
+}
+.root :global(.background-preview) {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 100%;
+  height: 96px;
+  border-radius: 8px;
+  background-color: var(--surface);
+  background-size: cover;
+  background-position: center;
+}
+.root :global(.background-option > span:last-child) {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.root :global(.background-option[aria-pressed="true"] .background-preview) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.root :global(.background-option:hover .background-preview) {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+.root :global(.background-option[aria-pressed="true"] > span:last-child) {
+  color: var(--ink);
+}
+.root :global(.background-selected) {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink);
+}
+.root :global(.language-setting) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.root :global(.language-setting p) {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+  margin-top: 7px;
+  max-width: 205px;
+}
+.root :global(.language-setting .ui-select-trigger) {
+  max-width: 150px;
+  font-size: 13px;
+}
+.root :global(.settings-header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.root :global(.settings-footer) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 18px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.root :global(.settings-description) {
+  margin-top: 8px;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.root :global(.settings-account-row) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.root :global(.settings-avatar) {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--surface);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.root :global(.settings-account-row > div) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.root :global(.settings-account-row strong) {
+  font-size: 13px;
+}
+.root :global(.settings-account-row > div > span) {
+  color: var(--muted);
+  font-size: 12px;
+}
+.root :global(.settings-account-row > button) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  font-size: 12px;
+}
+.root :global(.sign-out-review) {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+.root :global(.sign-out-review p) {
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.root :global(.sign-out-review > div) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.root :global(.sign-out-review button) {
+  font-size: 12px;
+}
+.root :global(.settings-section.nexent-settings) {
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+  margin-top: 26px;
+}
+.root :global(.nexent-settings form) {
+  margin-top: 22px;
+}
+.root :global(.settings-field) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+.root :global(.settings-field > label) {
+  font-size: 13px;
+  font-weight: 500;
+}
+.root :global(.authentication-method legend) {
+  font-size: 13px;
+  font-weight: 500;
+}
+.root :global(.settings-field input) {
+  width: 100%;
+  min-height: 42px;
+  font-size: 13px;
+}
+.root :global(.settings-field input[aria-invalid="true"]) {
+  border-color: var(--warning);
+}
+.root :global(.settings-field-error) {
+  color: var(--warning);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.root :global(.settings-field-hint) {
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.root :global(.authentication-tip) {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--secondary);
+}
+.root :global(.authentication-tip svg) {
+  margin-top: 3px;
+}
+.root :global(.authentication-method) {
+  padding: 0;
+  border: 0;
+  margin: 20px 0 0;
+  min-width: 0;
+}
+.root :global(.authentication-options) {
+  display: flex;
+  gap: 10px;
+  margin-top: 9px;
+}
+.root :global(.authentication-options > label) {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  padding: 11px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--secondary);
+}
+.root :global(.authentication-options input) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+.root :global(.authentication-options > label:hover) {
+  background: var(--hover);
+}
+.root :global(.authentication-options > label[data-selected="true"]) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.root :global(.authentication-options > label:has(:focus-visible)) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.root :global(.settings-secret) {
+  position: relative;
+}
+.root :global(.settings-secret input) {
+  padding-right: 48px;
+}
+.root :global(.settings-secret > button) {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 42px;
+  height: auto;
+  border-radius: 6px;
+}
+.root :global(.settings-form-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.root :global(.settings-form-actions button) {
+  font-size: 13px;
+}
+.root :global(.settings-form-actions button:first-child) {
+  margin-right: auto;
+}
+.root :global(.settings-save-status) {
+  min-height: 20px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--secondary);
+}
+@media (max-width: 760px) {
+  .root :global(.settings-header .icon-button) {
+    width: 44px;
+    height: 44px;
+  }
+  .root :global(.settings-header) {
+    padding: 14px 20px;
+  }
+  .root :global(.settings-body) {
+    padding: 24px 20px;
+  }
+  .root :global(.settings-tabs) {
+    padding-inline: 20px;
+  }
+  .root :global(.settings-account-row > button) {
+    min-height: 44px;
+  }
+  .root :global(.settings-form-actions > button) {
+    min-height: 44px;
+  }
+  .root :global(.sign-out-review button) {
+    min-height: 44px;
+  }
+  .root :global(.settings-field input) {
+    min-height: 46px;
+    font-size: 16px;
+  }
+  .root :global(.settings-footer) {
+    padding: 16px 20px max(16px, env(safe-area-inset-bottom));
+  }
+  .root :global(.theme-picker) {
+    gap: 9px;
+  }
+  .root :global(.language-setting) {
+    flex-wrap: wrap;
+  }
+}

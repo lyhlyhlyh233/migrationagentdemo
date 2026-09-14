@@ -1,0 +1,1438 @@
+.root :global(.panel-backdrop) {
+  position: relative;
+  width: 100%;
+}
+.root :global(.archive-panel) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 19px;
+}
+.root :global(.archive-panel > header) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.root :global(.archive-panel > header h2) {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.root :global(.archive-panel > header p) {
+  display: none;
+}
+.root :global(.archive-panel > header span) {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.root :global(.archive-panel > header > button[aria-label="关闭"]) {
+  display: none;
+}
+.root :global(.archive-panel button) {
+  font-size: 11px;
+}
+.root :global(.archive-panel input:not([type="checkbox"])) {
+  font-size: 11px;
+}
+.root :global(.archive-panel .ui-select-trigger) {
+  font-size: 11px;
+}
+.root :global(.archive-panel textarea) {
+  font-size: 11px;
+}
+.root :global(.archive-panel table) {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+  font-size: 11px;
+  min-width: 680px;
+}
+.root :global(.archive-panel th) {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 11px 10px;
+  background: var(--surface);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.archive-panel td) {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.65;
+  vertical-align: middle;
+}
+.root :global(.archive-panel tr:hover td) {
+  background: var(--surface);
+}
+.root :global(.archive-panel td > strong) {
+  display: block;
+}
+.root :global(.archive-panel td > small) {
+  display: block;
+  font-size: 10px;
+  margin-top: 3px;
+  color: var(--muted);
+}
+.root :global(.archive-panel td button) {
+  padding: 5px 7px;
+  white-space: nowrap;
+}
+.root :global(.archive-panel [class*="table-wrap"]) {
+  overflow-x: auto;
+  width: 100%;
+  border-block: 1px solid var(--line);
+  margin-top: 14px;
+}
+.root :global(.archive-panel small) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.archive-panel h3) {
+  font-size: 14px;
+}
+.root :global(.panel-kpis) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 0 0 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.cutover-kpis) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 0 0 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.validation-kpis) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 0 0 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.creation-summary) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 0 0 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.panel-kpis > div) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 75px;
+}
+.root :global(.cutover-kpis > div) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 75px;
+}
+.root :global(.validation-kpis > div) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 75px;
+}
+.root :global(.creation-summary > div) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 75px;
+}
+.root :global(.panel-kpis strong) {
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.cutover-kpis strong) {
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.validation-kpis strong) {
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.creation-summary strong) {
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+.root :global(.panel-kpis em) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.cutover-kpis em) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.validation-kpis em) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.creation-summary > span) {
+  display: none;
+}
+.root :global(.risk-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.batch-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.vm-task-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.creation-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.sync-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.validation-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+}
+.root :global(.risk-toolbar > label) {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.vm-task-toolbar > label) {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.creation-toolbar > label) {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.sync-toolbar > label) {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.validation-toolbar > label) {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.risk-toolbar input) {
+  width: 100%;
+}
+.root :global(.vm-task-toolbar input) {
+  width: 100%;
+}
+.root :global(.creation-toolbar input) {
+  width: 100%;
+}
+.root :global(.sync-toolbar input) {
+  width: 100%;
+}
+.root :global(.validation-toolbar input) {
+  width: 100%;
+}
+.root :global(.risk-toolbar > div) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.root :global(.batch-toolbar > div) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.root :global(.creation-toolbar > div) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.root :global(.vm-task-toolbar > div) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.root :global(.validation-toolbar > div) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.root :global(.risk-level) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.root :global(.vm-status) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.root :global(.creation-status) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.root :global(.sync-status) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.root :global(.validation-status) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.root :global(.vm-risk-count) {
+  color: var(--warning);
+}
+.root :global(.check-pass) {
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--success);
+}
+.root :global(.batch-complete) {
+  color: var(--success);
+}
+.root :global(.validation-match) {
+  color: var(--success);
+}
+.root :global(.vm-task-tabs) {
+  display: flex;
+  gap: 5px;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+.root :global(.task-primary-tabs) {
+  display: flex;
+  gap: 5px;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.task-primary-tabs button) {
+  background: transparent;
+  border-color: transparent;
+}
+.root :global(.vm-task-tabs button) {
+  background: transparent;
+  border-color: transparent;
+}
+.root :global(.task-primary-tabs b) {
+  margin-left: 5px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.root :global(.vm-task-tabs b) {
+  margin-left: 5px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.root :global(.task-ready) {
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--secondary);
+}
+.root :global(.vm-list-link) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.root :global(.vm-list-link small) {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.root :global(.vm-list-link em) {
+  color: var(--muted);
+  font-size: 10px;
+}
+.root :global(.vm-table-foot) {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 13px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.creation-foot) {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 13px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.vm-table-foot > div) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.root :global(.vm-table-foot button) {
+  border: 0;
+  padding: 1px 5px;
+}
+.root :global(.vm-progress) {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.root :global(.vm-progress > span) {
+  height: 3px;
+  width: 50px;
+  background: var(--line);
+}
+.root :global(.vm-progress b) {
+  font-size: 10px;
+}
+.root :global(.gantt-card) {
+  margin: 15px 0;
+}
+.root :global(.gantt-head) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.root :global(.gantt-head small) {
+  display: none;
+}
+.root :global(.gantt-head span) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.gantt-scroll) {
+  overflow-x: auto;
+}
+.root :global(.gantt-calendar) {
+  min-width: 580px;
+}
+.root :global(.gantt-date-row) {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.gantt-row) {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.gantt-date-row > span) {
+  font-size: 10px;
+}
+.root :global(.gantt-date-row > div) {
+  display: flex;
+}
+.root :global(.gantt-date-row b) {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+.root :global(.gantt-row > span) {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 0;
+  font-size: 10px;
+}
+.root :global(.gantt-track) {
+  position: relative;
+  height: 43px;
+  display: flex;
+}
+.root :global(.gantt-track > i) {
+  flex: 1;
+  border-left: 1px solid var(--line);
+}
+.root :global(.gantt-bar) {
+  position: absolute;
+  top: 9px;
+  height: 24px;
+  padding: 0 4px !important;
+  background: var(--accent-soft);
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.root :global(.gantt-bar b) {
+  font-size: 9px;
+}
+.root :global(.gantt-legend) {
+  display: flex;
+  gap: 13px;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 8px;
+}
+.root :global(.vm-detail-head) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+.root :global(.vm-detail-head small) {
+  display: none;
+}
+.root :global(.vm-detail-head p) {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.root :global(.vm-detail-head > span) {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.root :global(.vm-detail-summary) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 17px 0;
+}
+.root :global(.validation-identity) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 17px 0;
+}
+.root :global(.confirm-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 17px 0;
+}
+.root :global(.source-summary) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 17px 0;
+}
+.root :global(.vm-detail-summary > div) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.root :global(.validation-identity > div) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.root :global(.confirm-grid > div) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.root :global(.source-summary > div) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.root :global(.vm-detail-summary strong) {
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.root :global(.validation-identity strong) {
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.root :global(.confirm-grid strong) {
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.root :global(.source-summary strong) {
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.root :global(.vm-risk-list > div) {
+  display: flex;
+  gap: 9px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.vm-risk-list strong) {
+  font-size: 11px;
+  font-weight: 500;
+  display: block;
+}
+.root :global(.vm-risk-list small) {
+  display: block;
+  margin-top: 6px;
+}
+.root :global(.vm-no-risk) {
+  padding: 16px 0;
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+}
+.root :global(.vm-no-risk small) {
+  display: block;
+  margin-top: 6px;
+}
+.root :global(.wizard-steps) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.root :global(.wizard-steps button) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 5px 0;
+  background: transparent;
+  font-size: 10px;
+  color: var(--muted);
+}
+.root :global(.wizard-steps i) {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.root :global(.wizard-steps b) {
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+.root :global(.wizard-section-head > small) {
+  display: none;
+}
+.root :global(.wizard-section-head > p) {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.root :global(.wizard-form) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 13px;
+}
+.root :global(.wizard-form label) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 7px;
+  font-size: 11px;
+}
+.root :global(.wizard-form .wide) {
+  grid-column: 1 / -1;
+}
+.root :global(.resource-hints) {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  font-size: 11px;
+}
+.root :global(.resource-hints span) {
+  color: var(--muted);
+}
+.root :global(.advanced-options) {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.root :global(.advanced-options label) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.root :global(.advanced-options label > button) {
+  width: 28px;
+  height: 16px;
+  border: 0;
+  background: var(--line-strong);
+  border-radius: 9px;
+  padding: 2px;
+}
+.root :global(.advanced-options button i) {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: var(--panel);
+  border-radius: 50%;
+  transition: transform 150ms;
+}
+.root :global(.advanced-options button.on i) {
+  transform: translateX(12px);
+}
+.root :global(.advanced-options strong) {
+  display: block;
+  font-size: 11px;
+}
+.root :global(.advanced-options small) {
+  display: block;
+  margin-top: 3px;
+}
+.root :global(.wizard-foot) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.root :global(.confirm-notice) {
+  display: flex;
+  gap: 8px;
+  padding: 13px 0;
+  color: var(--muted);
+}
+.root :global(.confirm-notice p) {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.root :global(.confirm-notice strong) {
+  display: block;
+  color: var(--secondary);
+}
+.root :global(.sync-toolbar p) {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.root :global(.validation-head-actions) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.root :global(.comparison-column-head) {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr 45px;
+  gap: 10px;
+  align-items: center;
+  font-size: 10px;
+  padding: 10px 0;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.comparison-group > header) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 18px 0 4px;
+}
+.root :global(.comparison-group > header > span) {
+  display: none;
+}
+.root :global(.comparison-group h3) {
+  font-size: 12px;
+}
+.root :global(.comparison-group > header > em) {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+.root :global(.comparison-row) {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr 45px;
+  gap: 10px;
+  align-items: center;
+  font-size: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.comparison-row b) {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.root :global(.comparison-row em) {
+  color: var(--success);
+}
+.root :global(.validation-approval) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 20px;
+}
+.root :global(.validation-approval > span) {
+  display: none;
+}
+.root :global(.validation-approval > div) {
+  flex: 1;
+}
+.root :global(.validation-approval strong) {
+  font-size: 12px;
+}
+.root :global(.validation-approval p) {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 5px;
+}
+@media (max-width: 760px) {
+  .root :global(.archive-panel) {
+    padding: 14px;
+  }
+  .root :global(.archive-panel > header h2) {
+    font-size: 15px;
+  }
+  .root :global(.panel-kpis) {
+    gap: 13px;
+  }
+  .root :global(.cutover-kpis) {
+    gap: 13px;
+  }
+  .root :global(.validation-kpis) {
+    gap: 13px;
+  }
+  .root :global(.wizard-steps) {
+    gap: 5px;
+  }
+  .root :global(.wizard-steps span) {
+    font-size: 9px;
+  }
+  .root :global(.comparison-column-head) {
+    grid-template-columns: 0.9fr 1fr 1fr 35px;
+    gap: 6px;
+    font-size: 9px;
+  }
+  .root :global(.comparison-row) {
+    grid-template-columns: 0.9fr 1fr 1fr 35px;
+    gap: 6px;
+    font-size: 9px;
+  }
+}
+@media print {
+  .root :global(.archive-panel) {
+    padding: 0;
+  }
+  .root :global(.archive-panel [class*="table-wrap"]) {
+    overflow: visible;
+  }
+  .root :global(.archive-panel table) {
+    min-width: 0;
+    font-size: 8px;
+  }
+  .root :global(.archive-panel th) {
+    white-space: normal;
+  }
+}
+.root :global(.risk-list) {
+  margin-top: 10px;
+}
+.root :global(.risk-item) {
+  padding: 17px 0;
+  border-top: 1px solid var(--line);
+}
+.root :global(.risk-item-heading) {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+.root :global(.risk-item-heading h3) {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.8;
+  font-weight: 500;
+}
+.root :global(.risk-severity) {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  font-size: 10px;
+  background: var(--sidebar);
+}
+.root :global(.risk-item-heading button) {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+.root :global(.risk-item-meta) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 9px;
+  padding-left: 31px;
+}
+.root :global(.risk-item-meta span:last-child) {
+  margin-left: auto;
+}
+.root :global(.risk-item.is-closed .risk-item-meta span:last-child) {
+  color: var(--success);
+}
+.root :global(.risk-item-details) {
+  padding-left: 31px;
+  margin-top: 8px;
+}
+.root :global(.risk-item-details summary) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+.root :global(.risk-item-details summary::-webkit-details-marker) {
+  display: none;
+}
+.root :global(.risk-item-details dl) {
+  margin: 9px 0 0;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.root :global(.risk-item-details dl > div) {
+  display: flex;
+  gap: 10px;
+  margin: 5px 0;
+}
+.root :global(.risk-item-details dt) {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.root :global(.risk-item-details dd) {
+  margin: 0;
+}
+.root :global(.creation-table) {
+  min-width: 510px !important;
+}
+.root
+  :global(
+    .creation-table
+      :is(th, td):is(
+        :nth-child(2),
+        :nth-child(4),
+        :nth-child(5),
+        :nth-child(6),
+        :nth-child(9),
+        :nth-child(10),
+        :nth-child(11),
+        :nth-child(12)
+      )
+  ) {
+  display: none;
+}
+.root :global(.vm-task-table) {
+  min-width: 620px !important;
+}
+.root
+  :global(
+    .vm-task-table
+      :is(th, td):is(
+        :nth-child(8),
+        :nth-child(9),
+        :nth-child(10),
+        :nth-child(11),
+        :nth-child(12)
+      )
+  ) {
+  display: none;
+}
+.root :global(.validation-table) {
+  min-width: 550px !important;
+}
+.root
+  :global(
+    .validation-table
+      :is(th, td):is(:nth-child(3), :nth-child(5), :nth-child(6))
+  ) {
+  display: none;
+}
+.root :global(.validation-table td:nth-child(7) button) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+}
+.root :global(.project-records) {
+  padding: 26px;
+}
+.root :global(.project-records h2) {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+.root :global(.project-records > p) {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 25px;
+}
+.root :global(.project-records > button) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+.root :global(.deliverable-row) {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.deliverable-row > span) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.root :global(.deliverable-row small) {
+  font-size: 11px;
+  color: var(--muted);
+}
+.root :global(.operation-log) {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.root :global(.operation-log li) {
+  display: flex;
+  gap: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+}
+.root :global(.operation-log time) {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding-top: 3px;
+}
+.root :global(.operation-log small) {
+  color: var(--muted);
+  font-size: 11px;
+}
+.root :global(.operation-log p) {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+@media (max-width: 760px) {
+  .root :global(.project-records) {
+    padding: 18px;
+  }
+}
+.root:global(.management-surface) {
+  width: 100%;
+  min-width: 0;
+}
+.root:global(.management-surface .archive-panel) {
+  padding: 0;
+}
+.root:global(.management-surface .project-records) {
+  padding: 0;
+}
+.root:global(.management-surface .archive-panel > header h2) {
+  font-size: 22px;
+  font-weight: 550;
+}
+.root:global(.management-surface .project-records h2) {
+  font-size: 22px;
+  font-weight: 550;
+}
+.root:global(.management-surface .archive-panel > header) {
+  margin-bottom: 22px;
+}
+.root:global(.management-surface .archive-panel table) {
+  font-size: 12px;
+}
+.root:global(.management-surface .archive-panel th) {
+  padding: 12px;
+}
+.root:global(.management-surface .archive-panel td) {
+  padding: 12px;
+}
+.root:global(.management-surface .risk-list) {
+  max-width: 920px;
+}
+.root:global(.management-surface .operation-log) {
+  max-width: 900px;
+}
+@media (max-width: 760px) {
+  .root:global(.management-surface .archive-panel > header h2) {
+    font-size: 20px;
+  }
+  .root:global(.management-surface .project-records h2) {
+    font-size: 20px;
+  }
+}
+.root:global(.management-surface .task-head-actions) {
+  display: none;
+}
+.root :global(.vm-progress i) {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.root :global(.validation-approval button) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.root :global(.validation-approval button:hover:not(:disabled)) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.root :global(.deliverable-row > svg) {
+  color: var(--accent);
+}
+.root :global(.deliverable-row:hover) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.root :global(.risk-toolbar button.active) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.root :global(.batch-toolbar button.active) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.root :global(.task-primary-tabs button.active) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.root :global(.vm-task-tabs button.active) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.root :global(.wizard-steps button.active) {
+  color: var(--accent-ink);
+}
+.root :global(.advanced-options button.on) {
+  background: var(--accent);
+}
+.root
+  :global(
+    :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary)
+  ) {
+  gap: 0;
+  padding: 14px 16px;
+  background: var(--info-soft);
+  border: 0;
+  border-radius: 9px;
+}
+.root
+  :global(
+    :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary) > div
+  ) {
+  padding: 0 14px;
+}
+.root
+  :global(
+    :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary)
+      > div:first-child
+  ) {
+  padding-left: 0;
+}
+.root
+  :global(
+    :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary) strong
+  ) {
+  color: var(--tone-ink, var(--info));
+}
+.root
+  :global(
+    :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary)
+      :is(small, em)
+  ) {
+  color: var(--info);
+}
+.root :global(.risk-severity.level-high) {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.root :global(.risk-level.level-high) {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.root :global(.risk-severity.level-medium) {
+  background: var(--info-soft);
+  color: var(--info);
+}
+.root :global(.risk-level.level-medium) {
+  background: var(--info-soft);
+  color: var(--info);
+}
+.root :global(.risk-item-meta > span:last-child) {
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+.root :global(.risk-item.is-closed .risk-item-meta > span:last-child) {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.root :global(.sync-status.done) {
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--success);
+  background: var(--success-soft);
+}
+.root :global(.validation-status.done) {
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--success);
+  background: var(--success-soft);
+}
+.root :global(.sync-status.running) {
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.root :global(.risk-overview) {
+  max-width: 920px;
+  padding: 15px 18px;
+  margin-bottom: 20px;
+  background: var(--info-soft);
+  border-radius: 9px;
+  color: var(--info);
+}
+.root :global(.risk-overview > header) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.root :global(.risk-overview h3) {
+  font-size: 12px;
+  font-weight: 550;
+}
+.root :global(.risk-closure-track) {
+  display: flex;
+  gap: 3px;
+  height: 7px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--line);
+}
+.root :global(.risk-closure-track > i) {
+  min-width: 0;
+}
+.root :global(.risk-closure-track > .closed-segment) {
+  background: var(--success);
+}
+.root :global(.risk-closure-track > .open-segment) {
+  background: var(--warning);
+}
+.root :global(.risk-chart-legend) {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 11px;
+}
+.root :global(.risk-chart-legend > span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.root :global(.risk-chart-legend i) {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--warning);
+}
+.root :global(.risk-chart-legend > span:first-child i) {
+  background: var(--success);
+}
+.root :global(.risk-chart-legend > span:last-child) {
+  margin-left: auto;
+  color: var(--warning);
+}
+.root :global(.gantt-bar.phase-pilot) {
+  background: var(--info);
+  color: var(--on-accent);
+}
+.root :global(.gantt-bar.phase-core) {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.root :global(.gantt-bar.phase-scale) {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.root :global(.gantt-bar:hover) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.root :global(.gantt-bar.selected) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.root :global(.gantt-row.selected) {
+  background: var(--accent-surface);
+}
+.root :global(.gantt-legend > span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.root :global(.gantt-legend i) {
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--accent-soft);
+}
+.root :global(.gantt-legend .pilot) {
+  background: var(--info);
+}
+.root :global(.gantt-legend .tackle) {
+  background: var(--accent);
+}
+.root :global(.batch-phase) {
+  font-size: 10px;
+  color: var(--secondary);
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.root :global(.batch-phase.phase-pilot) {
+  color: var(--info);
+  background: var(--info-soft);
+}
+.root :global(.batch-phase.phase-core) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.root :global(.batch-phase.phase-scale) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+@media (max-width: 760px) {
+  .root
+    :global(
+      :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary)
+    ) {
+    gap: 14px;
+  }
+  .root
+    :global(
+      :is(.panel-kpis, .cutover-kpis, .validation-kpis, .creation-summary) > div
+    ) {
+    padding: 0;
+    min-width: 100px;
+  }
+}
+.root :global(.operation-log li > div) {
+  min-width: 0;
+}
+.root :global(.operation-log li small) {
+  color: var(--muted);
+  font-size: 11px;
+}
+.root :global(.risk-severity.level-high),
+.root :global(.risk-level.level-high) {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+}
+.root :global(.risk-severity.level-medium),
+.root :global(.risk-level.level-medium) {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+.root :global(.archive-panel th) {
+  font-size: 12px;
+}
+.root :global(.archive-panel td) {
+  font-size: 13px;
+}
+.root :global(.archive-panel > header h2) {
+  font-size: 20px;
+}
+.root :global(.panel-kpis strong) {
+  color: var(--info);
+}
+.root :global(.status-confirmed),
+.root :global(.status-created),
+.root :global(.check-pass) {
+  color: var(--success);
+}
+.root :global(.archive-panel) {
+  color: var(--text);
+}

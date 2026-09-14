@@ -1,68 +1,49 @@
-# Migration Workspace Design System
+# MigrationDirector Plus 视觉规范
 
-## Visual direction
+面向迁移项目经理与实施工程师的日常工作台。沿用对话为主、进度为辅的布局，参考用户提供的 Codex 截图增强文字对比和业务输出层次。架构与适配说明见 [docs/design.md](docs/design.md)。
 
-A quiet, light workspace for migration delivery. The conversation is the primary surface. A compact progress rail gives orientation; an output inspector shows the active specialist's steps and results. Reference: the user's requested ChatGPT conversation structure and Codex-style output organization.
+## 色彩与主题
 
-## Surfaces and color
+默认白色，设置中依次提供白、黑、绿、红四种主题。青绿和酒红只用于导航选择、关键动作与少量模块标记，不给不同智能体分配彩色大卡。使用系统字体，不依赖外网字体。
 
-A settings button to the right of the current user opens a right-side modal drawer. Its appearance section offers white (default), neutral charcoal dark, teal (#167D7F), and burgundy (#934352), in that order. The choice applies across projects, standalone setup, conversations, management pages and diagrams; it is stored locally and restored before first paint. An absent or invalid saved value falls back to white. White uses the original quiet neutral surfaces; teal and burgundy retain restrained module tints. Dark uses separate canvas, panel and raised surface tokens, light text and adjusted semantic colors. All components use theme tokens rather than hard-coded light backgrounds.
+- 正文：中性高对比色；辅助文字以 `--muted` 区分，不通过透明度降低整块内容可读性。
+- 完成：`--success` 绿色；执行中：`--info` 蓝色。
+- 待处理/提醒：`--warning` 琥珀色；失败/高风险：`--danger` 红色。
+- 状态同时提供文字或图标，不能只靠颜色表达。
+- 全局背景覆盖导航、对话和右侧详情，保留左右分隔线。移动导航和浮层采用不透明背景。
 
-Slate blue identifies inputs and scale statistics in colored themes; green means completion and amber means risk. Compact step segments and risk closure bars use actual project state; labels and counts provide the same information without color. No gradients, decorative glow, or agent-specific color palettes.
+语义色、正文与气泡变量在 `src/styles/tokens.css`；原有主题、背景与基础控制变量在 `src/styles/index.css`。不要在功能文件里另加同义色系。偏好即时应用并在本地保存，白色/无背景/中文为默认值。
 
-## Typography
+## 对话与业务结果
 
-The settings drawer uses a 20px title and 14px section labels. Four compact interface thumbnails preview the appearances, with labels and a check marking the current choice. The sidebar footer contains only the avatar, account name and settings icon.
+三个浅色主题的用户气泡为深石墨底、浅色字；深色主题使用与画布区分的灰色表面。助手内容开放排版，无大气泡。
 
-One native system sans-serif stack, including PingFang SC and Microsoft YaHei for Chinese. Conversation body is 14–15px with a compact 1.65 line height, 9px paragraph spacing and 4px between list items. Metadata stays subordinate; headings use modest size and weight differences. Use clear Chinese labels instead of repeated English eyebrows.
+桌面助手正文 15px、小屏 14px，行高约 1.6。辅助信息 12px；关键结论通过字重强调，避免大段加粗。消息不重复平台名，也不显示每轮时间。耗时以整秒展示，等待时每秒更新一次。
 
-## Layout
+助手回答可包含可折叠的思考摘要、最终文本和业务结果块。摘要是模拟服务编写的说明，不是真实模型思维链。保留有效的复制正文操作，不增加没有动作的图标。
 
-Desktop: 256px navigation (240px on compact desktops), flexible conversation, 282px inspector. Four stages occupy a horizontal progress rail instead of large cards. Chat content uses a responsive centered column: 790px normally, 980px from 1600px viewport width, and 1160px from 1920px. The progress rail and composer align to its inner reading width. Embedded forms remain narrower (620/700/780px) to keep conversation primary. The message body scrolls independently. The composer stays anchored below it. Under 981px, the inspector is opt-in; under 761px, navigation becomes a drawer.
+结果块采用紧凑标题、列表及底部必要操作，10–12px 圆角和细边框。以迁移摘要、任务、交付文件及人工确认呈现，不照搬代码 diff 或文件修改统计。不嵌套大卡片。默认三项，剩余内容可展开；详细管理继续使用已有页面。
 
-## Components
+## 布局与导航
 
-Controls share neutral borders, 7px radii and visible keyboard focus. Embedded workflow surfaces use 10px radii and a single border. Chat input uses a 15px radius. Buttons use verb-first actions. Line icons share one stroke weight. Shortcut categories use native disclosure controls with one open menu and Escape/outside-click dismissal.
+桌面侧栏约 256px，右侧详情约 282px；对话阅读列随宽屏扩展，普通桌面 790px、1600px 起约 980px、1920px 起约 1160px（含内边距）。进度和输入框与阅读列对齐；阶段表单约 640px，宽屏约 700px，保持对话为主。
 
-The composer footer places the agent selector and attachment action on the left, and the model selector and send action on the right. Agents include general, assessment, planning, execution and validation; stage conversations default to their corresponding agent, temporary conversations to general. GLM 5.1 (default) and DeepSeek v4 are user-specified preview options, with the menu indicating that no model service is connected. Both choices stay in each conversation's page memory. Sending captures the selected agent and model in that turn's metadata, so changes while a reply is pending apply to later messages. Choosing an agent adjusts the authored reply focus without bypassing stage prerequisites.
+侧栏顺序：项目管理四入口 → 四阶交付会话 → 临时对话。文字和标题统一 14px，紧凑桌面行距，移动端提供较大点击区域。当前用户和设置按钮位于底部，品牌与项目选择器位于左上角。
 
-Assistant answers separate a collapsible thought summary from the final response, using compact paragraphs, emphasis and lists. Waiting shows a quiet thinking indicator with elapsed time updated once per second; completed replies retain their duration in whole seconds. The summary describes the authored response focus, and the timer measures frontend simulation latency. There is no real model reasoning service or execution trace in this presentation. Async answers and duration always return to the initiating conversation.
+四阶只在阶段会话与初始空白工作区显示。首页和评估启动前使用流程预览，不显示 0%。管理页不展示顶部流程、输入框或右侧详情；临时对话隐藏流程和详情。进入阶段须人工确认，确认前展示条件和影响。
 
-Project switching, project and task forms, agent/model pickers and language use the shared custom Select. Triggers keep the existing border, radius, typography and focus tokens; menus share an opaque theme surface, compact rows, a selected check and a restrained hover state. Menus use fixed positioning with viewport-aware upward/downward placement, portalled into the nearest modal dialog or the document body. Arrow keys, Home/End, Enter, Escape, Tab and typeahead preserve keyboard access. Narrow layouts constrain the menu to viewport edges and coarse pointers receive 44px option targets. The short opacity entrance respects reduced motion.
+桌面侧栏可折叠；手机使用导航抽屉。较窄桌面右侧详情可收起。2K 下保持阅读宽度，表格在自身容器横向滚动。
 
-Planning inputs, MD setup, task configuration and verification live inside compact conversation embeds. Tasks, risks, deliverables and operation logs use dedicated management surfaces. Large tables scroll inside their own containers. Risk details progressively disclose secondary metadata; closure is an inline form.
+## 组件与可访问性
 
-## State and accessibility
+按钮、表单、状态、结果框架、空状态从 shared/ui 复用。Select 为自定义下拉，支持方向键、Home/End、Enter、Escape、Tab 和输入检索，并处理弹层边界与模态对话内的定位。
 
-Show distinct waiting, active, blocked and done steps with text and icons, not color alone. Queue and artifact statistics come from current demo state. Progress bars expose value and label. Use a slow sweep only while a stage is executing, breathing nodes only for actual running work, brief check drawing for completed steps, and a 160ms menu entrance. Waiting for user input is static. Respect reduced motion. Use live regions for assistant messages and task notifications; do not move keyboard focus when background progress updates.
+Agent 在输入框左下，模型在右下；分类快捷操作紧贴输入框上方。子会话初始仅提供短上下文，选择操作才展开表单。
 
-## Project navigation and entry
+设置使用右侧 560px 模态抽屉，包含通用与账户认证两页。背景、语言和主题自动保存；Nexent 配置需要手动保存，API Key 与账号密码分别说明输入规则，不提供平台地址字段。退出需要确认。
 
-The left header contains a custom project switcher and icon actions for new project and new chat. The sidebar order is project resources, a unified delivery conversation list, then temporary chats. Before project creation, resource entries retain normal text contrast but remain disabled; a custom tooltip appears immediately on hover or keyboard focus with “创建或选择项目后开启” (Create or select a project to enable). Disabled resource controls use aria-disabled with guarded activation so they remain discoverable by keyboard. The tooltip renders outside the navigation scroll container, stays within the viewport, and closes on Escape, scroll or pointer/focus exit. Delivery history remains visible across stages. Automatically created conversations are named after their stage; other conversation names show a short stage label inline at the right. Full names and stage context remain available in hover titles and accessible labels; omit repeated creation subtitles. Both support inline renaming. The plus action creates a conversation in the currently viewed stage.
+所有操作保留可见焦点。异步回复和通知使用适当 live region，背景任务不抢走会话。无渐变、装饰大卡或繁杂动画；遵循 prefers-reduced-motion，业务进度更新不依赖动画表达。
 
-The top progress rail switches between entered stages and restores their last viewed conversation. A ready but unentered stage is labeled “待确认”. An inline handoff notice progressively discloses completed prerequisites and the effect of proceeding. Only explicit confirmation creates the next stage conversation; cancellation preserves all state. Background completion announces readiness without navigation or conversation creation.
+## 品牌资产
 
-Stage entry conversations retain guided forms. Other conversations start with short project context and reveal shared operations through shortcuts. Messages, drafts, pending replies and expanded panels belong to a conversation, while execution and project records are shared. Results return to the initiating conversation. Management and temporary chats hide the rail but retain delivery history. New project remains a standalone form followed by the research conversation. The empty lobby omits the conversation context toolbar and opens directly onto its welcome actions. The empty lobby and new projects awaiting assessment show a compact four-stage preview with icons and short stage descriptions, without percentages or empty progress bars. The assessment stage becomes available after project creation; once assessment starts, the preview becomes the live progress rail. Descriptions hide on compact screens while stage titles remain visible. Project state resets on refresh.
-
-Resource, delivery and temporary navigation share 14px text, 16px leading icons, 36px desktop rows and 2px row gaps. Section labels use the same 14px size as resource menu entries; 20px spacing separates groups without divider lines. Align icon and text columns across lists. Long conversation names truncate on one line while stage labels remain visible. The mobile drawer is 288px wide at most, with 44px navigation rows and icon targets. The bottom-left area displays the current user avatar and account label.
-
-## Workspace refinement
-
-Use MigrationDirector Plus as the platform name. Show the stage rail only in stage conversations and the initial empty workspace. Management pages and temporary chats omit it; management pages also omit the composer and inspector. Categorized shortcuts sit immediately above the composer and open upward. Assistant messages show a branch-node icon, without per-message timestamps or the platform name. Timestamps remain available in operation logs and inspector activity. The inspector starts with current status and steps, omitting agent identity and description. Remove the daily report and DEMO badges. Embedded forms are limited to 620px with 12–16px padding.
-
-The platform name and mark sit at the top of the left navigation, above the project switcher and creation actions. A desktop toggle collapses navigation into a 56px rail with expand, new project, new chat and settings actions. The conversation takes the freed width; inspector visibility is independent. Collapse state is shared across projects during the page session. Narrow screens retain their drawer, regardless of desktop collapse state. Toggling moves keyboard focus to the corresponding expand/collapse button and preserves conversation state. The main canvas starts directly with stage progress; its redundant branding toolbar is removed. Narrow layouts retain a small navigation launcher. When execution details are hidden, a text action in the conversation context restores them.
-
-## Header logo
-
-The upper-left navigation and project setup header use the Huawei flower symbol before MigrationDirector Plus. The browser favicon uses the same symbol, centered in a square viewport. Preserve its official red and proportions across all themes. The local `public/huawei-symbol.svg` contains the symbol path from the [Huawei website logo](https://consumer.huawei.com/.resources/huawei-cbg-site-lm-basic/webresources/mkt/etc/designs/huawei-cbg-site/clientlib-campaign-v4/common-v4/images/logo.svg).
-
-
-## Settings drawer and localization
-
-The native modal dialog slides in from the right, 560px wide on desktop and bounded by the viewport on mobile. Native dialog focus containment includes the authentication fields; Escape and backdrop clicks close it and restore focus to its trigger. A fixed tab strip separates General (appearance, background and language) from Account & authentication. Tabs support arrow, Home and End keys. The scrollable body and fixed footer keep controls usable on short screens. Reduced-motion users receive no slide animation.
-
-Account & authentication starts with the current user and an inline sign-out review. Nexent authentication follows a thin separator, with a two-option radio group for API Key or account/password and labeled credential fields. There is no platform URL input. Credentials are masked by default, with a reveal control. Each authentication method has a brief tip and persistent input rules. API keys and account names trim surrounding whitespace; keys reject internal whitespace, while passwords preserve exact case and whitespace but cannot be blank. Validation is inline and focuses the first invalid field on submit. Save and clear actions affect React memory only; saved configuration is explicitly marked unverified. Closing the drawer or switching tabs discards unsaved form input. Confirmed sign-out unmounts workspace state and credentials, retains appearance preferences, and displays a signed-out page with a frontend-preview reentry action. No real identity or Nexent service is connected in this iteration.
-
-Background choices use bundled images referenced in the background-selection conversation: white curves, misty mountains and graphite waves, plus the default solid canvas. A single fixed background spans the entire viewport, including desktop navigation, conversations, the inspector, management pages and project setup. The crop stays aligned when projects, pages or sidebar visibility change. Desktop navigation and inspector surfaces are transparent; the navigation keeps a 1px theme-aware divider against the content, including when collapsed. Forms, inputs, tables, settings and floating mobile drawers retain opaque surfaces for readability. Photo opacity is controlled by theme and image; misty mountains use 40% opacity in light appearances and 18% in dark, with darker secondary text in light appearances to preserve contrast. No external image host is needed at runtime. Credits live in `public/backgrounds/README.md`.
-
-Simplified Chinese and English share the same layout and state. A local string catalog translates rendered labels, controls, statuses, shortcuts and system-authored templates. Select values and business enums retain their canonical values. Assistant replies use the language active when issued; existing messages, user questions, project names and renamed conversations retain their original content. Changing language does not remount projects or discard drafts. The HTML language attribute and saved preferences update immediately.
+平台名为 MigrationDirector Plus。导航、创建页和网页 favicon 使用本地 Huawei 标志，保持原始红色和比例。背景来源见 [public/backgrounds/README.md](public/backgrounds/README.md)。

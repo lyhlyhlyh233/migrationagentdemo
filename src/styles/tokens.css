@@ -1,0 +1,67 @@
+:root {
+  --text: #232529;
+  --muted: #666a70;
+  --surface: #fff;
+  --surface-subtle: #fafafa;
+  --surface-hover: #f1f2f3;
+  --line: #e4e5e7;
+  --bubble-bg: #26282d;
+  --bubble-text: #fafafa;
+  --info: #2866aa;
+  --success: #247b50;
+  --warning: #946213;
+  --danger: #b13b42;
+  --body-size: 15px;
+  --meta-size: 12px;
+}
+:root[data-theme="dark"] {
+  --text: #e8e9ec;
+  --muted: #aaaeb7;
+  --surface: #25272c;
+  --surface-subtle: #222429;
+  --surface-hover: #33363c;
+  --line: #40434b;
+  --bubble-bg: #3c3f46;
+  --bubble-text: #f5f5f6;
+  --info: #83b9f2;
+  --success: #83caa2;
+  --warning: #e4bb76;
+  --danger: #ed9699;
+}
+[data-tone="info"] {
+  color: var(--info);
+}
+[data-tone="success"] {
+  color: var(--success);
+}
+[data-tone="warning"] {
+  color: var(--warning);
+}
+[data-tone="danger"] {
+  color: var(--danger);
+}
+body {
+  color: var(--text);
+}
+button,
+input,
+textarea {
+  font: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
