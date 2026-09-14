@@ -1,5 +1,6 @@
 .root {
-  color: var(--ink);
+  container-type: inline-size;
+  color: var(--text);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -18,7 +19,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
-  padding: 16px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
 .overview span {
@@ -26,7 +27,7 @@
 }
 .overview strong {
   margin-left: 6px;
-  color: var(--ink);
+  color: var(--text);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -37,7 +38,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 16px;
 }
 .filters > button {
   flex: 1;
@@ -65,7 +66,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 14px 0;
+  min-height: 58px;
+  padding: 10px 0;
   font-size: 12px;
   color: var(--secondary);
 }
@@ -80,32 +82,183 @@
   flex-shrink: 0;
   accent-color: var(--accent);
 }
-.editor {
-  border-block: 1px solid var(--line-strong);
-  padding: 16px 0;
-  margin-bottom: 18px;
-}
-.editorTitle {
+.layout {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0;
-}
-.choices label {
-  display: flex;
-  flex: 1;
-  min-width: 180px;
   flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
+  gap: 18px;
+  align-items: stretch;
 }
-.editor textarea,
+.tablePane {
+  min-width: 0;
+}
+.tableScroll {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.root .table {
+  width: 100%;
+  min-width: 630px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: var(--panel);
+}
+.table .selectColumn {
+  width: 32px;
+}
+.table .impactColumn {
+  width: 116px;
+}
+.table .strategyColumn {
+  width: 138px;
+}
+.table .actionColumn {
+  width: 88px;
+}
+.root .table th,
+.root .table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.root .table thead th {
+  background: var(--surface-subtle);
+  color: var(--secondary);
+  font-weight: 500;
+  padding-block: 9px;
+}
+.root .table th[scope="row"] {
+  font-weight: 400;
+}
+.root .table tbody:last-child > tr:last-child > * {
+  border-bottom: 0;
+}
+.root .table tr[data-selected="true"] > * {
+  background: var(--accent-soft);
+}
+.table small {
+  display: block;
+  margin-top: 5px;
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 400;
+}
+.riskTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.riskTitle strong {
+  font-weight: 550;
+  flex: 1;
+}
+.severity {
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.severity[data-level="high"],
+.table [data-impact="blocked"] {
+  color: var(--danger);
+}
+.severity[data-level="medium"],
+.table [data-impact="change"] {
+  color: var(--warning);
+}
+.severity[data-level="low"],
+.table [data-impact="constraint"] {
+  color: var(--info);
+}
+.root .table .groupRow th {
+  padding: 8px 10px;
+  background: var(--surface-subtle);
+}
+.groupRow th > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.groupRow button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 3px 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 550;
+}
+.groupRow button > span {
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 400;
+}
+.root .textAction {
+  border: 0;
+  background: transparent;
+  padding: 3px 0;
+  color: var(--accent-ink);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+}
+.root .textAction:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.root .textAction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rowActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.root .table .detailRow td {
+  padding: 16px 20px;
+  background: var(--surface-subtle);
+}
+.evidence {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.evidence dt {
+  color: var(--secondary);
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+.evidence dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.detailRow td > button {
+  margin-top: 12px;
+}
+.strategyPane {
+  min-width: 0;
+  order: -1;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  scroll-margin-block: 12px;
+}
+.strategyPane:focus {
+  outline: none;
+}
+.verification {
+  padding-top: 12px;
+}
 .verification textarea {
   display: block;
   width: 100%;
@@ -115,11 +268,6 @@
   font: inherit;
   margin-top: 6px;
 }
-.editor > label {
-  display: block;
-  margin-top: 12px;
-  font-size: 12px;
-}
 .editorActions {
   display: flex;
   justify-content: flex-end;
@@ -127,121 +275,41 @@
   gap: 8px;
   margin-top: 10px;
 }
-.group {
-  position: relative;
-  border-top: 1px solid var(--line);
-}
-.group > summary {
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 16px 80px 14px 0;
-}
-.group > summary span {
-  margin-left: 6px;
-  color: var(--secondary);
-  font-size: 12px;
-  font-weight: 400;
-}
-.selectGroup {
-  position: absolute;
-  right: 0;
-  top: 12px;
-  padding: 5px 0;
-  font-size: 12px;
-  border: 0;
-  color: var(--accent-ink);
-  background: transparent;
-}
-.risk {
-  padding: 0 0 18px;
-}
-.risk + .risk {
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.riskHeading {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.riskHeading strong {
-  font-size: 13px;
-  font-weight: 550;
-  flex: 1;
-}
-.severity {
-  font-size: 11px;
-  white-space: nowrap;
-}
-.severity[data-level="high"],
-.meta [data-impact="blocked"] {
-  color: var(--danger);
-}
-.severity[data-level="medium"],
-.meta [data-impact="change"] {
-  color: var(--warning);
-}
-.severity[data-level="low"],
-.meta [data-impact="constraint"] {
-  color: var(--info);
-}
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 12px;
-  font-size: 11px;
-  color: var(--secondary);
-  margin: 5px 0 9px;
-}
-.recommendation {
-  margin-block: 8px;
-  color: var(--ink);
-}
-.evidence {
-  font-size: 12px;
-  color: var(--secondary);
-  margin-top: 6px;
-}
-.evidence summary {
-  cursor: pointer;
-}
-.evidence p {
-  margin-top: 6px;
-}
-.decision {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 12px;
-}
-.decision > span {
-  flex: 1;
-}
 .hint {
   margin-block: 8px;
-}
-.verification {
-  padding-top: 12px;
 }
 .empty {
   padding-block: 28px;
   color: var(--secondary);
 }
+@container (min-width: 1000px) {
+  .layout[data-editing="true"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+  .strategyPane {
+    order: 0;
+    position: sticky;
+    top: 0;
+  }
+  .filters .search {
+    width: auto;
+    flex: 2;
+  }
+}
 @media (max-width: 600px) {
   .overview {
     gap: 14px;
   }
-  .editorTitle {
-    flex-wrap: wrap;
-  }
-  .riskHeading {
-    align-items: flex-start;
-  }
   .filters > button {
-    min-width: 100px;
+    min-width: 95px;
+  }
+  .root .textAction {
+    min-height: 36px;
+  }
+  .strategyPane {
+    padding: 12px;
   }
 }
 @media (min-width: 1920px) {
@@ -255,19 +323,23 @@
   .hint,
   .filters > button,
   .batch,
-  .choices label,
-  .editor > label,
-  .evidence,
-  .decision {
+  .root .table,
+  .root .textAction {
     font-size: 14px;
   }
-  .riskHeading strong,
-  .group > summary {
-    font-size: 15px;
-  }
-  .meta,
+  .table small,
   .severity,
-  .selectGroup {
-    font-size: 13px;
+  .groupRow button > span,
+  .evidence dt {
+    font-size: 12px;
+  }
+  .table .impactColumn {
+    width: 126px;
+  }
+  .table .strategyColumn {
+    width: 154px;
+  }
+  .table .actionColumn {
+    width: 96px;
   }
 }

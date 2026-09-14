@@ -1,0 +1,161 @@
+.root {
+  color: var(--text);
+  font-size: 13px;
+}
+.root header {
+  margin-bottom: 12px;
+}
+.root header > strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+}
+.root header > span {
+  display: block;
+  color: var(--secondary);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.root header p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.options {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.option {
+  display: flex;
+  gap: 9px;
+  padding: 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.option:hover {
+  background: var(--surface-hover);
+}
+.option[data-selected="true"] {
+  background: var(--accent-soft);
+}
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.option input,
+.methods input {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin: 3px 0 0;
+}
+.option > span {
+  min-width: 0;
+}
+.option strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: inherit;
+  font-weight: 550;
+}
+.option small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--secondary);
+}
+.option em {
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--accent-ink);
+}
+.option[data-disabled="true"] {
+  cursor: not-allowed;
+}
+.option[data-disabled="true"] strong {
+  color: var(--secondary);
+}
+.option[data-disabled="true"]:hover {
+  background: transparent;
+}
+.details {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 12px;
+}
+.details > label {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.details textarea {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  margin-top: 6px;
+  padding: 8px;
+  font: inherit;
+}
+.methods {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.methods legend {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.methods label {
+  display: inline-flex;
+  gap: 6px;
+  font-size: 12px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.methods label:has(input:disabled) {
+  color: var(--secondary);
+  cursor: not-allowed;
+}
+.root footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.note {
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+@media (min-width: 1920px) {
+  .root {
+    font-size: 15px;
+  }
+  .root header > strong {
+    font-size: 17px;
+  }
+  .root header > span,
+  .option small,
+  .details > label,
+  .methods legend,
+  .methods label,
+  .note {
+    font-size: 14px;
+  }
+  .option em {
+    font-size: 12px;
+  }
+}

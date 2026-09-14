@@ -120,8 +120,21 @@ export function Composer({
         </p>
       )}
       {stage && (
-        <div className="composer-shortcuts">
-          <ShortcutMenu groups={groups} />
+        <div className={styles.topRow}>
+          <div className="composer-shortcuts">
+            <ShortcutMenu groups={groups} />
+          </div>
+          {onNext && (
+            <button
+              type="button"
+              disabled={busy}
+              className={styles.nextStage}
+              onClick={onNext}
+            >
+              {nextLabel}
+              <Icon name="right" size={15} />
+            </button>
+          )}
         </div>
       )}
       <form
@@ -186,17 +199,6 @@ export function Composer({
       </form>
       <div className={styles.footerRow}>
         <p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p>
-        {onNext && (
-          <button
-            type="button"
-            disabled={busy}
-            className={styles.nextStage}
-            onClick={onNext}
-          >
-            {nextLabel}
-            <Icon name="right" size={14} />
-          </button>
-        )}
         {stage === "validation" && (
           <span className={styles.lastStage}>{t("当前为最终验证阶段")}</span>
         )}

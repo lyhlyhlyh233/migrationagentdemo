@@ -492,13 +492,13 @@
   .root:global(.workspace.inspector-collapsed) {
     display: block;
   }
-  .root :global(.workspace-nav) {
+  .root:global(.workspace > .workspace-nav) {
     display: none;
   }
   .root :global(.conversation-workspace) {
     height: 100dvh;
   }
-  .root :global(.nav-open .workspace-nav) {
+  .root:global(.workspace.nav-open > .workspace-nav) {
     position: fixed;
     left: 0;
     top: 0;
@@ -852,7 +852,7 @@
   }
 }
 @media (max-width: 760px) {
-  .root :global(.nav-open .workspace-nav) {
+  .root:global(.workspace.nav-open > .workspace-nav) {
     width: min(288px, calc(100vw - 24px));
   }
   .root :global(.workspace-welcome) {
@@ -1180,6 +1180,7 @@
 }
 @media (max-width: 760px) {
   .root:global(.workspace) {
+    display: block;
     --conversation-gutter: 18px;
   }
 }

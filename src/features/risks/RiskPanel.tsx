@@ -1,10 +1,5 @@
-import { useId, useRef, useState } from "react";
-import type {
-  ProjectSnapshot,
-  RiskItem,
-  RiskStrategy,
-  MigrationMethod,
-} from "@/domain/models";
+import { Fragment, useId, useRef, useState } from "react";
+import type { ProjectSnapshot, RiskItem } from "@/domain/models";
 import {
   canChangeAssessmentDecision,
   excludedFromTool,
@@ -23,7 +18,9 @@ import {
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { Select } from "@/shared/ui/Select";
+import { RiskStrategyEditor } from "./RiskStrategyEditor";
 import styles from "./RiskPanel.module.css";
+
 export function RiskPanel({
   snapshot: s,
   onCommand,
@@ -33,15 +30,15 @@ export function RiskPanel({
 }) {
   const t = useTranslation();
   const uid = useId();
-  const editor = useRef<HTMLDivElement>(null);
+  const editor = useRef<HTMLElement>(null);
   const [query, setQuery] = useState("");
   const [groupBy, setGroupBy] = useState("category");
   const [level, setLevel] = useState("all");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<number[]>([]);
-  const [strategy, setStrategy] = useState<RiskStrategy>("remediate");
-  const [method, setMethod] = useState<MigrationMethod>("agentless");
-  const [note, setNote] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [details, setDetails] = useState<number[]>([]);
   const [verification, setVerification] = useState<number | null>(null);
   const [evidence, setEvidence] = useState("");
   const [saving, setSaving] = useState(false);
@@ -77,27 +74,35 @@ export function RiskPanel({
   const selectable = visible
     .filter((r) => r.stage === "research")
     .map((r) => r.id);
-  function select(ids: number[]) {
+  const showEditor = editorOpen && selectedRisks.length > 0 && editable;
+  function select(ids: number[], open = false) {
     setSelected(ids);
+    setEditorOpen(open);
     setFeedback("");
     setVerification(null);
-  }
-  function edit(r: RiskItem) {
-    select([r.id]);
-    setStrategy(r.decision?.strategy ?? r.recommendedStrategy ?? "remediate");
-    setMethod(r.decision?.method ?? r.recommendedMethod ?? "agentless");
-    setNote(r.decision?.note ?? r.recommendation ?? "");
-    requestAnimationFrame(() =>
-      editor.current?.scrollIntoView({ block: "nearest", behavior: "instant" }),
-    );
+    if (open)
+      requestAnimationFrame(() => {
+        editor.current?.scrollIntoView({
+          block: "nearest",
+          behavior: "instant",
+        });
+        editor.current?.focus({ preventScroll: true });
+      });
   }
   async function submit(cmd: ProjectCommand) {
     setSaving(true);
     setFeedback("");
-    const ok = await onCommand(cmd);
-    setSaving(false);
+    let ok = false;
+    try {
+      ok = await onCommand(cmd);
+    } catch {
+      ok = false;
+    } finally {
+      setSaving(false);
+    }
     if (ok) {
       setSelected([]);
+      setEditorOpen(false);
       setVerification(null);
       setEvidence("");
       setFeedback("已保存，处置说明已同步到发起会话。");
@@ -172,7 +177,7 @@ export function RiskPanel({
         <label>
           <input
             type="checkbox"
-            disabled={!editable || !selectable.length}
+            disabled={!editable || saving || !selectable.length}
             checked={
               !!selectable.length &&
               selectable.every((id) => selected.includes(id))
@@ -189,7 +194,19 @@ export function RiskPanel({
         </label>
         <span>{t("已选 {0} 项", selected.length)}</span>
         {selected.length > 0 && (
-          <Button onClick={() => select([])}>{t("清空选择")}</Button>
+          <>
+            <Button onClick={() => select(selected, true)} disabled={saving}>
+              {t("选择处置方案")}
+            </Button>
+            <button
+              type="button"
+              className={styles.textAction}
+              onClick={() => select([])}
+              disabled={saving}
+            >
+              {t("清空选择")}
+            </button>
+          </>
         )}
       </div>
       {!editable && s.risks.length > 0 && (
@@ -197,295 +214,328 @@ export function RiskPanel({
           {t("实施准备已开始，策略已锁定；仍可补充验证记录。")}
         </p>
       )}
-      <div ref={editor}>
-        {!!selected.length && editable && (
-          <form
-            className={styles.editor}
-            onSubmit={(e) => {
-              e.preventDefault();
-              void submit({
-                type: "risk.decide",
-                riskIds: selected,
-                decision: {
-                  strategy,
-                  method: strategy === "exclude" ? "manual" : method,
-                  note,
-                },
-              });
-            }}
-          >
-            <div className={styles.editorTitle}>
-              <strong>{t("为所选 {0} 项选择策略", selected.length)}</strong>
-              <Button
-                disabled={saving}
-                onClick={() =>
-                  void submit({ type: "risk.recommend", riskIds: selected })
-                }
-              >
-                {t("分别采用建议")}
-              </Button>
-            </div>
-            <div className={styles.choices}>
-              <label>
-                {t("处置方式")}
-                <Select
-                  value={strategy}
-                  onValueChange={(value) => {
-                    setStrategy(value as RiskStrategy);
-                    if (value === "exclude") setMethod("manual");
-                    else if (value !== "custom" && method === "manual")
-                      setMethod("agentless");
-                  }}
-                  aria-label={t("处置方式")}
-                >
-                  {(Object.keys(riskStrategyLabels) as RiskStrategy[]).map(
-                    (v) => (
-                      <option
-                        key={v}
-                        value={v}
-                        disabled={
-                          v === "ignore" &&
-                          selectedRisks.some((r) => r.impact !== "constraint")
-                        }
-                      >
-                        {t(riskStrategyLabels[v])}
-                      </option>
-                    ),
-                  )}
-                </Select>
-              </label>
-              {strategy !== "exclude" && (
-                <label>
-                  {t("迁移方式")}
-                  <Select
-                    value={method}
-                    onValueChange={(v) => setMethod(v as MigrationMethod)}
-                    aria-label={t("迁移方式")}
-                  >
-                    {(
-                      Object.keys(migrationMethodLabels) as MigrationMethod[]
-                    ).map((v) => (
-                      <option
-                        key={v}
-                        value={v}
-                        disabled={v === "manual" && strategy !== "custom"}
-                      >
-                        {t(migrationMethodLabels[v])}
-                      </option>
-                    ))}
-                  </Select>
-                </label>
-              )}
-            </div>
-            <p className={styles.hint}>
-              {t(
-                strategy === "ignore"
-                  ? "仅接受可迁对象的约束，不会把不兼容或待整改对象改为可迁。"
-                  : strategy === "remediate"
-                    ? "记录整改计划后仍暂时排除，提交验证依据后再重新核对范围。"
-                    : strategy === "exclude"
-                      ? "所选风险关联的虚拟机退出本次工具范围，其他风险记录仍保留。"
-                      : "写明具体方案与验证要求；另行迁移或重建的对象不进入工具任务。",
-              )}
-            </p>
-            <label htmlFor={`${uid}-note`}>{t("策略说明")}</label>
-            <textarea
-              id={`${uid}-note`}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t("说明采用的方案、约束或验证要求（4 至 500 字）")}
-              required
-              minLength={4}
-              maxLength={500}
-            />
-            <div className={styles.editorActions}>
-              <Button onClick={() => select([])} disabled={saving}>
-                {t("取消")}
-              </Button>
-              <Button
-                primary
-                type="submit"
-                disabled={
-                  saving ||
-                  note.trim().length < 4 ||
-                  (strategy === "ignore" &&
-                    selectedRisks.some((r) => r.impact !== "constraint"))
-                }
-              >
-                {t(saving ? "保存中…" : "保存策略并记录对话")}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
       {feedback && (
         <p role="status" className={styles.hint}>
           {t(feedback)}
         </p>
       )}
-      <div className={styles.groups}>
-        {[...groups].map(([name, risks]) => (
-          <details key={name} open className={styles.group}>
-            <summary>
-              {t(name)} <span>{risks.length}</span>
-            </summary>
-            {editable && risks.some((r) => r.stage === "research") && (
-              <button
-                type="button"
-                className={styles.selectGroup}
-                onClick={() =>
-                  select([
-                    ...new Set([
-                      ...selected,
-                      ...risks
-                        .filter((r) => r.stage === "research")
-                        .map((r) => r.id),
-                    ]),
-                  ])
-                }
-              >
-                {t("选择此组")}
-              </button>
-            )}
-            {risks.map((r) => (
-              <article key={r.id} className={styles.risk}>
-                <div className={styles.riskHeading}>
-                  {r.stage === "research" && (
-                    <input
-                      type="checkbox"
-                      aria-label={t("选择 {0}", t(r.description))}
-                      disabled={!editable}
-                      checked={selected.includes(r.id)}
-                      onChange={(e) =>
-                        select(
-                          e.target.checked
-                            ? [...selected, r.id]
-                            : selected.filter((id) => id !== r.id),
-                        )
-                      }
-                    />
-                  )}
-                  <strong>{t(r.description)}</strong>
-                  <span className={styles.severity} data-level={r.level}>
-                    {t(r.level)}
-                  </span>
-                </div>
-                <div className={styles.meta}>
-                  <span>R-{r.id}</span>
-                  <span>{r.vmName}</span>
-                  {r.impact && (
-                    <span data-impact={r.impact}>
-                      {t(riskImpactLabels[r.impact])}
-                    </span>
-                  )}
-                  <span>
-                    {t(riskReadyForExecution(r) ? "可纳入" : "暂时排除")}
-                  </span>
-                </div>
-                {r.recommendation && (
-                  <p className={styles.recommendation}>{t(r.recommendation)}</p>
-                )}
-                <details className={styles.evidence}>
-                  <summary>{t("规则依据与原始发现")}</summary>
-                  <p>{t(r.rule ?? "规划风险")}</p>
-                  <p>{t(r.evidence ?? r.description)}</p>
-                </details>
-                <div className={styles.decision}>
-                  <span>
-                    {t(
-                      r.closed
-                        ? "整改已验证"
-                        : r.decision
-                          ? riskStrategyLabels[r.decision.strategy]
-                          : "未选策略",
-                    )}
-                    {r.decision &&
-                      ` · ${t(migrationMethodLabels[r.decision.method])}`}
-                  </span>
-                  {r.stage === "research" && editable && (
-                    <Button onClick={() => edit(r)}>
-                      {t(r.decision ? "调整策略" : "选择策略")}
-                    </Button>
-                  )}
-                  {!r.closed &&
-                    !excludedFromTool(r) &&
-                    (r.stage !== "research" ||
-                      (r.decision &&
-                        ["remediate", "custom"].includes(
-                          r.decision.strategy,
-                        ))) && (
-                      <Button
-                        onClick={() => {
-                          setVerification(r.id);
-                          setEvidence("");
-                        }}
-                      >
-                        {t("提交整改验证")}
-                      </Button>
-                    )}
-                </div>
-                {r.decision?.note && r.decision.note !== r.recommendation && (
-                  <p className={styles.hint}>{t(r.decision.note)}</p>
-                )}
-                {r.closed && (
-                  <p className={styles.hint}>{t(r.closureDescription)}</p>
-                )}
-                {verification === r.id && (
-                  <form
-                    className={styles.verification}
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void submit({
-                        type: "risk.close",
-                        riskId: r.id,
-                        description: evidence,
-                      });
-                    }}
-                  >
-                    <label htmlFor={`${uid}-evidence`}>
-                      {t("整改措施与验证依据")}
-                    </label>
-                    <textarea
-                      id={`${uid}-evidence`}
-                      value={evidence}
-                      onChange={(e) => setEvidence(e.target.value)}
-                      required
-                      minLength={4}
-                      maxLength={500}
-                    />
-                    <p className={styles.hint}>
-                      {t(
-                        "人工记录验证依据，不代表系统已重新执行兼容性评估。已生成的批次不会自动追加对象。",
-                      )}
-                    </p>
-                    <div className={styles.editorActions}>
-                      <Button onClick={() => setVerification(null)}>
-                        {t("取消")}
-                      </Button>
-                      <Button
-                        primary
-                        type="submit"
-                        disabled={saving || evidence.trim().length < 4}
-                      >
-                        {t("确认验证结果")}
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </article>
-            ))}
-          </details>
-        ))}
-      </div>
-      {!visible.length && (
-        <p className={styles.empty}>
-          {t(
-            s.risks.length
-              ? "没有符合条件的风险。"
-              : "完成评估后，在这里查看风险与处理建议。",
+      <div className={styles.layout} data-editing={showEditor}>
+        <div className={styles.tablePane}>
+          <div
+            className={styles.tableScroll}
+            tabIndex={0}
+            role="region"
+            aria-label={t("风险表格，可横向滚动")}
+          >
+            <table className={styles.table} aria-label={t("分类风险列表")}>
+              <colgroup>
+                <col className={styles.selectColumn} />
+                <col />
+                <col className={styles.impactColumn} />
+                <col className={styles.strategyColumn} />
+                <col className={styles.actionColumn} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col" aria-label={t("选择")} />
+                  <th scope="col">{t("风险 / 虚拟机")}</th>
+                  <th scope="col">{t("迁移影响")}</th>
+                  <th scope="col">{t("处置策略")}</th>
+                  <th scope="col">{t("操作")}</th>
+                </tr>
+              </thead>
+              {[...groups].map(([name, risks]) => (
+                <tbody key={name}>
+                  <tr className={styles.groupRow}>
+                    <th colSpan={5} scope="rowgroup">
+                      <div>
+                        <button
+                          type="button"
+                          aria-expanded={!collapsed.includes(name)}
+                          onClick={() =>
+                            setCollapsed(
+                              collapsed.includes(name)
+                                ? collapsed.filter((v) => v !== name)
+                                : [...collapsed, name],
+                            )
+                          }
+                        >
+                          <Icon
+                            name={
+                              collapsed.includes(name) ? "right" : "chevron"
+                            }
+                            size={13}
+                          />
+                          {t(name)}
+                          <span>{risks.length}</span>
+                        </button>
+                        {editable &&
+                          risks.some((r) => r.stage === "research") && (
+                            <button
+                              type="button"
+                              className={styles.textAction}
+                              disabled={saving}
+                              onClick={() =>
+                                select(
+                                  risks
+                                    .filter((r) => r.stage === "research")
+                                    .map((r) => r.id),
+                                  true,
+                                )
+                              }
+                            >
+                              {t("为此组选择策略")}
+                            </button>
+                          )}
+                      </div>
+                    </th>
+                  </tr>
+                  {!collapsed.includes(name) &&
+                    risks.map((r) => (
+                      <Fragment key={r.id}>
+                        <tr data-selected={selected.includes(r.id)}>
+                          <td>
+                            {r.stage === "research" && (
+                              <input
+                                type="checkbox"
+                                aria-label={t("选择 {0}", t(r.description))}
+                                disabled={!editable || saving}
+                                checked={selected.includes(r.id)}
+                                onChange={(e) =>
+                                  select(
+                                    e.target.checked
+                                      ? [...selected, r.id]
+                                      : selected.filter((id) => id !== r.id),
+                                  )
+                                }
+                              />
+                            )}
+                          </td>
+                          <th scope="row">
+                            <div className={styles.riskTitle}>
+                              <strong>{t(r.description)}</strong>
+                              <span
+                                className={styles.severity}
+                                data-level={r.level}
+                              >
+                                {t(r.level)}
+                              </span>
+                            </div>
+                            <small>
+                              R-{r.id} · {r.vmName}
+                            </small>
+                          </th>
+                          <td>
+                            <span data-impact={r.impact}>
+                              {r.impact
+                                ? t(riskImpactLabels[r.impact])
+                                : t("规划风险")}
+                            </span>
+                            <small>
+                              {t(
+                                riskReadyForExecution(r)
+                                  ? "可纳入"
+                                  : "暂时排除",
+                              )}
+                            </small>
+                          </td>
+                          <td>
+                            <span>
+                              {t(
+                                r.closed
+                                  ? "整改已验证"
+                                  : r.decision
+                                    ? riskStrategyLabels[r.decision.strategy]
+                                    : "未选策略",
+                              )}
+                            </span>
+                            <small>
+                              {r.decision
+                                ? t(migrationMethodLabels[r.decision.method])
+                                : r.recommendedStrategy
+                                  ? t(
+                                      "建议：{0}",
+                                      t(
+                                        riskStrategyLabels[
+                                          r.recommendedStrategy
+                                        ],
+                                      ),
+                                    )
+                                  : "—"}
+                            </small>
+                          </td>
+                          <td>
+                            <div className={styles.rowActions}>
+                              {r.stage === "research" && editable && (
+                                <button
+                                  type="button"
+                                  className={styles.textAction}
+                                  disabled={saving}
+                                  onClick={() => select([r.id], true)}
+                                >
+                                  {t(r.decision ? "调整策略" : "选择策略")}
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className={styles.textAction}
+                                aria-expanded={details.includes(r.id)}
+                                aria-controls={`${uid}-detail-${r.id}`}
+                                onClick={() =>
+                                  setDetails(
+                                    details.includes(r.id)
+                                      ? details.filter((id) => id !== r.id)
+                                      : [...details, r.id],
+                                  )
+                                }
+                              >
+                                {t(
+                                  details.includes(r.id)
+                                    ? "收起详情"
+                                    : "查看详情",
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {details.includes(r.id) && (
+                          <tr
+                            id={`${uid}-detail-${r.id}`}
+                            className={styles.detailRow}
+                          >
+                            <td colSpan={5}>
+                              <dl className={styles.evidence}>
+                                <div>
+                                  <dt>{t("评估建议")}</dt>
+                                  <dd>
+                                    {t(r.recommendation ?? r.description)}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt>{t("规则依据与原始发现")}</dt>
+                                  <dd>
+                                    {t(r.rule ?? "规划风险")}
+                                    <br />
+                                    {t(r.evidence ?? r.description)}
+                                  </dd>
+                                </div>
+                                {r.decision?.note && (
+                                  <div>
+                                    <dt>{t("策略说明")}</dt>
+                                    <dd>{t(r.decision.note)}</dd>
+                                  </div>
+                                )}
+                                {r.closed && (
+                                  <div>
+                                    <dt>{t("整改措施与验证依据")}</dt>
+                                    <dd>{r.closureDescription}</dd>
+                                  </div>
+                                )}
+                              </dl>
+                              {!r.closed &&
+                                !excludedFromTool(r) &&
+                                (r.stage !== "research" ||
+                                  (r.decision &&
+                                    ["remediate", "custom"].includes(
+                                      r.decision.strategy,
+                                    ))) &&
+                                verification !== r.id && (
+                                  <Button
+                                    disabled={saving}
+                                    onClick={() => {
+                                      setVerification(r.id);
+                                      setEvidence("");
+                                    }}
+                                  >
+                                    {t("提交整改验证")}
+                                  </Button>
+                                )}
+                              {verification === r.id && (
+                                <form
+                                  className={styles.verification}
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    void submit({
+                                      type: "risk.close",
+                                      riskId: r.id,
+                                      description: evidence,
+                                    });
+                                  }}
+                                >
+                                  <label htmlFor={`${uid}-evidence`}>
+                                    {t("整改措施与验证依据")}
+                                  </label>
+                                  <textarea
+                                    id={`${uid}-evidence`}
+                                    value={evidence}
+                                    disabled={saving}
+                                    onChange={(e) =>
+                                      setEvidence(e.target.value)
+                                    }
+                                    required
+                                    minLength={4}
+                                    maxLength={500}
+                                  />
+                                  <p className={styles.hint}>
+                                    {t(
+                                      "人工记录验证依据，不代表系统已重新执行兼容性评估。已生成的批次不会自动追加对象。",
+                                    )}
+                                  </p>
+                                  <div className={styles.editorActions}>
+                                    <Button
+                                      disabled={saving}
+                                      onClick={() => setVerification(null)}
+                                    >
+                                      {t("取消")}
+                                    </Button>
+                                    <Button
+                                      primary
+                                      type="submit"
+                                      disabled={
+                                        saving || evidence.trim().length < 4
+                                      }
+                                    >
+                                      {t("确认验证结果")}
+                                    </Button>
+                                  </div>
+                                </form>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                </tbody>
+              ))}
+            </table>
+          </div>
+          {!visible.length && (
+            <p className={styles.empty}>
+              {t(
+                s.risks.length
+                  ? "没有符合条件的风险。"
+                  : "完成评估后，在这里查看风险与处理建议。",
+              )}
+            </p>
           )}
-        </p>
-      )}
+        </div>
+        {showEditor && (
+          <aside
+            className={styles.strategyPane}
+            ref={editor}
+            tabIndex={-1}
+            aria-label={t("风险处置方案")}
+          >
+            <RiskStrategyEditor
+              key={selected.join(",")}
+              risks={selectedRisks}
+              saving={saving}
+              onSubmit={(cmd) => void submit(cmd)}
+              onCancel={() => select([])}
+            />
+          </aside>
+        )}
+      </div>
     </section>
   );
 }

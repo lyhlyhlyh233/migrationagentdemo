@@ -78,7 +78,7 @@ dataReducer → 当前工作区和共享结果状态
 
 `assessment.choosePlan` 保存总体偏好，`risk.decide` 批量保存同一策略，`risk.recommend` 为每项采用各自建议，`risk.close` 记录人工整改验证。策略保存不标记整改完成。原始发现不改变，历史结论保留快照，后续处置记录可更新。MD 准备开始后不再修改策略，避免已创建任务被静默改写；新增验证不会自动追加已生成批次。
 
-`stage.review` 在发起会话返回交接说明及 approval 引用；统一入口位于输入框下方右侧。点击确认仍调用 `stage.confirm`，而不是直接通过前端导航开启阶段。
+`stage.review` 在发起会话返回交接说明及 approval 引用；统一深色入口位于输入框上方右侧。点击确认仍调用 `stage.confirm`，而不是直接通过前端导航开启阶段。
 
 评估资料中的报告属于模板，包含占位符和互相不一致的示例数值；只借鉴报告维度与规则，不将其当成当前项目真实输出。原始 Excel/PPT 文件未纳入前端仓库。
 
@@ -112,16 +112,16 @@ dataReducer → 当前工作区和共享结果状态
 
 ## 界面与样式修改位置
 
-| 修改                     | 文件入口                                                        |
-| ------------------------ | --------------------------------------------------------------- |
-| 菜单顺序、折叠、会话列表 | workspace/Sidebar、StageNavigation                              |
-| 四阶条件/进度            | domain/policies、workspace/presentation、ProgressRail           |
-| 聊天排版和业务结果       | conversations/Conversation、ConversationAnswer、BusinessResults |
-| Agent/模型目录           | services 的 catalog；选择框只呈现返回选项                       |
-| 阶段表单                 | research、planning、migration、validation 对应模块              |
-| 表格和风险策略           | tasks/TaskPanel、risks/RiskPanel / RiskDrawer                   |
-| 主题/字号/语义颜色       | styles/tokens.css 和 styles/index.css                           |
-| 界面翻译                 | shared/i18n/en.json、status-labels、stages                      |
+| 修改                     | 文件入口                                                           |
+| ------------------------ | ------------------------------------------------------------------ |
+| 菜单顺序、折叠、会话列表 | workspace/Sidebar、StageNavigation                                 |
+| 四阶条件/进度            | domain/policies、workspace/presentation、ProgressRail              |
+| 聊天排版和业务结果       | conversations/Conversation、ConversationAnswer、BusinessResults    |
+| Agent/模型目录           | services 的 catalog；选择框只呈现返回选项                          |
+| 阶段表单                 | research、planning、migration、validation 对应模块                 |
+| 表格和风险策略           | tasks/TaskPanel、risks/RiskPanel / RiskStrategyEditor / RiskDrawer |
+| 主题/字号/语义颜色       | styles/tokens.css 和 styles/index.css                              |
+| 界面翻译                 | shared/i18n/en.json、status-labels、stages                         |
 
 CSS Modules 放在功能附近。工作区、对话、输入区、设置、项目创建和管理视图各自隔离；保留下来的表格/布局类名通过 Module 根节点限定作用域，便于继续修改既有复杂表单。共用管理表格规则集中在 `ManagementView.module.css`，避免为每个表格复制一套样式。全局仅保留基础控制、主题和背景等跨页面规则。
 
