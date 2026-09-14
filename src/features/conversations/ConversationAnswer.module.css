@@ -18,7 +18,7 @@
   font-size: 12px;
 }
 .root :global(.reply-thought) {
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: var(--secondary);
 }
 .root :global(.reply-thought > summary) {
@@ -181,4 +181,10 @@
   .root :global(.message-body p) {
     max-width: 72ch;
   }
+}
+
+.resultDivider {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 12px 0;
 }

@@ -206,6 +206,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 onDownload={a.download}
                 onCommand={a.execute}
                 onStage={a.confirmStage}
+                onNavigateStage={selectStage}
                 onUpload={a.upload}
                 onCloseWork={() => a.view({ workOpen: false })}
               />

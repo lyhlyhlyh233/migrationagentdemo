@@ -80,6 +80,7 @@ export function ConversationAnswer({
           <p>{reply.summary}</p>
         </details>
       ) : null}
+      {reply && <hr className={styles.resultDivider} />}
       <div aria-label={t("最终结果")}>
         <AnswerBody text={text} />
       </div>

@@ -8,6 +8,7 @@ const actions = {
   onDownload: () => {},
   onCommand: async () => true,
   onStage: () => {},
+  onNavigateStage: () => {},
 };
 describe("business result rendering", () => {
   it("limits a file list to three rows with expansion and real download controls", async () => {

@@ -165,3 +165,38 @@
     font-size: 18px;
   }
 }
+
+.quickActions {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+.quickActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.4;
+}
+.quickActions button:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+@media (min-width: 1920px) {
+  .quickActions {
+    font-size: 14px;
+  }
+}
+@media (max-width: 600px) {
+  .quickActions button {
+    min-height: 44px;
+  }
+}

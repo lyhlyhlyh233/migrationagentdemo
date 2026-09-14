@@ -2,7 +2,6 @@ import type { PanelId } from "@/app/state";
 import type { BusinessResult, ProjectSnapshot, StageId } from "@/domain/models";
 import { canExecute, stageEligibility } from "@/domain/policies";
 import { AssessmentForm } from "@/features/research/AssessmentForm";
-import { AssessmentDecision } from "@/features/research/AssessmentDecision";
 import type { FilePurpose, ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
@@ -15,6 +14,7 @@ export interface ResultActions {
   onDownload: (id: string) => void;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onStage: (stage: StageId) => void;
+  onNavigateStage: (stage: StageId) => void;
   onUpload?: (purpose: FilePurpose, file: File) => void;
   onAsk?: (text: string) => void;
   activeInput?: boolean;
@@ -24,6 +24,13 @@ export function BusinessResults({
   snapshot,
   ...actions
 }: { results: BusinessResult[]; snapshot: ProjectSnapshot } & ResultActions) {
+  const t = useTranslation();
+  const assessmentResult = results.some(
+    (r) =>
+      r.kind === "assessment-decision" ||
+      (r.kind === "summary" && r.stageId === "research"),
+  );
+  const planningEntered = snapshot.enteredStages.includes("planning");
   return (
     <div className={styles.results}>
       {results.map((result, index) => (
@@ -34,6 +41,26 @@ export function BusinessResults({
           {...actions}
         />
       ))}
+      {assessmentResult && (
+        <div
+          className={styles.quickActions}
+          role="group"
+          aria-label={t("评估结果快捷操作")}
+        >
+          <button type="button" onClick={() => actions.onPanel("risk")}>
+            <Icon name="shield" size={15} />
+            {t("查看&处理风险")}
+          </button>
+          <button
+            type="button"
+            disabled={!planningEntered && !stageEligibility(snapshot).planning}
+            onClick={() => actions.onNavigateStage("planning")}
+          >
+            {t(planningEntered ? "打开规划设计" : "继续下一步规划设计")}
+            <Icon name="right" size={15} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -72,14 +99,8 @@ function BusinessResultBlock({
         <p>{r.files.presales || t("调研表待提供")}</p>
       </details>
     );
-  if (r.kind === "assessment-decision")
-    return (
-      <AssessmentDecision
-        snapshot={s}
-        onCommand={onCommand}
-        onRisks={() => onPanel("risk")}
-      />
-    );
+  // Compatibility marker: assessment actions render once below all result blocks.
+  if (r.kind === "assessment-decision") return null;
   if (r.kind === "summary")
     return (
       <section className={styles.summary} aria-label={t(r.title)}>
@@ -98,9 +119,11 @@ function BusinessResultBlock({
               <p>{t(r.detail)}</p>
             </details>
           )}
-          <button type="button" onClick={() => onPanel("risk")}>
-            {t("查看风险")}
-          </button>
+          {r.stageId !== "research" && (
+            <button type="button" onClick={() => onPanel("risk")}>
+              {t("查看风险")}
+            </button>
+          )}
           {r.stageId === "planning" && (
             <button type="button" onClick={() => onPanel("tasks")}>
               {t("打开计划")}

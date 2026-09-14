@@ -1309,5 +1309,9 @@
   "这些风险已有策略，本次未覆盖任何选择。请查看最新状态。": "These risks already have decisions. Nothing was overwritten. Review the latest status.",
   "已保存 {0} 条风险策略，保留 {1} 条已有选择。当前工具迁移范围为 {2} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。": "Saved {0} risk decisions and preserved {1} existing decisions. {2} VMs are in scope for tool migration. Remediation still requires verification; other risks can be handled later without blocking planning.",
   "已保存 {0} 条风险策略。当前工具迁移范围为 {1} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。": "Saved {0} risk decisions. {1} VMs are in scope for tool migration. Remediation still requires verification; other risks can be handled later without blocking planning.",
-  "按各项建议分别处理": "Apply each finding’s recommendation"
+  "按各项建议分别处理": "Apply each finding’s recommendation",
+  "评估结果快捷操作": "Assessment result actions",
+  "查看&处理风险": "Review & handle risks",
+  "继续下一步规划设计": "Continue to planning",
+  "打开规划设计": "Open planning"
 }
