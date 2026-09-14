@@ -74,6 +74,9 @@
 .root :global(.progress-rail li) {
   min-width: 0;
 }
+.root :global(.stage-connector) {
+  display: none;
+}
 .root :global(.progress-rail li button) {
   display: flex;
   align-items: center;
@@ -123,6 +126,33 @@
   scroll-behavior: smooth;
   overscroll-behavior: contain;
   outline: none;
+}
+.root :global(.conversation-scroll[data-auto-hide-scrollbar]) {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable both-edges;
+}
+.root :global(.conversation-scroll[data-auto-hide-scrollbar][data-scrolling]) {
+  scrollbar-color: var(--muted) transparent;
+}
+@supports not (scrollbar-color: auto) {
+  .root
+    :global(.conversation-scroll[data-auto-hide-scrollbar]::-webkit-scrollbar) {
+    width: 8px;
+  }
+  .root
+    :global(
+      .conversation-scroll[data-auto-hide-scrollbar]::-webkit-scrollbar-thumb
+    ) {
+    background: transparent;
+    border-radius: 8px;
+  }
+  .root
+    :global(
+      .conversation-scroll[data-auto-hide-scrollbar][data-scrolling]::-webkit-scrollbar-thumb
+    ) {
+    background: var(--muted);
+  }
 }
 .root :global(.message) {
   margin-bottom: 22px;
@@ -1166,10 +1196,6 @@
   }
 }
 @media (min-width: 1920px) {
-  .root:global(.workspace) {
-    --conversation-width: 1160px;
-    --conversation-gutter: 40px;
-  }
   .root :global(.workflow-embeds) {
     max-width: 780px;
   }
@@ -1743,9 +1769,9 @@
 /* At 2K, size the interface for reading at 100% browser zoom. */
 @media (min-width: 1920px) {
   .root:global(.workspace) {
-    grid-template-columns: 292px minmax(0, 1fr) 320px;
-    --conversation-width: 1120px;
-    --conversation-gutter: 40px;
+    grid-template-columns: 292px minmax(0, 1fr) 384px;
+    --conversation-width: 1560px;
+    --conversation-gutter: 32px;
   }
   .root:global(.workspace.inspector-collapsed),
   .root:global(.workspace.management-view) {
@@ -1755,7 +1781,57 @@
     grid-template-columns: 64px minmax(0, 1fr);
   }
   .root:global(.workspace.nav-collapsed:has(> .agent-inspector)) {
-    grid-template-columns: 64px minmax(0, 1fr) 320px;
+    grid-template-columns: 64px minmax(0, 1fr) 384px;
+  }
+  .root :global(.conversation-workspace > .progress-rail) {
+    padding-block: 24px;
+    padding-inline: var(--conversation-gutter);
+  }
+  .root :global(.progress-rail > .progress-caption) {
+    margin-bottom: 16px;
+  }
+  .root :global(.progress-rail > ol) {
+    gap: 48px;
+  }
+  .root :global(.progress-rail li) {
+    position: relative;
+  }
+  .root :global(.progress-rail li button) {
+    min-height: 48px;
+    padding: 12px 16px;
+    gap: 10px;
+    font-size: 16px;
+  }
+  .root :global(.stage-flow-preview .preview-stage-copy strong) {
+    font-size: 16px;
+  }
+  .root :global(.progress-rail small) {
+    font-size: 14px;
+  }
+  .root :global(.stage-sequence) {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+  .root :global(.stage-track) {
+    margin-top: 8px;
+    height: 4px;
+  }
+  .root :global(.stage-connector),
+  .root :global(.preview-stage-next) {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    right: -34px;
+    top: 14px;
+    width: 20px;
+    height: 20px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .root :global(.preview-stage-next svg) {
+    width: 20px;
+    height: 20px;
   }
   .root :global(.project-resources button),
   .root :global(.stage-chat-link),

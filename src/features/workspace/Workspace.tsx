@@ -13,7 +13,7 @@ import { RiskDrawer } from "@/features/risks/RiskDrawer";
 import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ManagementView } from "./ManagementView";
 import { workspacePresentation } from "./presentation";
 import { ProgressRail } from "./ProgressRail";
@@ -35,6 +35,23 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   }, []);
   const [riskDrawer, setRiskDrawer] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const scrollViewport = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const viewport = scrollViewport.current;
+    if (!viewport) return;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const showScrollbar = () => {
+      viewport.dataset.scrolling = "true";
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => delete viewport.dataset.scrolling, 800);
+    };
+    viewport.addEventListener("scroll", showScrollbar, { passive: true });
+    return () => {
+      viewport.removeEventListener("scroll", showScrollbar);
+      clearTimeout(idleTimer);
+      delete viewport.dataset.scrolling;
+    };
+  }, []);
   const p = { ...(ui.projects[s.id] ?? projectUi()) };
   p.conversationId ??= s.info ? mainConversationId("research") : null;
   const chat = s.conversations.find((c) => c.id === p.conversationId);
@@ -170,7 +187,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           </div>
         )}
         <div
+          ref={scrollViewport}
           className="conversation-scroll"
+          data-auto-hide-scrollbar={!management || undefined}
           id="workspace-content"
           tabIndex={-1}
         >

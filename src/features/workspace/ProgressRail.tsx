@@ -68,6 +68,11 @@ export function ProgressRail({
             >
               <i style={{ width: `${progress[id]}%` }} />
             </div>
+            {i < 3 && (
+              <span className="stage-connector" aria-hidden="true">
+                <Icon name="right" size={20} />
+              </span>
+            )}
           </li>
         ))}
       </ol>

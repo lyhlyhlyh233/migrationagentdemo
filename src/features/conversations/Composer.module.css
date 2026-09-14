@@ -406,6 +406,9 @@
   }
 }
 @media (min-width: 1920px) {
+  .root:global(.composer-area) {
+    padding-inline: var(--conversation-gutter);
+  }
   .root :global(.chat-composer textarea) {
     font-size: 17px;
     min-height: 58px;
