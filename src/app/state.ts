@@ -1,4 +1,5 @@
 import type { Catalog, ProjectSnapshot, StageId } from "@/domain/models";
+import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import type { RiskLocation } from "@/features/risks/presentation";
 export type PanelId =
   | "tasks"
@@ -36,7 +37,7 @@ export interface UiState {
   projects: Record<string, ProjectUi>;
 }
 export const initialUi: UiState = {
-  selected: "lobby",
+  selected: EMPTY_WORKSPACE_ID,
   creating: false,
   navCollapsed: false,
   projects: {},

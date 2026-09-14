@@ -5,6 +5,8 @@ export interface ReplyPresentation {
 export type ConversationAgentId = string;
 export type ConversationModelId = string;
 export type StageId = "research" | "planning" | "migration" | "validation";
+// Reserved UI workspace for conversations before a project is created.
+export const EMPTY_WORKSPACE_ID = "lobby";
 export interface StageConversation {
   id: string;
   stageId: StageId;
@@ -12,15 +14,6 @@ export interface StageConversation {
   kind: "main" | "child";
   manuallyNamed?: boolean;
 }
-export const mainConversationId = (stageId: StageId) => `stage-${stageId}-main`;
-export const createStageConversation = (
-  stageId: StageId,
-): StageConversation => ({
-  id: mainConversationId(stageId),
-  stageId,
-  title: stageId,
-  kind: "main",
-});
 
 export type AssessmentStatus = "idle" | "ready" | "running" | "completed";
 export type PlanningStatus =
@@ -225,6 +218,7 @@ export interface Catalog {
   models: CatalogOption[];
   defaultModel: string;
   defaultAgent: string;
+  stageAgents?: Partial<Record<StageId, string>>;
 }
 export interface Artifact {
   id: string;

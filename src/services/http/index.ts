@@ -2,7 +2,11 @@ import type { MigrationService } from "../contracts";
 import { ServiceError } from "../errors";
 // Implement these capability methods against your internal API. No endpoint is guessed.
 // Wire DTO decoding through client.ts, and map progress/stream events into ServiceEvent.
-export function createHttpService(): MigrationService {
+// baseUrl is supplied by app/config.ts. Use it with createHttpClient when routes are agreed.
+// Receiving a base URL alone does not enable an unimplemented backend.
+export function createHttpService(_config: {
+  baseUrl: string;
+}): MigrationService {
   const missing = async (): Promise<never> => {
     throw new ServiceError(
       "NOT_CONFIGURED",

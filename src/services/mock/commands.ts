@@ -1,14 +1,11 @@
-import {
-  createStageConversation,
-  type OperationContext,
-} from "@/domain/models";
+import type { OperationContext } from "@/domain/models";
 import { stageEligibility } from "@/domain/policies";
 import { stageName } from "@/shared/i18n/stages";
 import type { ProjectCommand, RequestOptions } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
 import { assess } from "./assessment";
 import { checkMd, executeTasks } from "./execution";
-import { buildValidationTasks } from "./fixtures";
+import { buildValidationTasks, createStageConversation } from "./fixtures";
 import { decideRisks } from "./risk-decisions";
 import { canChangeAssessmentDecision } from "@/domain/assessment";
 import { scopeArtifacts } from "./files";

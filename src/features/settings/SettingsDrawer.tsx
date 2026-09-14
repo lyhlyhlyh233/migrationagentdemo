@@ -4,7 +4,6 @@ import {
   type NexentConfiguration,
 } from "@/features/settings/NexentSettings";
 import { ThemePicker } from "@/features/settings/ThemePicker";
-import type { MigrationService } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n/index";
 import {
   backgrounds,
@@ -22,9 +21,11 @@ export function SettingsDrawer({
   open,
   onClose,
   onSignOut,
-  service,
+  onConfigureAccount,
 }: {
-  service: MigrationService;
+  onConfigureAccount: (
+    configuration: NexentConfiguration | null,
+  ) => Promise<void>;
   open: boolean;
   onClose: () => void;
   onSignOut: () => void;
@@ -211,7 +212,7 @@ export function SettingsDrawer({
                 <NexentSettings
                   configuration={configuration}
                   onChange={async (value) => {
-                    await service.configureAccount(value);
+                    await onConfigureAccount(value);
                     setConfiguration(value);
                   }}
                 />

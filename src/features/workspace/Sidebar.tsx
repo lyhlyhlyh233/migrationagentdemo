@@ -1,4 +1,5 @@
 import type { PanelId, ProjectUi } from "@/app/state";
+import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import type {
   ProjectSnapshot,
   StageConversation,
@@ -104,7 +105,7 @@ export function Sidebar({
               aria-label={t("切换当前项目")}
               onValueChange={onProject}
             >
-              <option value="lobby">{t("工作空间")}</option>
+              <option value={EMPTY_WORKSPACE_ID}>{t("工作空间")}</option>
               {projects
                 .filter((p) => p.info)
                 .map((p) => (

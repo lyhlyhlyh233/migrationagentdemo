@@ -1,9 +1,13 @@
-import { createStageConversation, type StageId } from "@/domain/models";
+import type { StageId } from "@/domain/models";
 import { migrationScope, riskReadyForExecution } from "@/domain/assessment";
 import { canExecute, stageEligibility } from "@/domain/policies";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MockMigrationService } from "../mock";
-import { buildBatchTasks, buildVmTasks } from "../mock/fixtures";
+import {
+  buildBatchTasks,
+  buildVmTasks,
+  createStageConversation,
+} from "../mock/fixtures";
 const info = {
   industry: "金融",
   region: "中国地区部",

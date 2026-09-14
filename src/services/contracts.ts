@@ -43,6 +43,7 @@ export type ProjectCommand =
     };
 export type FilePurpose = "rvtools" | "presales" | "scope" | "planning";
 export interface RequestOptions {
+  // Cancels this request; switching the visible workspace does not cancel work.
   signal?: AbortSignal;
 }
 export interface Download {
@@ -59,6 +60,8 @@ export type ServiceEvent =
       conversationId?: string;
       message: string;
     };
+// UI-facing capabilities, not backend routes. See docs/integration.md for semantics.
+// Project mutations publish fresh snapshots before resolving; no JSX/HTML payloads.
 export interface MigrationService {
   catalog(options?: RequestOptions): Promise<Catalog>;
   listProjects(

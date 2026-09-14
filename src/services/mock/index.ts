@@ -1,5 +1,5 @@
 import {
-  createStageConversation,
+  EMPTY_WORKSPACE_ID,
   type Catalog,
   type Conversation,
   type NexentConfiguration,
@@ -22,6 +22,7 @@ import { assessmentWelcome } from "./assessment-knowledge";
 import { researchTemplate, scopeArtifacts } from "./files";
 import { plan } from "./planning";
 import { MockRuntime } from "./runtime";
+import { createStageConversation } from "./fixtures";
 const catalog: Catalog = {
   agents: [
     { id: "general", label: "通用智能体" },
@@ -36,12 +37,18 @@ const catalog: Catalog = {
   ],
   defaultModel: "glm-5.1",
   defaultAgent: "general",
+  stageAgents: {
+    research: "research",
+    planning: "planning",
+    migration: "migration",
+    validation: "validation",
+  },
 };
 export class MockMigrationService implements MigrationService {
   readonly runtime = new MockRuntime();
   private readonly downloads = new AbortController();
   constructor() {
-    this.initialize("lobby", null, "zh-CN");
+    this.initialize(EMPTY_WORKSPACE_ID, null, "zh-CN");
   }
   private active(options: RequestOptions = {}) {
     if (this.runtime.disposed || options.signal?.aborted)
@@ -167,14 +174,17 @@ export class MockMigrationService implements MigrationService {
     this.runtime.publish(s);
     return structuredClone(s);
   }
-  async getProject(id: string) {
+  async getProject(id: string, options: RequestOptions = {}) {
+    this.active(options);
     return structuredClone(this.runtime.state(id));
   }
   async createConversation(
     projectId: string,
     stageId: StageId | undefined,
     language: OperationContext["language"],
+    options: RequestOptions = {},
   ) {
+    this.active(options);
     const s = this.runtime.state(projectId);
     requireCondition(
       !stageId || s.enteredStages.includes(stageId),
@@ -190,7 +200,13 @@ export class MockMigrationService implements MigrationService {
     this.runtime.publish(s);
     return structuredClone(chat);
   }
-  async renameConversation(projectId: string, id: string, title: string) {
+  async renameConversation(
+    projectId: string,
+    id: string,
+    title: string,
+    options: RequestOptions = {},
+  ) {
+    this.active(options);
     const s = this.runtime.state(projectId);
     const chat = s.conversations.find((c) => c.id === id);
     requireCondition(chat && title.trim(), "请填写会话名称");
@@ -198,7 +214,7 @@ export class MockMigrationService implements MigrationService {
     chat.manuallyNamed = true;
     this.runtime.publish(s);
   }
-  sendMessage(
+  async sendMessage(
     c: OperationContext,
     input: {
       text: string;
@@ -208,6 +224,7 @@ export class MockMigrationService implements MigrationService {
     },
     options: RequestOptions = {},
   ) {
+    this.active(options);
     requireCondition(
       catalog.agents.some((a) => a.id === input.agentId) &&
         catalog.models.some((m) => m.id === input.modelId),
@@ -215,11 +232,12 @@ export class MockMigrationService implements MigrationService {
     );
     return reply(this.runtime, c, input, options);
   }
-  execute(
+  async execute(
     c: OperationContext,
     cmd: ProjectCommand,
     options: RequestOptions = {},
   ) {
+    this.active(options);
     return command(this.runtime, c, cmd, options);
   }
   async upload(
@@ -228,13 +246,12 @@ export class MockMigrationService implements MigrationService {
     file: File,
     options: RequestOptions = {},
   ) {
+    this.active(options);
     const s = this.runtime.context(c);
     requireCondition(
       /\.(xlsx?|csv)$/i.test(file.name),
       "请选择 XLSX、XLS 或 CSV 文件",
     );
-    if (options.signal?.aborted)
-      throw new ServiceError("ABORTED", "操作已取消");
     if (purpose === "rvtools" || purpose === "presales") {
       requireCondition(
         c.stageId === "research" &&
@@ -347,7 +364,8 @@ export class MockMigrationService implements MigrationService {
     };
     return { ...this.runtime.account };
   }
-  async logout() {
+  async logout(options: RequestOptions = {}) {
+    this.active(options);
     this.dispose();
   }
   subscribe(listener: (event: ServiceEvent) => void) {

@@ -2,7 +2,11 @@ import { useWorkspace } from "@/app/context";
 import { projectUi, type PanelId } from "@/app/state";
 import styles from "./Workspace.module.css";
 
-import { mainConversationId, type StageId } from "@/domain/models";
+import type { StageId } from "@/domain/models";
+import {
+  currentConversation,
+  findStageConversation,
+} from "@/domain/conversations";
 import { stageEligibility } from "@/domain/policies";
 import { Composer } from "@/features/conversations/Composer";
 import { Conversation } from "@/features/conversations/Conversation";
@@ -53,8 +57,12 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     };
   }, []);
   const p = { ...(ui.projects[s.id] ?? projectUi()) };
-  p.conversationId ??= s.info ? mainConversationId("research") : null;
-  const chat = s.conversations.find((c) => c.id === p.conversationId);
+  const chat = currentConversation(
+    s.conversations,
+    p.conversationId,
+    p.activeStage,
+  );
+  p.conversationId = chat?.id ?? null;
   const view = conversationState[s.id]?.[p.conversationId ?? ""] ?? {
     draft: "",
   };
@@ -72,12 +80,20 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     setNavOpen(false);
   };
   function selectStage(id: StageId) {
-    if (s.enteredStages.includes(id))
-      chooseChat(p.lastStages[id] ?? mainConversationId(id), id);
-    else if (stageEligibility(s)[id])
+    if (s.enteredStages.includes(id)) {
+      const target = findStageConversation(
+        s.conversations,
+        id,
+        p.lastStages[id],
+      );
+      if (target) chooseChat(target.id, id);
+    } else if (stageEligibility(s)[id])
       void a.execute({ type: "stage.review", target: id });
   }
-  const agent = view.agentId ?? chat?.stageId ?? data.catalog!.defaultAgent;
+  const agent =
+    view.agentId ??
+    (chat?.stageId && data.catalog!.stageAgents?.[chat.stageId]) ??
+    data.catalog!.defaultAgent;
   const model = view.modelId ?? data.catalog!.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {

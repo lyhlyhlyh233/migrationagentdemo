@@ -2,10 +2,21 @@ import type {
   BatchTask,
   CreationTask,
   RiskItem,
+  StageConversation,
+  StageId,
   ValidationVm,
   VmConfiguration,
   VmTask,
 } from "@/domain/models";
+export const createStageConversation = (
+  stageId: StageId,
+): StageConversation => ({
+  id: `stage-${stageId}-main`,
+  stageId,
+  title: stageId,
+  kind: "main",
+});
+
 export const planningRisks: RiskItem[] = [
   {
     id: 5,

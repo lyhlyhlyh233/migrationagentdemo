@@ -1,7 +1,11 @@
 import { useWorkspace } from "@/app/context";
 
 import { projectUi, type ConversationView } from "@/app/state";
-import { mainConversationId, type StageId } from "@/domain/models";
+import type { StageId } from "@/domain/models";
+import {
+  currentConversation,
+  findStageConversation,
+} from "@/domain/conversations";
 import type { FilePurpose, ProjectCommand } from "@/services/contracts";
 import { errorMessage } from "@/services/errors";
 import { saveDownload } from "@/shared/files";
@@ -17,9 +21,12 @@ export function useWorkspaceActions(projectId: string) {
   } = useWorkspace();
   const s = data.snapshots[projectId];
   const p = ui.projects[projectId] ?? projectUi();
-  const id =
-    p.conversationId ?? (s?.info ? mainConversationId("research") : null);
-  const chat = s?.conversations.find((c) => c.id === id);
+  const chat = currentConversation(
+    s?.conversations ?? [],
+    p.conversationId,
+    p.activeStage,
+  );
+  const id = chat?.id ?? null;
   const context = {
     projectId,
     conversationId: id ?? "",
@@ -89,9 +96,7 @@ export function useWorkspaceActions(projectId: string) {
       invoke(async () => {
         await service.execute(context, { type: "stage.confirm", target });
         const next = await service.getProject(projectId);
-        const c = next.conversations.find(
-          (c) => c.stageId === target && c.kind === "main",
-        );
+        const c = findStageConversation(next.conversations, target);
         if (c)
           dispatchUi({
             type: "conversation",

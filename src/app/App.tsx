@@ -67,7 +67,9 @@ function Session({ onSignOut }: { onSignOut: () => void }) {
             setError(errorMessage(e));
           }
         }}
-        service={service}
+        onConfigureAccount={async (configuration) => {
+          await service.configureAccount(configuration);
+        }}
       />
       {error && !ui.creating && <div role="alert">{t(error)}</div>}
     </>

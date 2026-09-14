@@ -14,12 +14,15 @@
 - 保持 `.gitignore` 的排除规则，不提交依赖目录、构建产物、本地缓存或凭据。
 - 使用普通推送，不强制覆盖远端历史。遇到权限、网络或冲突问题时，说明推送尚未完成及具体原因。
 - 完成后简要报告同步结果，可附提交编号。
+- 仅在用户要求时创建版本标签；标记本次实际提交，推送分支和标签后核对远端，不覆盖已发布标签。
 
 ## 工程边界
 
 - 本项目为 Vite + React + TypeScript 静态前端。入口在 `src/app/main.tsx`，使用 `npm run dev`，不要恢复 Next/Vinext 或托管平台专用依赖。
 - `domain` 只放模型和规则；`services` 负责数据与执行；`features` 负责界面和局部交互；通用控制放 `shared`。
 - 展示组件不直接请求接口、不生成 Mock 任务、不使用业务计时器。真实后端通过 `services/contracts.ts` 与 `services/http` 适配。
+- `app/config.ts` 读取公开服务配置；`services/index.ts` 是唯一实现工厂，对外返回 `MigrationService`。页面不能导入 Mock/HTTP 实现，设置等展示组件只接收数据和回调。主要依赖方向已加入 ESLint。
+- 会话 ID 按快照查找，阶段默认 Agent 按目录映射；不在 UI 拼 Mock ID。真实接口的 DTO、URL、认证和事件格式只在适配器内转换。
 - 默认 Mock。未知模式或未实现接口明确失败，不静默降级为模拟成功。不虚构服务端 URL、DTO 或认证成功。
 - 保留项目/会话隔离、异步发起上下文、人工交接、资源 ID 和共享执行锁。后台完成不得强制切换当前会话。
 - 样式就近使用 CSS Modules；共用主题/字号/语义颜色集中维护。不要新增装饰性大卡、渐变或繁杂动画。
@@ -30,6 +33,6 @@
 - 常规检查：`npm run typecheck`、`npm run lint`、`npm test`；生产构建：`npm run build`。合并命令 `npm run check` 覆盖前三项。
 - 业务改动补充有意义的针对性测试；纯样式调整不为实现细节新增测试。按用户要求确定回归范围。
 - 影响静态资源时检查根路径及子目录部署；影响视觉时快速检查四种主题、窄屏和宽屏。
-- [docs/design.md](docs/design.md) 维护工程架构与接口适配；[DESIGN.md](DESIGN.md) 维护视觉规则；[agent.md](agent.md) 是 AI 阅读入口。避免多份文档重复维护同一细节。
+- [docs/design.md](docs/design.md) 维护工程架构；[docs/integration.md](docs/integration.md) 维护接口契约语义和接入说明；[DESIGN.md](DESIGN.md) 维护视觉规则；[agent.md](agent.md) 是 AI 阅读入口。避免多份文档重复维护同一细节。
 - 启动与配置更新 README，功能范围更新 PRODUCT，业务门禁和模拟边界更新业务逻辑说明。
 - 文档与输出均区分 Mock 已验证行为和未接入的真实能力。禁止提交凭据、环境文件、依赖或构建目录。

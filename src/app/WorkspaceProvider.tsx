@@ -1,10 +1,12 @@
 import { conversationReducer } from "@/features/conversations/state";
+import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import { createServices } from "@/services";
 import type { MigrationService } from "@/services/contracts";
 import { errorMessage } from "@/services/errors";
 import { useEffect, useReducer, useState, type ReactNode } from "react";
 import { WorkspaceContext } from "./context";
 import { dataReducer, initialData, initialUi, uiReducer } from "./state";
+import { serviceConfig } from "./config";
 function useWorkspaceState(service: MigrationService) {
   const [conversationState, dispatchConversation] = useReducer(
     conversationReducer,
@@ -15,6 +17,8 @@ function useWorkspaceState(service: MigrationService) {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
     const unsub = service.subscribe((e) => {
       if (!active) return;
       if (e.type === "snapshot")
@@ -28,13 +32,13 @@ function useWorkspaceState(service: MigrationService) {
     });
     dispatchData({ type: "loading" });
     Promise.all([
-      service.catalog(),
-      service.listProjects(),
-      service.getProject("lobby"),
+      service.catalog(options),
+      service.listProjects(options),
+      service.getProject(EMPTY_WORKSPACE_ID, options),
     ])
       .then(async ([catalog, projects, lobby]) => {
         const snapshots = await Promise.all(
-          projects.map((p) => service.getProject(p.id)),
+          projects.map((p) => service.getProject(p.id, options)),
         );
         if (!active) return;
         [lobby, ...snapshots].forEach((snapshot) =>
@@ -48,6 +52,7 @@ function useWorkspaceState(service: MigrationService) {
       });
     return () => {
       active = false;
+      controller.abort();
       unsub();
     };
   }, [service, reload]);
@@ -77,7 +82,7 @@ export function WorkspaceProvider({
   );
 }
 export function useServiceSession() {
-  const [service, setService] = useState(() => createServices());
+  const [service, setService] = useState(() => createServices(serviceConfig));
   useEffect(() => () => service.dispose(), [service]);
-  return { service, reset: () => setService(createServices()) };
+  return { service, reset: () => setService(createServices(serviceConfig)) };
 }

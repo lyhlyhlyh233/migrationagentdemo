@@ -28,7 +28,10 @@ export function createHttpClient(baseUrl: string, fetcher: Fetcher = fetch) {
     try {
       body = await response.json();
     } catch {
-      throw new ServiceError("HTTP", "接口返回内容格式不正确");
+      throw new ServiceError(
+        init.signal?.aborted ? "ABORTED" : "HTTP",
+        init.signal?.aborted ? "操作已取消" : "接口返回内容格式不正确",
+      );
     }
     return decode(body);
   };
