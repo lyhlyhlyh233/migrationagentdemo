@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 import type { RiskItem } from "@/domain/models";
 import { useTranslation } from "@/shared/i18n";
 import { riskImpactLabels } from "@/shared/i18n/risks";
+import { Button } from "@/shared/ui/primitives";
 import { Status } from "@/shared/ui/Status";
 import { Icon } from "@/shared/ui/icons";
 import { Pagination } from "@/shared/ui/Pagination";
@@ -185,9 +186,9 @@ export function CategoryRiskTable({
                       </span>
                     </td>
                     <td data-actions>
-                      <div className={styles.rowActions}>
-                        <button
-                          className={styles.textAction}
+                      <div className={styles.ruleActions}>
+                        <Button
+                          className={styles.rowButton}
                           aria-expanded={detailsOpen}
                           onClick={() =>
                             setDetails(
@@ -197,11 +198,15 @@ export function CategoryRiskTable({
                             )
                           }
                         >
+                          <Icon name="eye" size={14} />
                           {t("查看详情")}
-                        </button>
+                        </Button>
                         {items.some((r) => r.stage === "research") && (
-                          <button
-                            className={styles.textAction}
+                          <Button
+                            className={`${styles.rowButton} ${styles.strategyButton}`}
+                            aria-expanded={
+                              actions.inlineEditor?.key === `rule:${key}`
+                            }
                             disabled={
                               !actions.editable ||
                               actions.saving ||
@@ -211,8 +216,9 @@ export function CategoryRiskTable({
                               actions.onEdit(`rule:${key}`, items, true)
                             }
                           >
+                            <Icon name="edit" size={14} />
                             {t("设置策略")}
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>

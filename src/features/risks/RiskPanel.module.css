@@ -298,6 +298,44 @@
   white-space: normal;
   text-align: left;
 }
+.ruleActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.ruleActions .rowButton {
+  gap: 5px;
+  min-height: var(--control-compact);
+  padding: 5px 8px;
+  border-color: var(--line-strong);
+  color: var(--ink);
+  font-size: var(--ui-small);
+  line-height: 1.3;
+  white-space: normal;
+}
+.rowButton svg {
+  flex-shrink: 0;
+}
+.ruleActions .strategyButton {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.ruleActions .strategyButton:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.ruleActions .rowButton:active:not(:disabled) {
+  background: var(--hover);
+}
+.riskTable .actionsColumn {
+  width: 116px;
+}
+.workspace:lang(en) .riskTable .actionsColumn {
+  width: 136px;
+}
 .riskTable,
 .vmTable {
   min-width: 0;
@@ -856,4 +894,28 @@
   flex: 1;
   min-width: 160px;
   overflow-wrap: anywhere;
+}
+
+@container risk-table (min-width: 1000px) {
+  .riskTable .actionsColumn {
+    width: 220px;
+  }
+  .workspace:lang(en) .riskTable .actionsColumn {
+    width: 264px;
+  }
+  .ruleActions {
+    flex-direction: row;
+  }
+  .ruleActions .rowButton {
+    flex: 1;
+  }
+}
+@container risk-table (max-width: 460px) {
+  .ruleActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .ruleActions .rowButton {
+    min-height: 36px;
+  }
 }
