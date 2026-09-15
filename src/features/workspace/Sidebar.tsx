@@ -138,9 +138,9 @@ export function Sidebar({
           >
             {(
               [
+                { id: "risk", label: "迁移风险", icon: "shield" },
                 { id: "planning", label: "迁移规划", icon: "file" },
                 { id: "tasks", label: "迁移任务", icon: "tasks" },
-                { id: "risk", label: "迁移风险", icon: "shield" },
                 { id: "deliverables", label: "迁移交付件", icon: "file" },
                 { id: "logs", label: "操作日志", icon: "clock" },
               ] as const

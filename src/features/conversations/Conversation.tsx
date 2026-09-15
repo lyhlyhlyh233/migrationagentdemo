@@ -70,6 +70,7 @@ export function Conversation({
     m.results?.some(
       (r) =>
         r.kind === "planning-input" ||
+        (!s.planning?.batches.length && r.kind === "planning-preview") ||
         (r.kind === "summary" && r.stageId === "planning"),
     ),
   )?.id;
@@ -128,6 +129,11 @@ export function Conversation({
                         onUpload={onUpload}
                         activeInput={message.id === latestInputId}
                         {...actions}
+                        planningInput={
+                          message.id === latestPlanningInputId
+                            ? actions.planningInput
+                            : undefined
+                        }
                       />
                     )}
                     {message.id === copyId && (

@@ -8,7 +8,7 @@ import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
 import { Button, ResultFrame } from "@/shared/ui/primitives";
 import { Status } from "@/shared/ui/Status";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import styles from "./BusinessResults.module.css";
 export interface ResultActions {
   onExecutionWork?: (
@@ -23,6 +23,7 @@ export interface ResultActions {
   onAsk?: (text: string) => void;
   activeInput?: boolean;
   planningDraftDirty?: boolean;
+  planningInput?: ReactNode;
   onPlanningTimeline?: () => void;
 }
 export function BusinessResults({
@@ -87,6 +88,7 @@ function BusinessResultBlock({
   onUpload,
   activeInput = false,
   planningDraftDirty = false,
+  planningInput,
   onPlanningTimeline,
   onExecutionWork,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
@@ -122,23 +124,27 @@ function BusinessResultBlock({
     );
   if (r.kind === "planning-input")
     return (
-      <PlanningForm
-        snapshot={s}
-        dirty={planningDraftDirty}
-        onCommand={onCommand}
-        onDownload={onDownload}
-        onOpen={() => onPanel("planning")}
-      />
+      planningInput ?? (
+        <PlanningForm
+          snapshot={s}
+          dirty={planningDraftDirty}
+          onCommand={onCommand}
+          onDownload={onDownload}
+          onOpen={() => onPanel("planning")}
+        />
+      )
     );
   if (r.kind === "planning-preview")
     return (
-      <Button onClick={() => onPanel("planning")}>
-        {t(
-          s.planning?.preview?.id === r.previewId
-            ? "查看调整预览"
-            : "查看当前规划",
-        )}
-      </Button>
+      planningInput ?? (
+        <Button onClick={() => onPanel("planning")}>
+          {t(
+            s.planning?.preview?.id === r.previewId
+              ? "查看调整预览"
+              : "查看当前规划",
+          )}
+        </Button>
+      )
     );
   if (r.kind === "assessment-input")
     return activeInput && s.assessmentStatus !== "completed" && onUpload ? (

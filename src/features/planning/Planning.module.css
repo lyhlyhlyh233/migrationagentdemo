@@ -49,6 +49,38 @@
 .resultActions {
   margin-block: 12px 4px;
 }
+.intake {
+  height: auto;
+  max-width: 800px;
+  margin-block: 16px 4px;
+  padding-block: 14px;
+  border-block: 1px solid var(--line);
+  background: transparent;
+}
+.intake p {
+  margin: 8px 0;
+}
+.intake input[type="file"] {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.intakeConditions {
+  margin-top: 12px;
+  border-block: 1px solid var(--line);
+  padding-block: 10px;
+}
+.intakeConditions > summary {
+  cursor: pointer;
+  font-size: var(--ui-size);
+  font-weight: 500;
+}
+.intakeConditions > summary small {
+  margin-left: 12px;
+  font-size: var(--ui-caption);
+  font-weight: 400;
+  color: var(--muted);
+}
 .summary {
   display: flex;
   flex-wrap: wrap;

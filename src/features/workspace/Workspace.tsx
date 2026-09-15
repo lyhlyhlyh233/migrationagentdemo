@@ -23,6 +23,7 @@ import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { PlanningWorkspace } from "@/features/planning/PlanningWorkspace";
+import { PlanningIntake } from "@/features/planning/PlanningIntake";
 import type { PlanningView } from "@/features/planning/state";
 import { ManagementDiscussion } from "./ManagementDiscussion";
 import { ManagementView } from "./ManagementView";
@@ -105,7 +106,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       },
     });
   const canShowSidePanel = !!s.info && !management && !!chat?.stageId;
-  const hasRiskPanel = p.sidePanel.tabs.length > 0;
+  const planningPreparing =
+    chat?.stageId === "planning" && !s.planning?.batches.length;
+  const hasRiskPanel = p.sidePanel.tabs.length > 0 && !planningPreparing;
   const showSidePanel = canShowSidePanel && hasRiskPanel && p.sidePanel.open;
   const showInspector = canShowSidePanel && inspector && !showSidePanel;
   const closeRiskPanel = () => {
@@ -149,7 +152,13 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     dispatchUi,
   ]);
   useEffect(() => {
-    if (chat?.stageId !== "planning" || management || p.planningOpened) return;
+    if (
+      chat?.stageId !== "planning" ||
+      management ||
+      p.planningOpened ||
+      !s.planning?.batches.length
+    )
+      return;
     dispatchUi({
       type: "project",
       id: s.id,
@@ -166,6 +175,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     chat?.stageId,
     management,
     p.planningOpened,
+    s.planning?.batches.length,
     p.sidePanel,
     s.id,
     dispatchUi,
@@ -273,11 +283,14 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const model = view.modelId ?? data.catalog!.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {
-      openSidePanel("risk");
+      if (planningPreparing) setPanel("risk");
+      else openSidePanel("risk");
       setInspector(true);
       void a.send(t("查看迁移风险与处置建议"), agent, model);
-    } else if (panel === "planning") openSidePanel("planning");
-    else if (
+    } else if (panel === "planning") {
+      if (planningPreparing) void a.send(t("补充规划资料"), agent, model);
+      else openSidePanel("planning");
+    } else if (
       [
         "execution",
         "connection",
@@ -349,6 +362,17 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       compact={!management}
     />
   );
+  const planningInput = planningPreparing ? (
+    <PlanningIntake
+      snapshot={s}
+      view={p.planningView}
+      onView={planningViewChange}
+      onCommand={a.execute}
+      onDownload={a.download}
+      onUpload={a.upload}
+      conversationId={chat?.id ?? null}
+    />
+  ) : undefined;
   const executionContent = (
     <ExecutionWorkspace
       snapshot={s}
@@ -665,6 +689,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               <Conversation
                 key={chat.id}
                 onExecutionWork={executionLocation}
+                planningInput={planningInput}
                 planningDraftDirty={planningDraftDirty}
                 onPlanningTimeline={() => {
                   planningViewChange({ tab: "timeline" });
@@ -722,7 +747,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onWork={() => {
               if (chat.stageId === "research")
                 void a.send(t("查看评估资料"), agent, model);
-              else if (chat.stageId === "planning") openSidePanel("planning");
+              else if (chat.stageId === "planning")
+                conversationPanel("planning");
               else if (chat.stageId === "migration") openSidePanel("execution");
               else if (chat.stageId === "validation")
                 openSidePanel("validation");

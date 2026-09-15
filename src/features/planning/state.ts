@@ -6,6 +6,7 @@ import type {
 } from "@/domain/planning";
 import type { PageState } from "@/shared/ui/pagination-state";
 export interface PlanningView {
+  intakeConditionsOpen?: boolean;
   compactAction?: "conditions" | "import";
   tab: "inputs" | "batches" | "resources" | "timeline";
   section: "attributes" | "dependencies" | "conditions";

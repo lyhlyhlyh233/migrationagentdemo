@@ -81,7 +81,7 @@ export function planningFiles(rt: MockRuntime, s: ProjectSnapshot) {
           ...planningConditionFields.map(([key, label]) => [
             label,
             p.conditions[key],
-            "示例输入，可在规划面板修改；上传内容本轮不解析",
+            "可在表中或界面填写；上传内容本轮不解析，已有条件保留",
           ]),
         ],
       },

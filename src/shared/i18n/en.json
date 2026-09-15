@@ -1591,8 +1591,6 @@
   "规划初稿已生成，可在规划面板查看和调整": "Draft generated. Review and adjust it in the planning panel.",
   "已准备 B02 割接移至周六的调整预览。只修改该批次，其他批次保持原值；依赖影响需人工核对，确认后才应用。": "A preview moves B02 cutover to Saturday. Only this batch changes. Review dependency impacts, then confirm to apply.",
   "建议先将并发数降低一半。应用后现有计划会标记为待更新；本轮不会把示例时长冒充精确重算结果。": "The preview halves concurrency. Applying it marks the plan as needing an update. Sample durations are not a precise recalculation.",
-  "已有一份待确认调整。请先在规划面板应用或取消，再继续修改。": "A change is awaiting confirmation. Apply or cancel it in the planning panel before making another change.",
-  "可以继续细化这份规划。请明确要调整的批次、虚拟机或约束值；也可以使用右侧表单。": "Specify the batch, VM or constraint to change, or use the planning form.",
   "本轮支持演示“将 B02 割接改到周六”“降低单批次并发”，其他复杂要求需要先澄清，不会自动执行。": "This version demonstrates moving B02 to Saturday and reducing concurrency. Other complex requests need clarification and are not executed automatically.",
   "示例先安排试点，再扩展到核心业务与规模批次。": "The sample begins with a pilot, followed by core services and scale migration.",
   "- 受阻对象优先排除。": "- Blocked VMs are excluded first.",
@@ -1929,7 +1927,15 @@
   "验证状态已更新，请核对最新结果后重新提交": "Validation has changed. Review the latest results before resubmitting.",
   "{0} 台同步就绪": "{0} VMs ready for cutover",
   "模拟日志：{0}，{1}。": "Sample log: {0}, {1}.",
-  "右侧可以填写迁移约束或直接生成模拟初稿。业务属性与依赖等详细资料，请在迁移规划页面补充。": "Use the side panel to set migration constraints or generate a sample draft. Add business attributes and dependencies on the full planning page.",
   "暂停会保留已同步数据；恢复和重试从原位置继续。只有完成同步且没有阻塞的对象可割接，割接后仍须人工业务验证。": "Pausing retains synchronized data. Resume and retry continue from the saved position. Only synchronized VMs without blockers can cut over; business validation still requires human confirmation.",
-  "本批次同步结果已更新。就绪对象保持增量同步；暂停或异常对象仍需处理，割接必须人工确认。": "Batch sync results updated. Ready VMs continue incremental sync; paused or failed VMs still need attention. Cutover requires confirmation."
+  "本批次同步结果已更新。就绪对象保持增量同步；暂停或异常对象仍需处理，割接必须人工确认。": "Batch sync results updated. Ready VMs continue incremental sync; paused or failed VMs still need attention. Cutover requires confirmation.",
+  "下方可下载模板并导入规划资料，重点补充业务属性与依赖，也可在表中一并填写带宽等迁移约束。基础约束表单默认收起，可以直接在对话中修改；资料准备好后，再生成规划初稿。": "Download the template and import planning inputs below, mainly business attributes and dependencies. You can also fill in bandwidth and migration constraints in the workbook. The basic constraints form is collapsed by default and can be edited here in the conversation. Generate a draft when your inputs are ready.",
+  "已有一份待确认调整。请先在调整预览中应用或取消，再继续修改。": "A change is awaiting confirmation. Apply or cancel it in the preview before making another change.",
+  "可以继续细化这份规划。请明确要调整的批次、虚拟机或约束值；也可以使用规划资料表单。": "Specify the batch, VM or constraint to change, or use the planning form.",
+  "规划资料补充": "Planning inputs",
+  "导入规划资料": "Import planning inputs",
+  "主要补充业务系统、业务等级、集群类型与角色，也可一并填写业务依赖、带宽和迁移约束。业务资料可选。": "Use the workbook mainly for business systems, criticality, cluster types and roles. It also supports dependencies, bandwidth and migration constraints. Business information is optional.",
+  "上传后展示示例解析预览，尚未读取实际表格内容；确认后才应用。": "Uploads show a sample preview, without reading the actual workbook contents. Confirm before applying.",
+  "带宽与基础约束": "Bandwidth and basic constraints",
+  "有未保存的规划资料，请先保存或放弃修改再导入、生成。": "Save or discard your pending inputs before importing or generating a plan."
 }
