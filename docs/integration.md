@@ -14,18 +14,18 @@
 
 ## 能力与返回内容
 
-| 能力 | 契约入口 | 适配重点 |
-| --- | --- | --- |
-| 项目 | listProjects、createProject、getProject | 返回列表/完整项目快照，保留项目隔离 |
-| 会话 | createConversation、renameConversation | 独立 ID、所属阶段、主/子/临时类型 |
-| Agent、模型 | catalog | 目录 ID、默认值及可选 stageAgents 映射 |
-| 回复 | sendMessage、stopReply | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
-| 评估/规划/交接 | execute 的 assessment、planning、stage 命令 | 阶段条件、人工确认、不可重复启动 |
-| MD/实施/验收 | md.check、execution.confirm、creation.update、cutover.complete、validation.confirm | 共享任务与审批状态，按资源 ID 操作 |
-| 风险/任务 | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action | 最新状态校验、批量原子性与阶段锁定 |
-| 文件 | upload(File)、download | File 输入，Blob、filename、mediaType 输出 |
-| 账户 | getAccount、configureAccount、logout | 区分配置与真实验证，不回传明文凭据 |
-| 实时状态 | subscribe、dispose | 统一事件、取消订阅、请求和连接清理 |
+| 能力           | 契约入口                                                                           | 适配重点                                                                  |
+| -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 项目           | listProjects、createProject、getProject                                            | 返回列表/完整项目快照，保留项目隔离                                       |
+| 会话           | createConversation、renameConversation                                             | 独立 ID、所属阶段、主/子/临时类型                                         |
+| Agent、模型    | catalog                                                                            | 目录 ID、默认值及可选 stageAgents 映射                                    |
+| 回复           | sendMessage、stopReply                                                             | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
+| 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                        | 阶段条件、人工确认、不可重复启动                                          |
+| MD/实施/验收   | md.check、execution.confirm、creation.update、cutover.complete、validation.confirm | 共享任务与审批状态，按资源 ID 操作                                        |
+| 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action        | 最新状态校验、批量原子性与阶段锁定                                        |
+| 文件           | upload(File)、download                                                             | File 输入，Blob、filename、mediaType 输出                                 |
+| 账户           | getAccount、configureAccount、logout                                               | 区分配置与真实验证，不回传明文凭据                                        |
+| 实时状态       | subscribe、dispose                                                                 | 统一事件、取消订阅、请求和连接清理                                        |
 
 契约是前端能力边界，不需要拆成等量后端接口。`assessment.choosePlan` 是保留的兼容命令，当前页面已没有总体方案选择入口；`assessment-decision` 也是历史结果标记，不需要为其新增后端能力。
 
@@ -55,18 +55,42 @@
 
 ## 文件、日志与账户
 
+### 规划契约
+
+`ProjectSnapshot.planning` 在进入规划时初始化，包含资产、评估基线 ID、约束及来源、容量、依赖、批次、待更新状态、风险签名、revision 和可选 preview。资产通过稳定 ID 关联，真实系统需提供权威标识和资源值。
+
+沿用 `execute`，不约定新 HTTP 端点：
+
+| 命令               | 输入与行为                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| planning.save      | expectedRevision + patch；约束、容量、依赖或选定资产属性，整体校验后写入，已生成计划标记待更新         |
+| planning.useSample | 按最新评估资格生成示例批次，复用 planning 执行锁；失败或停止后可重试                                   |
+| planning.preview   | expectedRevision + change；window（窗口/缓冲）、move（资产归属）、conditions 或 import；只建立前后对照 |
+| planning.apply     | previewId；检查发起会话、规划 revision、最新风险及阶段锁定，确认后一次应用                             |
+| planning.cancel    | previewId；仅删除待确认预览，不修改原计划                                                              |
+
+`planning.confirmScope` 保留兼容旧流程，新界面在人工交接时直接继承范围。进入 planning 自动产生一次引导问答；进入 migration 后规划只读。资料或风险变化、待确认预览会阻止旧计划交接；仍无需逐项处理风险。
+
+一份项目只能有一份待应用预览，其他会话可查看，应用/取消必须回到发起会话。规划 revision 只随内容变化递增，普通消息不造成冲突。未指定业务属性不覆盖已有值；示例导入仅填缺失系统/等级，依赖为空时添加样例。UI 草稿不进入业务快照，显式保存后才参与计划。
+
+`upload(context, "planning", file)` 校验扩展名和 20MB 上限，只展示模拟解析结果；实际表格内容未读取，确认后才应用样例。文件名不代表解析成功。真实导入、字段映射、自然语言解析、排程需后续在适配器/后端实现。
+
+`planning-template`、`batch-plan`、`runbook` 始终引用当前规划资源。Excel 输出是 SpreadsheetML（Excel 2003 XML）`.xls`，不是 XLSX 压缩包。模板三 Sheet、输出五 Sheet，字段与统计见业务说明。日期作为无时区示例值显示，运算统一按 UTC 解释避免跨浏览器日期错位；真实排程需另行约定项目时区。
+
+### 文件与账户行为
+
 `upload` 接收 File 和用途 `rvtools/presales/scope/planning`。真实适配器按已约定的上传和解析接口处理；组件不读 Excel。`download` 通过服务返回 Blob 与元信息，页面仅调用 `shared/files.ts` 触发保存。
 
 除快照内的 artifact ID，当前下载契约还有两个保留资源格式：
 
-| 资源标识 | 含义 |
-| --- | --- |
-| research-template | 原始迁移调研 XLSX 模板，Mock 从随应用打包的资源读取 |
-| task-log:后接逗号分隔的任务ID | 已选任务的日志下载，Mock 从当前项目任务生成文本 |
+| 资源标识                      | 含义                                                |
+| ----------------------------- | --------------------------------------------------- |
+| research-template             | 原始迁移调研 XLSX 模板，Mock 从随应用打包的资源读取 |
+| task-log:后接逗号分隔的任务ID | 已选任务的日志下载，Mock 从当前项目任务生成文本     |
 
 这是客户端资源约定，不是 URL。适配器将它们映射为真实资源；如真实任务 ID 允许逗号，应改为类型化下载参数并同步唯一调用处，不直接拼出后端 URL。
 
-当前评估报告和批次计划生成后保留；范围清单、规划信息模板、风险处置方案在处置变化后使用原 ID 更新为当前内容。聊天中的历史统计不随之改变，下载引用会取得该资源的当前内容。需要历史文件版本时再增加版本资源 ID，本轮没有文件版本库。
+当前评估报告生成后保留；规划模板、计划和 RunBook 随生成、保存、应用调整和下载更新为当前内容；范围清单及风险处置方案随风险变化更新。聊天历史统计不变，下载引用取得当前内容。本轮没有文件版本库。
 
 项目操作日志由消息中的 operation 标记及来源会话生成，没有独立审计后端。`getAccount` 只返回 configured、verified 和方式；Mock 只保存此状态，设置表单本次内存保存用户输入，退出清除，不落 localStorage。真实凭据的传输、保管、验证和登录态按内网平台规范在适配器/后端实现，配置成功不能等同于 verified。
 

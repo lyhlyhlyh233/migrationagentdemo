@@ -21,11 +21,19 @@ export function useWorkspaceActions(projectId: string) {
   } = useWorkspace();
   const s = data.snapshots[projectId];
   const p = ui.projects[projectId] ?? projectUi();
-  const chat = currentConversation(
-    s?.conversations ?? [],
-    p.conversationId,
-    p.activeStage,
-  );
+  const chat =
+    (p.panel === "planning" || p.panel === "risk"
+      ? findStageConversation(
+          s?.conversations ?? [],
+          p.activeStage,
+          p.lastStages[p.activeStage],
+        )
+      : undefined) ??
+    currentConversation(
+      s?.conversations ?? [],
+      p.conversationId,
+      p.activeStage,
+    );
   const id = chat?.id ?? null;
   const context = {
     projectId,

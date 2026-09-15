@@ -4,6 +4,7 @@ import type {
   StageId,
 } from "@/domain/models";
 import { migrationScope } from "@/domain/assessment";
+import { planningIsStale } from "@/domain/planning";
 import { completedBatches } from "@/domain/policies";
 import type { WorkStep } from "@/features/workspace/ExecutionInspector";
 export function workspacePresentation(s: ProjectSnapshot) {
@@ -11,7 +12,6 @@ export function workspacePresentation(s: ProjectSnapshot) {
     risks,
     assessmentStatus,
     planningStatus,
-    planningWorkbook,
     files,
     vmCount,
     batchTasks,
@@ -26,7 +26,7 @@ export function workspacePresentation(s: ProjectSnapshot) {
     (v) => v.confirmed,
   ).length;
   const completedBatchIds = completedBatches(s);
-  const planned = planningStatus === "completed";
+  const planned = planningStatus === "completed" && !planningIsStale(s);
   const assessed = assessmentStatus === "completed";
   const step = (
     label: string,
@@ -75,13 +75,13 @@ export function workspacePresentation(s: ProjectSnapshot) {
       step(
         "确认迁移范围",
         `${migrationScope(s).length} 台虚拟机`,
-        ["details-pending", "generating", "completed"].includes(planningStatus),
+        Boolean(s.planning),
         planningStatus === "scope-review",
       ),
       step(
-        "补充业务信息",
-        "业务分级、依赖关系与迁移窗口",
-        Boolean(planningWorkbook),
+        "核对规划输入",
+        "业务资料可选，缺失依赖持续标记",
+        Boolean(s.planning?.revision) || planned,
         planningStatus === "details-pending",
       ),
       step(

@@ -20,7 +20,9 @@ import { command } from "./commands";
 import { reply } from "./conversations";
 import { assessmentWelcome } from "./assessment-knowledge";
 import { researchTemplate, scopeArtifacts } from "./files";
-import { plan } from "./planning";
+import { previewPlanning } from "./planning";
+import { initializePlanning } from "./planning-data";
+import { planningFiles } from "./planning-files";
 import { MockRuntime } from "./runtime";
 import { createStageConversation } from "./fixtures";
 const catalog: Catalog = {
@@ -282,7 +284,29 @@ export class MockMigrationService implements MigrationService {
       s.vmCount = s.scopeRows.length;
       s.planningStatus = "details-pending";
       scopeArtifacts(this.runtime, s);
-    } else return plan(this.runtime, c, file.name, options);
+    } else {
+      requireCondition(
+        file.size <= 20 * 1024 * 1024,
+        "文件超过 20 MB，请缩小后重试",
+      );
+      const p = initializePlanning(s);
+      const preview = previewPlanning(
+        this.runtime,
+        c,
+        { kind: "import", filename: file.name },
+        p.revision,
+      );
+      this.runtime.message(c, "user", `上传规划资料：${file.name}`, {
+        operation: true,
+      });
+      this.runtime.result(
+        c,
+        "文件已接收。本轮展示示例解析结果，尚未读取实际表格内容。确认后仅补充示例业务资料，已有填写会保留。",
+        [{ kind: "planning-preview", previewId: preview.id }],
+      );
+      this.runtime.publish(s);
+      return;
+    }
     this.runtime.message(c, "user", `已上传：${file.name}`, {
       operation: true,
       activity: c.stageId === "research" ? "assessment-preparation" : undefined,
@@ -311,6 +335,11 @@ export class MockMigrationService implements MigrationService {
   ) {
     this.active(options);
     const s = this.runtime.state(projectId);
+    if (
+      s.planning &&
+      ["planning-template", "batch-plan", "runbook"].includes(artifactId)
+    )
+      planningFiles(this.runtime, s);
     if (artifactId === "research-template") {
       requireCondition(s.info, "请先创建或选择项目");
       const signal = options.signal

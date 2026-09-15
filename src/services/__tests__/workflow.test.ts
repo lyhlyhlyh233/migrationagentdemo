@@ -623,9 +623,10 @@ describe("200 VM assessment sample", () => {
       expect(risk.vmId).toBe(`VMID-${1001 + vmIndex}`);
     }
     const assigned = planned.batchTasks.flatMap((batch) => batch.vmNames);
-    expect(assigned).toEqual(eligible);
+    // Planning may reorder by business tier and risk; scope must stay identical.
+    expect(new Set(assigned)).toEqual(new Set(eligible));
     expect(new Set(assigned).size).toBe(eligible.length);
-    expect(planned.vmTasks.map((task) => task.name)).toEqual(eligible);
+    expect(planned.vmTasks.map((task) => task.name)).toEqual(assigned);
     const planFile = await service.download(c.projectId, "batch-plan");
     const planText = await planFile.blob.text();
     for (const name of eligible) expect(planText).toContain(name);
@@ -647,10 +648,10 @@ describe("200 VM assessment sample", () => {
     const names = migrationScope(revised).map((row) => String(row[0]));
     expect(names).toHaveLength(182);
     await finish(service.execute(p, { type: "planning.useSample" }));
-    expect(
-      (await service.getProject(c.projectId)).batchTasks.flatMap(
-        (batch) => batch.vmNames,
-      ),
-    ).toEqual(names);
+    const assigned = (await service.getProject(c.projectId)).batchTasks.flatMap(
+      (batch) => batch.vmNames,
+    );
+    expect(new Set(assigned)).toEqual(new Set(names));
+    expect(assigned).toHaveLength(names.length);
   });
 });

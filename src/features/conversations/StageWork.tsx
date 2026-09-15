@@ -35,9 +35,8 @@ export function StageWork({
         <PlanningForm
           snapshot={snapshot}
           onCommand={onCommand}
-          onUpload={onUpload}
           onDownload={onDownload}
-          onTasks={() => onPanel("tasks")}
+          onOpen={() => onPanel("planning")}
         />
       ) : stage === "migration" ? (
         <MigrationForm

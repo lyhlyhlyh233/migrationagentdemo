@@ -25,9 +25,11 @@ export function Composer({
   onWork,
   onPanel,
   nextLabel,
+  compact = false,
   onNext,
 }: {
   nextLabel?: string;
+  compact?: boolean;
   onNext?: () => void;
   catalog: Catalog;
   draft: string;
@@ -85,6 +87,25 @@ export function Composer({
               description: "查询并处理当前风险",
               onClick: () => onPanel("risk"),
             },
+            ...(stage === "planning"
+              ? [
+                  {
+                    label: "将 B02 割接改到周六",
+                    description: "预览单批次窗口调整",
+                    onClick: () => onSend(t("将 B02 割接改到周六")),
+                  },
+                  {
+                    label: "降低单批次并发",
+                    description: "预览规划约束调整",
+                    onClick: () => onSend(t("降低单批次并发")),
+                  },
+                  {
+                    label: "说明这个批次的安排依据",
+                    description: "解释示例分批规则",
+                    onClick: () => onSend(t("说明这个批次的安排依据")),
+                  },
+                ]
+              : []),
             ...(stage === "research"
               ? [
                   {
@@ -126,7 +147,7 @@ export function Composer({
           {t("回复未完成，输入已保留。发送以重试。")}
         </p>
       )}
-      {stage && (
+      {stage && !compact && (
         <div className={styles.topRow}>
           <div className="composer-shortcuts">
             <ShortcutMenu groups={groups} />
@@ -200,12 +221,16 @@ export function Composer({
           </div>
         </div>
       </form>
-      <div className={styles.footerRow}>
-        <p className="composer-note">{t("Enter 发送 · Shift + Enter 换行")}</p>
-        {stage === "validation" && (
-          <span className={styles.lastStage}>{t("当前为最终验证阶段")}</span>
-        )}
-      </div>
+      {!compact && (
+        <div className={styles.footerRow}>
+          <p className="composer-note">
+            {t("Enter 发送 · Shift + Enter 换行")}
+          </p>
+          {stage === "validation" && (
+            <span className={styles.lastStage}>{t("当前为最终验证阶段")}</span>
+          )}
+        </div>
+      )}
     </footer>
   );
 }

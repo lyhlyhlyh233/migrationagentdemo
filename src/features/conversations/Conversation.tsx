@@ -22,6 +22,7 @@ export function Conversation({
   view,
   onUpload,
   onCloseWork,
+  compact = false,
   ...actions
 }: {
   snapshot: ProjectSnapshot;
@@ -29,6 +30,7 @@ export function Conversation({
   view: ConversationView;
   onUpload: (purpose: FilePurpose, file: File) => void;
   onCloseWork: () => void;
+  compact?: boolean;
 } & ResultActions) {
   const t = useTranslation();
   const end = useRef<HTMLDivElement>(null);
@@ -63,6 +65,13 @@ export function Conversation({
   )?.id;
   const latestInputId = messages.findLast((m) =>
     m.results?.some((r) => r.kind === "assessment-input"),
+  )?.id;
+  const latestPlanningInputId = messages.findLast((m) =>
+    m.results?.some(
+      (r) =>
+        r.kind === "planning-input" ||
+        (r.kind === "summary" && r.stageId === "planning"),
+    ),
   )?.id;
   const pending = s.pending[chat.id];
   const busy = !!pending;
@@ -107,7 +116,14 @@ export function Conversation({
                   >
                     {message.results && (
                       <BusinessResults
-                        results={message.results}
+                        results={message.results.filter(
+                          (r) =>
+                            !(compact && r.kind === "assessment-input") &&
+                            !(
+                              r.kind === "planning-input" &&
+                              (compact || message.id !== latestPlanningInputId)
+                            ),
+                        )}
                         snapshot={s}
                         onUpload={onUpload}
                         activeInput={message.id === latestInputId}
@@ -137,13 +153,11 @@ export function Conversation({
           }
         />
       )}
-      {chat.stageId &&
+      {!compact &&
+        chat.stageId &&
+        chat.stageId !== "planning" &&
         chat.stageId !== "research" &&
-        (view.workOpen ??
-          (chat.kind === "main" &&
-            (chat.stageId === "planning"
-              ? s.planningStatus !== "completed"
-              : true))) && (
+        (view.workOpen ?? chat.kind === "main") && (
           <div className={styles.work}>
             {chat.kind === "child" && (
               <div className={styles.workHeader}>

@@ -17,7 +17,9 @@
 
 业务执行位于 `services/mock/`，展示和局部草稿位于 `features/`。HTTP 模板故意未实现后端地址，切换 http 模式应显示未接入，不能伪装成成功。
 
-`V1_0914` 是本轮交接基线。对接时优先修改适配器及必要的领域映射，不将大页面搬进另一个大 Hook，不增加流程引擎或通用注册系统。ESLint 已检查主要依赖方向；边界文件是约定的代码入口，不需要额外 DI 框架。
+`V1_0914` 是已有历史交接标签，当前代码包含之后的提交，不要移动标签。对接时优先修改适配器及必要的领域映射，不将大页面搬进另一个大 Hook，不增加流程引擎或通用注册系统。ESLint 已检查主要依赖方向。
+
+规划改动从 `domain/planning.ts` → `services/mock/planning-data.ts` / `planning.ts` / `planning-files.ts` → `features/planning/PlanningWorkspace.tsx` 阅读。视图草稿按项目存在 `app/state.ts`；管理页小对话由 `ManagementDiscussion` 复用阶段记录。先读接口文档的规划 revision 和预览归属约定，不把 Mock 估算当成真实计算。
 
 ## 修改时必须保留
 

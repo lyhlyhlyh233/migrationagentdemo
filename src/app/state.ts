@@ -1,7 +1,12 @@
 import type { Catalog, ProjectSnapshot, StageId } from "@/domain/models";
 import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import type { RiskLocation } from "@/features/risks/presentation";
+import {
+  initialPlanningView,
+  type PlanningView,
+} from "@/features/planning/state";
 export type PanelId =
+  | "planning"
   | "tasks"
   | "risk"
   | "deliverables"
@@ -21,6 +26,14 @@ export interface ProjectUi {
   handoff: StageId | null;
   riskLocation: RiskLocation;
   assessmentRiskOpened: boolean;
+  planningOpened: boolean;
+  planningView: PlanningView;
+  managementChatCollapsed: boolean;
+  sidePanel: {
+    tabs: ("risk" | "planning")[];
+    active: "risk" | "planning";
+    open: boolean;
+  };
 }
 export const projectUi = (): ProjectUi => ({
   activeStage: "research",
@@ -31,6 +44,10 @@ export const projectUi = (): ProjectUi => ({
   handoff: null,
   riskLocation: { mode: "category" },
   assessmentRiskOpened: false,
+  planningOpened: false,
+  planningView: initialPlanningView(),
+  managementChatCollapsed: false,
+  sidePanel: { tabs: [], active: "risk", open: false },
 });
 export interface UiState {
   selected: string;
@@ -45,6 +62,7 @@ export const initialUi: UiState = {
   projects: {},
 };
 export type UiAction =
+  | { type: "planning-view"; id: string; patch: Partial<PlanningView> }
   | { type: "global"; patch: Partial<Omit<UiState, "projects">> }
   | { type: "project"; id: string; patch: Partial<ProjectUi> }
   | {
@@ -57,6 +75,14 @@ export type UiAction =
 export function uiReducer(s: UiState, a: UiAction): UiState {
   if (a.type === "global") return { ...s, ...a.patch };
   const p = s.projects[a.id] ?? projectUi();
+  if (a.type === "planning-view")
+    return {
+      ...s,
+      projects: {
+        ...s.projects,
+        [a.id]: { ...p, planningView: { ...p.planningView, ...a.patch } },
+      },
+    };
   if (a.type === "project")
     return { ...s, projects: { ...s.projects, [a.id]: { ...p, ...a.patch } } };
   if (a.expected && p.conversationId && p.conversationId !== a.expected)

@@ -1,7 +1,6 @@
 import type {
   BatchTask,
   CreationTask,
-  RiskItem,
   StageConversation,
   StageId,
   ValidationVm,
@@ -16,57 +15,6 @@ export const createStageConversation = (
   title: stageId,
   kind: "main",
 });
-
-export const planningRisks: RiskItem[] = [
-  {
-    id: 5,
-    description: "核心交易 RAC 集群跨批次迁移可能导致短时业务链路不一致",
-    level: "high",
-    stage: "planning",
-    batchId: "B-002",
-    vmName: "VM-DB-002",
-    vmId: "VMID-1002",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 6,
-    description: "6 台虚拟机未填写允许迁移窗口，实施排期存在冲突风险",
-    level: "medium",
-    stage: "planning",
-    batchId: "B-004",
-    vmName: "多台虚拟机",
-    vmId: "—",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 7,
-    description: "两项外围业务依赖缺少备用链路验证记录",
-    level: "medium",
-    stage: "planning",
-    batchId: "B-006",
-    vmName: "VM-WEB-087",
-    vmId: "VMID-1087",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-  {
-    id: 8,
-    description: "扩展批次资源池预留容量低于建议冗余阈值",
-    level: "low",
-    stage: "planning",
-    batchId: "B-008",
-    vmName: "VM-APP-113",
-    vmId: "VMID-1113",
-    closed: false,
-    closedAt: "—",
-    closureDescription: "—",
-  },
-];
 
 export function buildBatchTasks(vmNames: string[]): BatchTask[] {
   const phase: BatchTask["batchPhase"][] = [

@@ -19,6 +19,9 @@ import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { PlanningWorkspace } from "@/features/planning/PlanningWorkspace";
+import type { PlanningView } from "@/features/planning/state";
+import { ManagementDiscussion } from "./ManagementDiscussion";
 import { ManagementView } from "./ManagementView";
 import { workspacePresentation } from "./presentation";
 import { ProgressRail } from "./ProgressRail";
@@ -38,10 +41,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const [riskPanel, setRiskPanel] = useState<{
-    scope: string;
-    open: boolean;
-  }>();
   const openSidePanelButton = useRef<HTMLButtonElement>(null);
   const [riskInteractionLocked, setRiskInteractionLocked] = useState(false);
   const [sidePanelWidth, setSidePanelWidth] = useState<number>();
@@ -64,11 +63,15 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     };
   }, []);
   const p = { ...(ui.projects[s.id] ?? projectUi()) };
-  const chat = currentConversation(
-    s.conversations,
-    p.conversationId,
-    p.activeStage,
-  );
+  const chat =
+    (p.panel === "planning" || p.panel === "risk"
+      ? findStageConversation(
+          s.conversations,
+          p.activeStage,
+          p.lastStages[p.activeStage],
+        )
+      : undefined) ??
+    currentConversation(s.conversations, p.conversationId, p.activeStage);
   p.conversationId = chat?.id ?? null;
   const view = conversationState[s.id]?.[p.conversationId ?? ""] ?? {
     draft: "",
@@ -77,13 +80,29 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const management = !!p.panel;
   const stage = chat?.stageId ?? p.activeStage;
   const showRail = !management && (!chat || !!chat.stageId);
-  const panelScope = `${s.id}/${chat?.id}`;
+  const panelScope = s.id;
+  const openSidePanel = (tab: "risk" | "planning") =>
+    dispatchUi({
+      type: "project",
+      id: s.id,
+      patch: {
+        sidePanel: {
+          tabs: [...new Set([...p.sidePanel.tabs, tab])],
+          active: tab,
+          open: true,
+        },
+      },
+    });
   const canShowSidePanel = !!s.info && !management && !!chat?.stageId;
-  const hasRiskPanel = riskPanel?.scope === panelScope;
-  const showSidePanel = canShowSidePanel && hasRiskPanel && riskPanel.open;
+  const hasRiskPanel = p.sidePanel.tabs.length > 0;
+  const showSidePanel = canShowSidePanel && hasRiskPanel && p.sidePanel.open;
   const showInspector = canShowSidePanel && inspector && !showSidePanel;
   const closeRiskPanel = () => {
-    setRiskPanel({ scope: panelScope, open: false });
+    dispatchUi({
+      type: "project",
+      id: s.id,
+      patch: { sidePanel: { ...p.sidePanel, open: false } },
+    });
     setInspector(true);
     requestAnimationFrame(() => openSidePanelButton.current?.focus());
   };
@@ -98,9 +117,15 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     dispatchUi({
       type: "project",
       id: s.id,
-      patch: { assessmentRiskOpened: true },
+      patch: {
+        assessmentRiskOpened: true,
+        sidePanel: {
+          tabs: [...new Set([...p.sidePanel.tabs, "risk" as const])],
+          active: "risk",
+          open: true,
+        },
+      },
     });
-    setRiskPanel({ scope: panelScope, open: true });
     setInspector(true);
   }, [
     s.id,
@@ -109,6 +134,29 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     management,
     panelScope,
     p.assessmentRiskOpened,
+    p.sidePanel,
+    dispatchUi,
+  ]);
+  useEffect(() => {
+    if (chat?.stageId !== "planning" || management || p.planningOpened) return;
+    dispatchUi({
+      type: "project",
+      id: s.id,
+      patch: {
+        planningOpened: true,
+        sidePanel: {
+          tabs: [...new Set([...p.sidePanel.tabs, "planning" as const])],
+          active: "planning",
+          open: true,
+        },
+      },
+    });
+  }, [
+    chat?.stageId,
+    management,
+    p.planningOpened,
+    p.sidePanel,
+    s.id,
     dispatchUi,
   ]);
   const setPanel = (panel: PanelId) => {
@@ -137,10 +185,11 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const model = view.modelId ?? data.catalog!.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {
-      setRiskPanel({ scope: panelScope, open: true });
+      openSidePanel("risk");
       setInspector(true);
       void a.send(t("查看迁移风险与处置建议"), agent, model);
-    } else setPanel(panel);
+    } else if (panel === "planning") openSidePanel("planning");
+    else setPanel(panel);
   };
   const order: StageId[] = ["research", "planning", "migration", "validation"];
   const next = chat?.stageId
@@ -170,6 +219,66 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const scopedMessages = s.messages.filter(
     (m) => m.conversationId === chat?.id && m.operation,
   );
+  const planningViewChange = (patch: Partial<PlanningView>) =>
+    dispatchUi({ type: "planning-view", id: s.id, patch });
+  const planningDraftDirty = !!(
+    p.planningView.conditionsDraft ||
+    p.planningView.capacityDraft ||
+    p.planningView.dependenciesDraft ||
+    p.planningView.attributesDraft
+  );
+  const planningContent = (
+    <PlanningWorkspace
+      snapshot={s}
+      view={p.planningView}
+      onView={planningViewChange}
+      onCommand={a.execute}
+      onDownload={a.download}
+      onUpload={a.upload}
+      conversationId={chat?.id ?? null}
+      compact={!management}
+    />
+  );
+  const smallConversation = chat ? (
+    <Conversation
+      compact
+      planningDraftDirty={planningDraftDirty}
+      onPlanningTimeline={() => {
+        planningViewChange({ tab: "timeline" });
+        setPanel("planning");
+      }}
+      snapshot={s}
+      chat={chat}
+      view={view}
+      onPanel={setPanel}
+      onAsk={(text) => a.send(text, agent, model)}
+      onDownload={a.download}
+      onCommand={a.execute}
+      onStage={a.confirmStage}
+      onNavigateStage={selectStage}
+      onUpload={a.upload}
+      onCloseWork={() => a.view({ workOpen: false })}
+    />
+  ) : null;
+  const smallComposer = chat ? (
+    <Composer
+      compact
+      catalog={data.catalog!}
+      draft={view.draft}
+      agentId={agent}
+      modelId={model}
+      busy={!!s.pending[chat.id]}
+      retry={!!view.requestId && !s.pending[chat.id] && !!view.draft}
+      stage={chat.stageId}
+      onDraft={(draft) => a.view({ draft, requestId: undefined })}
+      onAgent={(agentId) => a.view({ agentId })}
+      onModel={(modelId) => a.view({ modelId })}
+      onSend={(text) => a.send(text, agent, model)}
+      onStop={() => void a.stop()}
+      onWork={() => setPanel("planning")}
+      onPanel={setPanel}
+    />
+  ) : null;
   return (
     <main
       style={
@@ -247,13 +356,13 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 <button
                   ref={openSidePanelButton}
                   className="icon-button"
-                  title={t(hasRiskPanel ? "展开迁移风险面板" : "查看执行详情")}
+                  title={t(hasRiskPanel ? "展开工作区面板" : "查看执行详情")}
                   aria-label={t(
-                    hasRiskPanel ? "展开迁移风险面板" : "查看执行详情",
+                    hasRiskPanel ? "展开工作区面板" : "查看执行详情",
                   )}
                   onClick={() =>
                     hasRiskPanel
-                      ? setRiskPanel({ scope: panelScope, open: true })
+                      ? openSidePanel(p.sidePanel.active)
                       : setInspector(true)
                   }
                 >
@@ -266,7 +375,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           ref={scrollViewport}
           className="conversation-scroll"
           data-auto-hide-scrollbar={!management || undefined}
-          data-risk-view={p.panel === "risk" || undefined}
+          data-risk-view={
+            p.panel === "risk" || p.panel === "planning" || undefined
+          }
           id="workspace-content"
           tabIndex={-1}
         >
@@ -274,26 +385,78 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             className={`conversation-content ${management ? "has-inline-panel" : ""}`}
           >
             {management ? (
-              <ManagementView
-                key={`${s.id}-${p.panel}`}
-                panel={p.panel}
-                snapshot={s}
-                onCommand={a.execute}
-                onClose={() => setPanel(null)}
-                onNotify={a.notify}
-                onDownload={a.download}
-                riskLocation={p.riskLocation}
-                onRiskLocation={(riskLocation) =>
-                  dispatchUi({
-                    type: "project",
-                    id: s.id,
-                    patch: { riskLocation },
-                  })
-                }
-              />
+              p.panel === "planning" || p.panel === "risk" ? (
+                <ManagementDiscussion
+                  key={s.id}
+                  title={
+                    t(chat?.title ?? "") === t(stageName[stage])
+                      ? t(stageName[stage])
+                      : `${t(stageName[stage])} · ${t(chat?.title ?? "")}`
+                  }
+                  collapsed={p.managementChatCollapsed}
+                  onCollapse={(managementChatCollapsed) =>
+                    dispatchUi({
+                      type: "project",
+                      id: s.id,
+                      patch: { managementChatCollapsed },
+                    })
+                  }
+                  onReturn={() => {
+                    if (chat) chooseChat(chat.id, chat.stageId);
+                    else setPanel(null);
+                  }}
+                  conversation={smallConversation}
+                  composer={smallComposer}
+                >
+                  {p.panel === "planning" ? (
+                    planningContent
+                  ) : (
+                    <ManagementView
+                      key={`${s.id}-${p.panel}`}
+                      panel={p.panel}
+                      snapshot={s}
+                      onCommand={a.execute}
+                      onClose={() => setPanel(null)}
+                      onNotify={a.notify}
+                      onDownload={a.download}
+                      riskLocation={p.riskLocation}
+                      onRiskLocation={(riskLocation) =>
+                        dispatchUi({
+                          type: "project",
+                          id: s.id,
+                          patch: { riskLocation },
+                        })
+                      }
+                    />
+                  )}
+                </ManagementDiscussion>
+              ) : (
+                <ManagementView
+                  key={`${s.id}-${p.panel}`}
+                  panel={p.panel}
+                  snapshot={s}
+                  onCommand={a.execute}
+                  onClose={() => setPanel(null)}
+                  onNotify={a.notify}
+                  onDownload={a.download}
+                  riskLocation={p.riskLocation}
+                  onRiskLocation={(riskLocation) =>
+                    dispatchUi({
+                      type: "project",
+                      id: s.id,
+                      patch: { riskLocation },
+                    })
+                  }
+                />
+              )
             ) : chat ? (
               <Conversation
                 key={chat.id}
+                planningDraftDirty={planningDraftDirty}
+                onPlanningTimeline={() => {
+                  planningViewChange({ tab: "timeline" });
+                  openSidePanel("planning");
+                }}
                 snapshot={s}
                 chat={chat}
                 view={view}
@@ -346,6 +509,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onWork={() => {
               if (chat.stageId === "research")
                 void a.send(t("查看评估资料"), agent, model);
+              else if (chat.stageId === "planning") openSidePanel("planning");
               else {
                 a.view({ workOpen: true });
                 void a.send(t("告诉我下一步该做什么"), agent, model);
@@ -424,13 +588,19 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           key={panelScope}
           open={showSidePanel}
           onWidthChange={setSidePanelWidth}
-          manageDisabled={riskInteractionLocked}
+          tabs={p.sidePanel.tabs}
+          active={p.sidePanel.active}
+          onSelect={openSidePanel}
+          planning={planningContent}
+          manageDisabled={
+            p.sidePanel.active === "risk" && riskInteractionLocked
+          }
           onManage={() =>
             dispatchUi({
               type: "project",
               id: s.id,
               patch: {
-                panel: "risk",
+                panel: p.sidePanel.active,
                 riskLocation: {
                   mode: "category",
                   category: p.riskLocation.category,
@@ -439,7 +609,21 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             })
           }
           onCollapse={closeRiskPanel}
-          onClose={closeRiskPanel}
+          onClose={(tab) => {
+            const tabs = p.sidePanel.tabs.filter((id) => id !== tab);
+            dispatchUi({
+              type: "project",
+              id: s.id,
+              patch: {
+                sidePanel: {
+                  tabs,
+                  active: tabs[0] ?? "risk",
+                  open: tabs.length > 0,
+                },
+              },
+            });
+            if (!tabs.length) setInspector(true);
+          }}
           risks={
             <RiskWorkspace
               key={s.id}

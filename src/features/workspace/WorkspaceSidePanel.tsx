@@ -12,12 +12,20 @@ export function WorkspaceSidePanel({
   onManage,
   manageDisabled,
   risks,
+  planning,
+  tabs,
+  active,
+  onSelect,
 }: {
   open: boolean;
   onWidthChange: (width: number) => void;
   onCollapse: () => void;
-  onClose: () => void;
+  onClose: (tab: "risk" | "planning") => void;
   risks: ReactNode;
+  planning: ReactNode;
+  tabs: ("risk" | "planning")[];
+  active: "risk" | "planning";
+  onSelect: (tab: "risk" | "planning") => void;
   onManage: () => void;
   manageDisabled: boolean;
 }) {
@@ -112,37 +120,65 @@ export function WorkspaceSidePanel({
           role="tablist"
           aria-label={t("侧面板页签")}
         >
-          <div className={styles.tabItem} role="presentation">
-            <button
-              type="button"
-              role="tab"
-              id={`${panelId}-risks-tab`}
-              aria-selected="true"
-              aria-controls={`${panelId}-risks`}
-              onKeyDown={(event) => {
-                if (event.key === "Delete") {
-                  event.preventDefault();
-                  onClose();
-                }
-              }}
-            >
-              <Icon name="shield" size={16} />
-              {t("迁移风险")}
-            </button>
-            <button
-              type="button"
-              className={styles.closeTab}
-              aria-label={t("关闭迁移风险页签")}
-              title={t("关闭迁移风险页签")}
-              onClick={onClose}
-            >
-              <Icon name="close" size={14} />
-            </button>
-          </div>
+          {tabs.map((tab, index) => (
+            <div key={tab} className={styles.tabItem} role="presentation">
+              <button
+                type="button"
+                role="tab"
+                id={`${panelId}-${tab}-tab`}
+                aria-selected={active === tab}
+                aria-controls={`${panelId}-${tab}`}
+                tabIndex={active === tab ? 0 : -1}
+                onClick={() => onSelect(tab)}
+                onKeyDown={(event) => {
+                  if (event.key === "Delete") {
+                    event.preventDefault();
+                    onClose(tab);
+                  }
+                  if (
+                    ["ArrowRight", "ArrowLeft", "Home", "End"].includes(
+                      event.key,
+                    )
+                  ) {
+                    event.preventDefault();
+                    const target =
+                      tabs[
+                        event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? tabs.length - 1
+                            : (index +
+                                (event.key === "ArrowRight" ? 1 : -1) +
+                                tabs.length) %
+                              tabs.length
+                      ];
+                    onSelect(target);
+                    document
+                      .getElementById(`${panelId}-${target}-tab`)
+                      ?.focus();
+                  }
+                }}
+              >
+                <Icon name={tab === "risk" ? "shield" : "file"} size={16} />
+                {t(tab === "risk" ? "迁移风险" : "规划设计")}
+              </button>
+              <button
+                type="button"
+                className={styles.closeTab}
+                aria-label={t(
+                  tab === "risk" ? "关闭迁移风险页签" : "关闭规划设计页签",
+                )}
+                onClick={() => onClose(tab)}
+              >
+                <Icon name="close" size={14} />
+              </button>
+            </div>
+          ))}
         </div>
         <div className={styles.headerActions}>
           <Button disabled={manageDisabled} onClick={onManage}>
-            {t("打开迁移风险页面")} <Icon name="open" size={14} />
+            {t(active === "risk" ? "打开迁移风险页面" : "打开迁移规划页面")}{" "}
+            <Icon name="open" size={14} />
           </Button>
           <button
             type="button"
@@ -155,14 +191,28 @@ export function WorkspaceSidePanel({
           </button>
         </div>
       </header>
-      <section
-        role="tabpanel"
-        id={`${panelId}-risks`}
-        aria-labelledby={`${panelId}-risks-tab`}
-        className={`${styles.content} ${styles.risks}`}
-      >
-        {risks}
-      </section>
+      {tabs.includes("risk") && (
+        <section
+          role="tabpanel"
+          id={`${panelId}-risk`}
+          aria-labelledby={`${panelId}-risk-tab`}
+          hidden={active !== "risk"}
+          className={`${styles.content} ${styles.risks}`}
+        >
+          {risks}
+        </section>
+      )}
+      {tabs.includes("planning") && (
+        <section
+          role="tabpanel"
+          id={`${panelId}-planning`}
+          aria-labelledby={`${panelId}-planning-tab`}
+          hidden={active !== "planning"}
+          className={styles.content}
+        >
+          {planning}
+        </section>
+      )}
     </aside>
   );
 }

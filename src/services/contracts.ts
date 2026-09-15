@@ -13,7 +13,20 @@ import type {
   AssessmentPlan,
   RiskDecision,
 } from "@/domain/models";
+import type { PlanningAdjustment, PlanningInputPatch } from "@/domain/planning";
 export type ProjectCommand =
+  | {
+      type: "planning.save";
+      expectedRevision: number;
+      patch: PlanningInputPatch;
+    }
+  | {
+      type: "planning.preview";
+      expectedRevision: number;
+      change: PlanningAdjustment;
+    }
+  | { type: "planning.apply"; previewId: string }
+  | { type: "planning.cancel"; previewId: string }
   | { type: "assessment.start" }
   | { type: "assessment.useSamples" }
   | { type: "assessment.choosePlan"; plan: AssessmentPlan }

@@ -10,7 +10,8 @@ import { decideRisks } from "./risk-decisions";
 import { canChangeAssessmentDecision } from "@/domain/assessment";
 import { scopeArtifacts } from "./files";
 import { offerHandoff, reviewHandoff } from "./handoff";
-import { plan } from "./planning";
+import { plan, planningCommand, planningIntro } from "./planning";
+import { planningFiles } from "./planning-files";
 import type { MockRuntime } from "./runtime";
 export async function command(
   rt: MockRuntime,
@@ -21,6 +22,17 @@ export async function command(
   if (options.signal?.aborted) throw new ServiceError("ABORTED", "操作已取消");
   const s = rt.context(c);
   requireCondition(s.info, "请先创建项目");
+  if (
+    cmd.type === "planning.save" ||
+    cmd.type === "planning.preview" ||
+    cmd.type === "planning.apply" ||
+    cmd.type === "planning.cancel"
+  ) {
+    planningCommand(rt, c, cmd);
+    offerHandoff(rt, c);
+    rt.publish(s);
+    return;
+  }
   if (cmd.type === "assessment.start") return assess(rt, c, options);
   if (cmd.type === "planning.useSample")
     return plan(rt, c, "迁移规划信息-示例.xlsx", options);
@@ -143,15 +155,20 @@ export async function command(
         `已人工确认阶段交接，进入${stageName[cmd.target]}。`,
         { operation: true },
       );
-      rt.message(
-        { ...c, stageId: cmd.target, conversationId: chat.id },
-        "agent",
-        cmd.target === "planning"
-          ? "请先核对迁移范围，再填写业务依赖和迁移窗口。"
-          : cmd.target === "migration"
+      if (cmd.target === "planning")
+        planningIntro(rt, {
+          ...c,
+          stageId: "planning",
+          conversationId: chat.id,
+        });
+      else
+        rt.message(
+          { ...c, stageId: cmd.target, conversationId: chat.id },
+          "agent",
+          cmd.target === "migration"
             ? "请检查近端 MD 的连接、源端和目标端配置，再确认任务。"
             : "请核对配置对比结果，逐台或批量完成人工验收。",
-      );
+        );
       break;
     }
     case "creation.update": {
@@ -291,6 +308,7 @@ export async function command(
       break;
     }
   }
+  if (s.planning) planningFiles(rt, s);
   offerHandoff(rt, c);
   rt.publish(s);
 }

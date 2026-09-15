@@ -1,3 +1,4 @@
+import { PlanningForm } from "@/features/planning/PlanningForm";
 import type { PanelId } from "@/app/state";
 import type { BusinessResult, ProjectSnapshot, StageId } from "@/domain/models";
 import { canExecute, stageEligibility } from "@/domain/policies";
@@ -18,6 +19,8 @@ export interface ResultActions {
   onUpload?: (purpose: FilePurpose, file: File) => void;
   onAsk?: (text: string) => void;
   activeInput?: boolean;
+  planningDraftDirty?: boolean;
+  onPlanningTimeline?: () => void;
 }
 export function BusinessResults({
   results,
@@ -80,6 +83,8 @@ function BusinessResultBlock({
   onStage,
   onUpload,
   activeInput = false,
+  planningDraftDirty = false,
+  onPlanningTimeline,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -89,6 +94,26 @@ function BusinessResultBlock({
         (a) => a.id === r.approvalId && a.action.kind === "stage",
       ),
   );
+  if (r.kind === "planning-input")
+    return (
+      <PlanningForm
+        snapshot={s}
+        dirty={planningDraftDirty}
+        onCommand={onCommand}
+        onDownload={onDownload}
+        onOpen={() => onPanel("planning")}
+      />
+    );
+  if (r.kind === "planning-preview")
+    return (
+      <Button onClick={() => onPanel("planning")}>
+        {t(
+          s.planning?.preview?.id === r.previewId
+            ? "查看调整预览"
+            : "查看当前规划",
+        )}
+      </Button>
+    );
   if (r.kind === "assessment-input")
     return activeInput && s.assessmentStatus !== "completed" && onUpload ? (
       <div className={styles.input}>
@@ -133,8 +158,13 @@ function BusinessResultBlock({
             </button>
           )}
           {r.stageId === "planning" && (
-            <button type="button" onClick={() => onPanel("tasks")}>
+            <button type="button" onClick={() => onPanel("planning")}>
               {t("打开计划")}
+            </button>
+          )}
+          {r.stageId === "planning" && onPlanningTimeline && (
+            <button type="button" onClick={onPlanningTimeline}>
+              {t("查看时间线")}
             </button>
           )}
         </div>

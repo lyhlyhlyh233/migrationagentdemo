@@ -11,6 +11,7 @@ export function Pagination({
   label,
   disabled = false,
   compact = false,
+  sizes = [10, 20, 50],
 }: {
   total: number;
   value: PageState;
@@ -18,6 +19,7 @@ export function Pagination({
   label: string;
   disabled?: boolean;
   compact?: boolean;
+  sizes?: number[];
 }) {
   const t = useTranslation();
   const range = pageWindow(total, value);
@@ -43,7 +45,7 @@ export function Pagination({
         disabled={disabled}
         onValueChange={(size) => onChange({ page: 1, size: Number(size) })}
       >
-        {[10, 20, 50].map((size) => (
+        {sizes.map((size) => (
           <option key={size} value={size}>
             {t("{0} 条／页", size)}
           </option>

@@ -7,6 +7,7 @@ import {
   assessmentWelcome,
 } from "./assessment-knowledge";
 import { previewDiscussionReply, previewThoughtSummary } from "./replies";
+import { planningDiscussion } from "./planning";
 import type { MockRuntime } from "./runtime";
 export async function reply(
   rt: MockRuntime,
@@ -68,6 +69,13 @@ export async function reply(
             text = assessmentWelcome;
             results.push({ kind: "assessment-input", files: { ...s.files } });
           }
+        } else if (
+          c.stageId === "planning" &&
+          !/风险|risk|报告|report|交付|deliverable/i.test(input.text)
+        ) {
+          const discussion = planningDiscussion(rt, c, input.text);
+          text = discussion.text;
+          results.push(...discussion.results);
         } else if (/风险|risk/i.test(input.text)) {
           text =
             s.assessmentStatus === "completed"

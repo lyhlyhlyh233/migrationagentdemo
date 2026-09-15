@@ -16,10 +16,10 @@ src/
     projects/    项目创建表单
     conversations/ 对话、结果块、输入框、快捷操作、会话草稿
     research/    评估资料输入及模板下载
-    planning/    范围与规划信息表单
+    planning/    资料、批次、资源、时间线、调整预览与视图草稿
     migration/   MD 检查、创建/同步/割接任务视图
     validation/  配置对比和人工验收
-    tasks/       任务管理和批次计划
+    tasks/       实施任务管理
     risks/       类别/虚拟机表、分页选择、策略编辑、右侧面板
     deliverables/ 交付件列表
     logs/        项目操作记录
@@ -50,13 +50,13 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 `WorkspaceProvider` 先订阅事件，再读取目录、项目列表及初始快照。初始化请求共用 AbortSignal，重试或卸载时取消；普通切页不取消业务任务。退出由 `logout` 和 `dispose` 清理本次服务生命周期，重新进入创建新服务实例。
 
-| 状态 | 归属 | 保留范围 |
-| --- | --- | --- |
-| 项目资料、风险、任务、消息、等待回复、审批、文件 | 服务持有，`dataReducer` 保存只读快照 | 当前页面会话内跨项目切换 |
-| 当前项目、会话、最近阶段会话、管理页、风险定位 | `uiReducer` | 按项目保存 |
-| 草稿、Agent、模型、展开操作区、重试 requestId | `conversationReducer` | 按项目和会话保存 |
-| 表格筛选、多选、分页、策略编辑草稿 | 功能组件局部状态 | 对应工作区挂载期间 |
-| 外观、背景、语言 | `shared/preferences.ts` | 浏览器 localStorage |
+| 状态                                                                   | 归属                                 | 保留范围                 |
+| ---------------------------------------------------------------------- | ------------------------------------ | ------------------------ |
+| 项目资料、风险、任务、消息、等待回复、审批、文件                       | 服务持有，`dataReducer` 保存只读快照 | 当前页面会话内跨项目切换 |
+| 当前项目、会话、最近阶段会话、管理页、面板页签、风险定位、规划视图草稿 | `uiReducer`                          | 按项目保存               |
+| 草稿、Agent、模型、展开操作区、重试 requestId                          | `conversationReducer`                | 按项目和会话保存         |
+| 风险筛选、多选、分页、策略编辑草稿                                     | 功能组件局部状态                     | 对应工作区挂载期间       |
+| 外观、背景、语言                                                       | `shared/preferences.ts`              | 浏览器 localStorage      |
 
 `dataReducer` 忽略较旧 revision；同一项目只有服务维护执行事实，组件不能直接修改快照。只渲染当前工作区，不靠隐藏多份页面保存业务数据。
 
@@ -70,20 +70,22 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 `Conversation` 组织回答，`ConversationAnswer` 呈现正文、思考摘要及耗时，`BusinessResults` 根据领域联合类型呈现内容。服务不返回 HTML、JSX 或组件名称。
 
-| result.kind | 内容与状态来源 |
-| --- | --- |
-| assessment-input | 资料输入与上传快照，最新输入可操作，旧输入保留历史 |
-| assessment-decision | 兼容旧结果的标记；快捷操作统一放在回答底部 |
-| summary | 当次结论和统计快照 |
-| tasks | 任务 ID，进度从当前项目快照读取 |
-| artifacts | 文件资源 ID，内容由下载服务提供 |
-| approval | 确认项 ID，从当前状态校验条件和是否已确认 |
+| result.kind         | 内容与状态来源                                             |
+| ------------------- | ---------------------------------------------------------- |
+| assessment-input    | 资料输入与上传快照，最新输入可操作，旧输入保留历史         |
+| assessment-decision | 兼容旧结果的标记；快捷操作统一放在回答底部                 |
+| planning-input      | 最新规划引导的资料、模板和生成入口；小对话只保留文字与结果 |
+| planning-preview    | 待应用预览 ID，历史入口打开当前规划                        |
+| summary             | 当次结论和统计快照                                         |
+| tasks               | 任务 ID，进度从当前项目快照读取                            |
+| artifacts           | 文件资源 ID，内容由下载服务提供                            |
+| approval            | 确认项 ID，从当前状态校验条件和是否已确认                  |
 
 普通回答可以只有文字。列表默认显示三项，可展开其余项。新增类型只修改 `BusinessResult`、服务输出及呈现分支，不增加组件注册器。历史统计不重算，资源引用读取当前内容；文件更新语义见接口说明。
 
 ### 风险、范围与表格
 
-`ExecutionInspector` 独立呈现窄执行详情栏，不属于面板页签。`WorkspaceSidePanel` 提供可关闭的迁移风险页签，打开时替换执行详情；风险页签与 `RiskPanel`（独立管理页）共用 `RiskWorkspace`。同一工作区内关闭或折叠使用隐藏属性保留已挂载的风险内容，切换项目或会话则重新建立当前面板，不缓存所有项目页面。面板通过原生 Pointer Capture 支持拖动及键盘调宽。`Workspace` 保存页面内宽度和当前会话的风险面板开合状态，CSS 约束两侧最小宽度；这些状态不进入业务快照。评估完成时读取现有快照，首次返回该项目评估会话即自动展开风险；不增加服务命令、API 或重复回复。
+`ExecutionInspector` 独立呈现窄执行详情栏，不属于面板页签。`WorkspaceSidePanel` 提供可关闭的迁移风险和规划设计页签，打开时替换执行详情；风险页签与 `RiskPanel`（独立管理页）共用 `RiskWorkspace`。同一工作区内关闭或折叠使用隐藏属性保留已挂载的风险内容，切换项目或管理页则重新建立当前面板，不缓存所有项目页面。面板通过原生 Pointer Capture 支持拖动及键盘调宽。`Workspace` 保存页面内宽度和项目内面板页签与开合状态，CSS 约束两侧最小宽度；这些状态不进入业务快照。评估完成时读取现有快照，首次返回该项目评估会话即自动展开风险；不增加服务命令、API 或重复回复。
 
 - `CategoryRiskTable`：按规则、阶段、类别和影响分组，缺失规则保持独立。
 - `RiskVmTable` / `RiskVmDetails`：虚拟机子表、证据与单台例外。
@@ -100,19 +102,35 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 ## 常见修改入口
 
-| 修改 | 入口 |
-| --- | --- |
-| 后端接口、DTO、事件协议 | services/contracts.ts、services/http；先读 integration.md |
-| 环境配置与服务选择 | app/config.ts、services/index.ts、.env.example |
-| 示例资产、模拟回复与执行 | services/mock/fixtures、assessment-knowledge、replies、runtime |
-| 菜单、折叠、会话列表 | workspace/Sidebar、StageNavigation |
-| 四阶条件、进度和宽屏布局 | domain/policies、workspace/presentation、ProgressRail、Workspace.module.css |
-| 回答排版、业务结果、输入框 | conversations/ConversationAnswer、BusinessResults、Composer |
-| 表单内容 | research、planning、migration、validation 对应组件 |
-| 表格、风险策略 | risks/RiskWorkspace、CategoryRiskTable、RiskVmTable、RiskStrategyDock、RiskStrategyEditor |
-| 主题、字号、语义颜色 | styles/tokens.css、styles/index.css |
-| 界面文案、阶段/状态标签 | shared/i18n/en.json、stages、status-labels |
+### 规划数据与工作台
 
-CSS Modules 就近维护，复杂既有表格可用 Module 根节点约束内部类名；公共表格规则集中于 `ManagementView.module.css`。本次结构整理不调整界面布局或增加样式层。
+`domain/planning.ts` 定义稳定资产 ID、业务属性、依赖、约束、容量、批次、预览及纯计算选择器。显示标签在 `shared/i18n/planning.ts` / `en.json`，领域不依赖界面。项目只保留一份当前计划和一份待确认调整，不新增版本库。
+
+- `mock/planning-data.ts` 从评估范围生成示例资产，保留稳定 ID 和已有属性，初始化进入规划时的评估基线。
+- `mock/planning.ts` 校验、生成、预览和应用修改，同时更新原实施任务结构。`mock/planning-files.ts` 从同一规划快照输出模板、五 Sheet 计划和 RunBook。
+- `PlanningWorkspace` 装配视图与服务回调。`PlanningInputs`、`PlanningAssets` / `PlanningSystems`、`PlanningBatches`、`PlanningResources` / `PlanningTimeline`、`PlanningPreview` 分别呈现对应功能，不在组件中生成业务样例。
+- `PlanningView` 通过已有 `uiReducer` 的 `planning-view` action 按项目增量保存。折叠、切页不丢资料草稿、分页和选择。表格只渲染当前页，默认 20 条，可切 50/100，不创建 1 万行 DOM。
+- `WorkspaceSidePanel` 使用风险/规划两个明确页签，状态按项目保留，宽度保持 62∶38 默认值及原拖动规则。执行详情仍独立于页签。
+- `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险管理页也复用该容器。
+
+规划 revision 独立于普通聊天的项目 revision，跨会话保存必须匹配。预览固定版本、资产/批次 ID 和发起会话，失败保留输入。风险资格变化使计划待更新；待更新或待确认预览不能交接。真实适配仍须在后端实施并发校验。详细语义见 [接口说明](integration.md)。
+
+### 其他入口
+
+| 修改                       | 入口                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| 后端接口、DTO、事件协议    | services/contracts.ts、services/http；先读 integration.md                                 |
+| 环境配置与服务选择         | app/config.ts、services/index.ts、.env.example                                            |
+| 示例资产、模拟回复与执行   | services/mock/fixtures、assessment-knowledge、replies、runtime                            |
+| 菜单、折叠、会话列表       | workspace/Sidebar、StageNavigation                                                        |
+| 四阶条件、进度和宽屏布局   | domain/policies、workspace/presentation、ProgressRail、Workspace.module.css               |
+| 回答排版、业务结果、输入框 | conversations/ConversationAnswer、BusinessResults、Composer                               |
+| 表单内容                   | research、planning、migration、validation 对应组件                                        |
+| 规划数据与导出             | domain/planning、mock/planning-data、mock/planning、mock/planning-files                   |
+| 表格、风险策略             | risks/RiskWorkspace、CategoryRiskTable、RiskVmTable、RiskStrategyDock、RiskStrategyEditor |
+| 主题、字号、语义颜色       | styles/tokens.css、styles/index.css                                                       |
+| 界面文案、阶段/状态标签    | shared/i18n/en.json、stages、status-labels                                                |
+
+CSS Modules 就近维护，复杂既有表格可用 Module 根节点约束内部类名。规划样式在 `planning/Planning.module.css`，不修改全局字号或其他管理表格列宽。
 
 运行命令见 [README](../README.md)，检查与文档维护约定见 [AGENTS.md](../AGENTS.md)。接口测试不等于真实迁移回归；本项目仍未接入后端。

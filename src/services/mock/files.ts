@@ -34,7 +34,7 @@ export function addArtifact(
   return artifact;
 }
 export function workbook(
-  sheets: { name: string; rows: (string | number)[][] }[],
+  sheets: { name: string; rows: (string | number)[][]; timeline?: boolean }[],
 ) {
   const escape = (v: string | number) =>
     String(v)
@@ -42,7 +42,7 @@ export function workbook(
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
-  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${sheets.map((s) => `<Worksheet ss:Name="${escape(s.name)}"><Table>${s.rows.map((r) => `<Row>${r.map((v) => `<Cell><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${escape(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`).join("")}</Workbook>`;
+  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#F0F1F2" ss:Pattern="Solid"/></Style><Style ss:ID="sync"><Interior ss:Color="#D7E6F7" ss:Pattern="Solid"/></Style><Style ss:ID="cutover"><Interior ss:Color="#F5E4BF" ss:Pattern="Solid"/></Style><Style ss:ID="verify"><Interior ss:Color="#D5EBDE" ss:Pattern="Solid"/></Style></Styles>${sheets.map((s) => `<Worksheet ss:Name="${escape(s.name)}"><Table>${s.rows.map((r, i) => `<Row>${r.map((v, j) => `<Cell${i === 0 ? ' ss:StyleID="header"' : s.timeline && j > 2 && ["同步", "割接", "验证"].includes(String(v)) ? ` ss:StyleID="${v === "同步" ? "sync" : v === "割接" ? "cutover" : "verify"}"` : ""}><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${escape(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`).join("")}</Workbook>`;
 }
 export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
   const rows = migrationScope(s);
@@ -96,7 +96,10 @@ export async function researchTemplate(signal: AbortSignal) {
   const signature = new Uint8Array(bytes, 0, Math.min(bytes.byteLength, 4));
   // A static server may return its HTML fallback for a missing asset.
   if (signature.join(",") !== "80,75,3,4")
-    throw new ServiceError("VALIDATION", "模板文件不可用，请重试或联系管理员。");
+    throw new ServiceError(
+      "VALIDATION",
+      "模板文件不可用，请重试或联系管理员。",
+    );
   const mediaType =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   return {
