@@ -33,17 +33,18 @@
 .field {
   display: grid;
   gap: 8px;
-  font-size: var(--ui-small);
   min-width: 0;
+  font-size: var(--ui-size);
+  line-height: 1.5;
 }
 .file {
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
 .file input {
-  font-size: var(--ui-caption);
   max-width: 100%;
   color: var(--muted);
+  font-size: var(--ui-size);
 }
 .fileHeading {
   display: flex;
@@ -59,6 +60,7 @@
   color: var(--text);
   margin-right: 8px;
   cursor: pointer;
+  font: inherit;
 }
 .file small {
   font-size: var(--ui-caption);
@@ -80,10 +82,10 @@
 }
 .result > header {
   padding: 12px 15px;
-  font-size: var(--ui-small);
-  font-weight: 650;
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
+  font-size: var(--ui-size);
+  font-weight: 600;
 }
 .result > div {
   padding: 4px 15px;

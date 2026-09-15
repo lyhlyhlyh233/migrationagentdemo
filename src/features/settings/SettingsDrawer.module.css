@@ -27,7 +27,7 @@
   animation: settings-enter 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .root :global(.settings-header h2) {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.3px;
 }
@@ -45,7 +45,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--secondary);
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-tabs button:hover) {
   color: var(--ink);
@@ -67,8 +67,8 @@
 }
 .root :global(.settings-section h3) {
   font-size: var(--ui-size);
-  line-height: 20px;
   font-weight: 600;
+  line-height: 1.5;
 }
 .root :global(.settings-section-heading) {
   display: flex;
@@ -167,8 +167,8 @@
   justify-content: space-between;
   gap: 3px;
   margin-top: 8px;
-  font-size: var(--ui-caption);
   color: var(--secondary);
+  font-size: var(--ui-size);
 }
 .root :global(.theme-picker button[aria-pressed="true"] .theme-swatch) {
   outline: 2px solid var(--accent);
@@ -210,8 +210,8 @@
 .root :global(.background-option > span:last-child) {
   display: block;
   margin-top: 8px;
-  font-size: var(--ui-caption);
   color: var(--secondary);
+  font-size: var(--ui-size);
 }
 .root :global(.background-option[aria-pressed="true"] .background-preview) {
   outline: 2px solid var(--accent);
@@ -253,7 +253,7 @@
 }
 .root :global(.language-setting .ui-select-trigger) {
   max-width: 150px;
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-header) {
   display: flex;
@@ -302,7 +302,7 @@
   min-width: 0;
 }
 .root :global(.settings-account-row strong) {
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-account-row > div > span) {
   color: var(--muted);
@@ -313,7 +313,7 @@
   align-items: center;
   gap: 7px;
   margin-left: auto;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.sign-out-review) {
   margin-top: 16px;
@@ -333,7 +333,7 @@
   margin-top: 12px;
 }
 .root :global(.sign-out-review button) {
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-section.nexent-settings) {
   padding-top: 26px;
@@ -350,17 +350,17 @@
   margin-top: 18px;
 }
 .root :global(.settings-field > label) {
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
   font-weight: 500;
 }
 .root :global(.authentication-method legend) {
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
   font-weight: 500;
 }
 .root :global(.settings-field input) {
   width: 100%;
   min-height: 42px;
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-field input[aria-invalid="true"]) {
   border-color: var(--warning);
@@ -409,7 +409,7 @@
   border-radius: 7px;
   padding: 11px 8px;
   cursor: pointer;
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
   color: var(--secondary);
 }
 .root :global(.authentication-options input) {
@@ -456,7 +456,7 @@
   margin-top: 24px;
 }
 .root :global(.settings-form-actions button) {
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.settings-form-actions button:first-child) {
   margin-right: auto;

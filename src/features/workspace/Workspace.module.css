@@ -30,7 +30,7 @@
   gap: 3px;
 }
 .root :global(.user-profile strong) {
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .root :global(.user-profile small) {
   font-size: var(--ui-caption);
@@ -60,8 +60,8 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--muted);
-  font-size: var(--ui-caption);
   margin-bottom: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.progress-rail ol) {
   display: grid;
@@ -88,7 +88,7 @@
   background: transparent;
   text-align: left;
   color: var(--muted);
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.progress-rail li.done button) {
   color: var(--ink);
@@ -104,7 +104,7 @@
   flex-shrink: 0;
   border: 1px solid var(--line-strong);
   border-radius: 50%;
-  font-size: 9px;
+  font-size: var(--ui-caption);
 }
 .root :global(.done .stage-sequence) {
   color: var(--success);
@@ -112,8 +112,8 @@
 }
 .root :global(.progress-rail small) {
   margin-left: auto;
-  font-size: var(--ui-caption);
   font-variant-numeric: tabular-nums;
+  font-size: var(--ui-caption);
 }
 .root :global(.done .stage-track i) {
   background: var(--success);
@@ -204,8 +204,8 @@
   margin-bottom: 15px;
 }
 .root :global(.inspector-section h3) {
-  font-size: var(--ui-caption);
   font-weight: 600;
+  font-size: var(--ui-size);
 }
 .root :global(.inspector-section > header > span) {
   color: var(--muted);
@@ -266,9 +266,9 @@
 }
 .root :global(.work-steps strong) {
   display: block;
-  font-size: var(--ui-caption);
   line-height: 1.5;
   font-weight: 500;
+  font-size: var(--ui-size);
 }
 .root :global(.work-steps p) {
   font-size: var(--ui-caption);
@@ -330,12 +330,12 @@
   gap: 5px;
 }
 .root :global(.artifact-list strong) {
-  font-size: var(--ui-caption);
   font-weight: 500;
+  font-size: var(--ui-size);
 }
 .root :global(.artifact-list small) {
-  font-size: var(--ui-caption);
   color: var(--muted);
+  font-size: var(--ui-caption);
 }
 .root :global(.artifact-list > * > svg:last-child) {
   color: var(--muted);
@@ -352,9 +352,9 @@
   margin-bottom: 12px;
 }
 .root :global(.activity-event time) {
-  font-size: 9px;
   color: var(--muted);
   padding-top: 3px;
+  font-size: var(--ui-caption);
 }
 .root :global(.activity-event p) {
   color: var(--secondary);
@@ -479,7 +479,6 @@
   }
   .root :global(.progress-rail li button) {
     gap: 4px;
-    font-size: var(--ui-caption);
   }
   .root :global(.conversation-toolbar) {
     padding-inline: 19px;
@@ -555,16 +554,25 @@
   .root :global(.progress-rail) {
     padding: 8px 17px 14px;
   }
-  .root :global(.progress-caption) {
-    font-size: 9px;
-  }
   .root :global(.progress-rail ol) {
     gap: 9px;
   }
   .root :global(.progress-rail li button) {
-    font-size: var(--ui-caption);
     flex-wrap: wrap;
     gap: 5px;
+    flex: 1;
+    align-content: flex-start;
+    padding-inline: 6px;
+  }
+  .root :global(.progress-rail li) {
+    display: flex;
+    flex-direction: column;
+  }
+  .root :global(.progress-rail li button > span:not(.stage-sequence)) {
+    min-width: 0;
+    width: 100%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
   }
   .root :global(.progress-rail small) {
     display: none;
@@ -572,7 +580,6 @@
   .root :global(.stage-sequence) {
     height: 15px;
     width: 15px;
-    font-size: 8px;
   }
   .root :global(.conversation-toolbar) {
     min-height: 51px;
@@ -669,34 +676,13 @@
   display: none;
 }
 @media (min-width: 981px) {
-  .root :global(.work-steps strong) {
-    font-size: var(--ui-caption);
-  }
   .root :global(.inspector-stats dt) {
     font-size: var(--ui-caption);
   }
   .root :global(.inspector-stats dd) {
     font-size: var(--ui-caption);
   }
-  .root :global(.artifact-list strong) {
-    font-size: var(--ui-caption);
-  }
   .root :global(.work-steps p) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.artifact-list small) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.inspector-section h3) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.progress-rail li button) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.inspector-section > header > span) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.progress-caption) {
     font-size: var(--ui-caption);
   }
 }
@@ -825,10 +811,10 @@
   white-space: nowrap;
 }
 .root :global(.nav-empty) {
-  font-size: var(--ui-caption);
   line-height: 20px;
   padding: 8px 10px;
   color: var(--muted);
+  font-size: var(--ui-caption);
 }
 .root :global(.workspace-welcome) {
   min-height: min(58vh, 520px);
@@ -930,7 +916,6 @@
   }
   .root :global(.conversation-context) {
     display: flex;
-    font-size: var(--ui-caption);
   }
   .root :global(.management-view .conversation-content) {
     padding: 24px 18px;
@@ -989,8 +974,8 @@
   line-height: 1.4;
   font-weight: 600;
   white-space: nowrap;
-  font-size: var(--ui-small);
   letter-spacing: -0.15px;
+  font-size: var(--ui-size);
 }
 .root :global(.workspace-welcome > svg) {
   margin-bottom: 8px;
@@ -1365,7 +1350,7 @@
   border-radius: 5px;
   background: var(--panel);
   color: var(--ink);
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.chat-rename-form .icon-button) {
   width: 25px;
@@ -1402,10 +1387,10 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: var(--ui-caption);
   color: var(--muted);
   white-space: nowrap;
   min-width: 0;
+  font-size: var(--ui-caption);
 }
 .root :global(.conversation-context > svg) {
   color: var(--accent);
@@ -1477,7 +1462,7 @@
   border-radius: 6px;
   background: var(--panel);
   color: var(--ink);
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.stage-handoff button:hover) {
   background: var(--hover);
@@ -1651,10 +1636,10 @@
 }
 .root :global(.preview-stage-copy strong) {
   color: var(--ink);
-  font-size: var(--ui-small);
   line-height: 20px;
   font-weight: 500;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  font-size: var(--ui-size);
 }
 .root :global(.preview-stage-copy > span) {
   font-size: var(--ui-caption);
@@ -1698,9 +1683,6 @@
   .root :global(.preview-stage-copy > span) {
     display: none;
   }
-  .root :global(.preview-stage-copy strong) {
-    font-size: var(--ui-caption);
-  }
 }
 @media (max-width: 760px) {
   .root :global(.stage-flow-preview ol) {
@@ -1721,9 +1703,6 @@
     position: absolute;
     right: -11px;
     top: 12px;
-  }
-  .root :global(.preview-stage-copy strong) {
-    font-size: var(--ui-caption);
   }
   .root :global(.stage-flow-preview .progress-caption) {
     font-size: var(--ui-caption);
@@ -1796,18 +1775,10 @@
     min-height: 48px;
     padding: 12px 16px;
     gap: 10px;
-    font-size: var(--ui-size);
-  }
-  .root :global(.stage-flow-preview .preview-stage-copy strong) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.progress-rail small) {
-    font-size: var(--ui-size);
   }
   .root :global(.stage-sequence) {
     width: 22px;
     height: 22px;
-    font-size: var(--ui-caption);
   }
   .root :global(.stage-track) {
     margin-top: 8px;
@@ -1852,49 +1823,8 @@
   }
   .root :global(.project-resources button),
   .root :global(.stage-chat-link),
-  .root :global(.temporary-conversations button),
-  .root :global(.nav-section-heading h2),
-  .root :global(.project-switcher .ui-select-trigger) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.project-resources button),
-  .root :global(.stage-chat-link),
   .root :global(.temporary-conversations button) {
     min-height: 42px;
-  }
-  .root :global(.nav-platform h1),
-  .root :global(.nav-account strong) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.nav-empty),
-  .root :global(.nav-account small),
-  .root :global(.delivery-chat-stage),
-  .root :global(.conversation-context) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.progress-rail button),
-  .root :global(.stage-flow-preview strong) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.progress-caption),
-  .root :global(.stage-flow-preview li span),
-  .root :global(.progress-rail button > span:last-child) {
-    font-size: var(--ui-small);
-  }
-  .root :global(.work-steps strong),
-  .root :global(.inspector-section h3),
-  .root :global(.inspector-header),
-  .root :global(.artifact-list strong) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.work-steps p),
-  .root :global(.inspector-stats),
-  .root :global(.inspector-section > header > span),
-  .root :global(.activity-event p),
-  .root :global(.artifact-list small),
-  .root :global(.inspector-empty),
-  .root :global(.inspector-status) {
-    font-size: var(--ui-small);
   }
   .root :global(.workspace-welcome h2) {
     font-size: 30px;
@@ -1997,11 +1927,9 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: 8px 6px;
-    font-size: var(--ui-small);
   }
   .root :global(.progress-rail small) {
     flex-basis: 100%;
-    font-size: var(--ui-caption);
     padding-left: 0;
   }
   .root :global(.progress-rail > ol) {
@@ -2013,7 +1941,6 @@
   .root :global(.stage-sequence) {
     width: 18px;
     height: 18px;
-    font-size: var(--ui-caption);
   }
   .root :global(.composer-bottom) {
     flex-wrap: wrap;

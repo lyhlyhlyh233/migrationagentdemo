@@ -10,9 +10,9 @@
   flex: 0 0 auto;
 }
 .heading h2 {
-  font-size: 22px;
   font-weight: 650;
   margin: 0 0 12px;
+  font-size: 1.25rem;
 }
 .workspace {
   min-width: 0;
@@ -426,9 +426,6 @@
   border: 0;
   border-radius: 0;
 }
-.subtable .vmTable {
-  font-size: var(--ui-small);
-}
 .subtable .vmTable th,
 .subtable .vmTable td {
   padding: 8px 10px;
@@ -458,7 +455,7 @@
   margin-left: auto;
   max-width: 400px;
   min-height: 34px;
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
 }
 .bulkButtons {
   display: flex;
@@ -468,8 +465,8 @@
   flex: 0 1 auto;
 }
 .bulkButtons button {
-  font-size: var(--ui-small);
   padding: 6px 10px;
+  font-size: var(--ui-size);
 }
 
 .workspace button.bulkPrimary {

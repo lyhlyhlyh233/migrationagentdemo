@@ -17,9 +17,10 @@
   --ui-small: 0.8125rem;
   --ui-caption: 0.75rem;
   --ui-title: 1rem;
-  --meta-size: var(--ui-small);
+  --meta-size: var(--ui-caption);
   --control-height: 2.25rem;
   --control-compact: 2rem;
+  --input-size: 1rem;
 }
 :root[data-theme="dark"] {
   --text: #e8e9ec;
@@ -87,6 +88,7 @@ summary:focus-visible {
 
 body {
   font-size: var(--ui-size);
+  line-height: 1.5;
   font-kerning: normal;
 }
 .ui-select-trigger,

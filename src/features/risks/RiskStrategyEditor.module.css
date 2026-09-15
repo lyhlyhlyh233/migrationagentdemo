@@ -1,6 +1,7 @@
 .root {
   color: var(--text);
-  font-size: var(--ui-small);
+  font-size: var(--ui-size);
+  line-height: 1.5;
 }
 .root header {
   margin-bottom: 6px;
@@ -72,10 +73,10 @@
   color: var(--secondary);
 }
 .option em {
-  font-size: 11px;
   font-style: normal;
   font-weight: 500;
   color: var(--accent-ink);
+  font-size: var(--ui-caption);
 }
 .option[data-disabled="true"] {
   cursor: not-allowed;
@@ -94,7 +95,7 @@
 .details > label {
   display: block;
   margin-top: 10px;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .details textarea {
   display: block;
@@ -115,14 +116,14 @@
 }
 .methods legend {
   margin-bottom: 6px;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .methods label {
   display: inline-flex;
   gap: 6px;
-  font-size: var(--ui-caption);
   align-items: flex-start;
   cursor: pointer;
+  font-size: var(--ui-size);
 }
 .methods label:has(input:disabled) {
   color: var(--secondary);

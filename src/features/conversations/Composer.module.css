@@ -14,9 +14,9 @@
   border-radius: 6px;
   list-style: none;
   cursor: pointer;
-  font-size: 11px;
   color: var(--secondary);
   white-space: nowrap;
+  font-size: var(--ui-size);
 }
 .root :global(.shortcut-menu summary::-webkit-details-marker) {
   display: none;
@@ -31,11 +31,13 @@
   padding: 11px 10px;
 }
 .root :global(.shortcut-options strong) {
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
+  font-weight: 600;
 }
 .root :global(.shortcut-options small) {
-  font-size: 10px;
   color: var(--muted);
+  font-size: var(--ui-caption);
+  line-height: 1.5;
 }
 .root :global(.chat-composer textarea) {
   width: 100%;
@@ -45,11 +47,13 @@
   border-radius: 0;
   padding: 0 1px;
   outline: none;
-  font-size: var(--ui-small);
-  line-height: 1.7;
   min-height: 41px;
   max-height: 140px;
   background: transparent;
+  font-size: var(--input-size);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
 }
 .root :global(.chat-composer textarea:focus-visible) {
   outline: none;
@@ -65,7 +69,7 @@
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--ui-caption);
 }
 .root :global(.composer-left) {
   display: flex;
@@ -95,7 +99,7 @@
   gap: 4px;
   min-width: 0;
   color: var(--secondary);
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.composer-agent-picker) {
   display: flex;
@@ -103,7 +107,7 @@
   gap: 4px;
   min-width: 0;
   color: var(--secondary);
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.composer-select-control) {
   display: flex;
@@ -114,14 +118,14 @@
   appearance: none;
   width: auto;
   max-width: 180px;
-  min-height: 32px;
+  min-height: var(--control-height);
   padding: 5px 7px 5px 8px;
   border: 0;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  font-size: var(--ui-caption);
   text-overflow: ellipsis;
+  font-size: var(--ui-size);
 }
 .root :global(.composer-agent-picker .ui-select-trigger) {
   width: 100%;
@@ -135,7 +139,6 @@
   }
   .root :global(.composer-select-control .ui-select-trigger) {
     min-height: 44px;
-    font-size: var(--ui-caption);
   }
   .root :global(.composer-agent-picker > svg) {
     display: none;
@@ -160,9 +163,9 @@
 .root :global(.composer-note) {
   text-align: center;
   margin-top: 9px;
-  font-size: 10px;
   line-height: 1.5;
   color: var(--muted);
+  font-size: var(--ui-caption);
 }
 @media (max-width: 1180px) {
   .root :global(.shortcut-groups) {
@@ -178,7 +181,6 @@
     gap: 3px;
   }
   .root :global(.shortcut-menu summary) {
-    font-size: 10px;
     gap: 4px;
     padding: 7px;
   }
@@ -200,21 +202,10 @@
     padding: 12px;
     border-radius: 13px;
   }
-  .root :global(.chat-composer textarea) {
-    font-size: var(--ui-caption);
-  }
-  .root :global(.composer-note) {
-    font-size: 9px;
-  }
 }
 @media print {
   .root:global(.composer-area) {
     display: none !important;
-  }
-}
-@media (min-width: 981px) {
-  .root :global(.shortcut-menu summary) {
-    font-size: var(--ui-caption);
   }
 }
 .root :global(.composer-shortcuts .shortcut-groups) {
@@ -234,7 +225,6 @@
     gap: 1px;
   }
   .root :global(.composer-shortcuts .shortcut-menu summary) {
-    font-size: 11px;
     padding: 7px 6px;
   }
   .root
@@ -286,8 +276,8 @@
 }
 .root :global(.send-button) {
   margin-left: auto;
-  width: 31px;
-  height: 31px;
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: 50%;
   padding: 0;
@@ -332,11 +322,6 @@
   margin: 0 auto 7px;
   max-width: var(--reading-width);
 }
-@media (min-width: 1920px) {
-  .root :global(.chat-composer textarea) {
-    font-size: var(--ui-size);
-  }
-}
 .root:global(.composer-area) {
   flex-shrink: 0;
   padding: 12px 28px 13px;
@@ -346,10 +331,10 @@
   background: var(--canvas);
 }
 .retry {
-  font-size: var(--ui-caption);
   max-width: var(--reading-width);
   margin: 0 auto 8px;
   color: var(--danger);
+  font-size: var(--ui-caption);
 }
 
 .footerRow {
@@ -364,7 +349,6 @@
 .footerRow :global(.composer-note) {
   margin-top: 0;
   text-align: left;
-  font-size: 11px;
 }
 .topRow {
   display: flex;
@@ -388,12 +372,12 @@
   min-height: 36px;
   margin-left: auto;
   padding: 8px 13px;
-  font-size: var(--ui-small);
   font-weight: 600;
   color: var(--bubble-text);
   border: 1px solid var(--bubble-bg);
   border-radius: 8px;
   background: var(--bubble-bg);
+  font-size: var(--ui-size);
 }
 .nextStage:hover:not(:disabled) {
   filter: brightness(1.15);
@@ -403,8 +387,8 @@
   cursor: not-allowed;
 }
 .lastStage {
-  font-size: 11px;
   color: var(--secondary);
+  font-size: var(--ui-caption);
 }
 @media (max-width: 600px) {
   .nextStage {
@@ -416,55 +400,17 @@
     padding-inline: var(--conversation-gutter);
   }
   .root :global(.chat-composer textarea) {
-    font-size: var(--body-size);
     min-height: 58px;
-  }
-  .root :global(.composer-select-control .ui-select-trigger) {
-    font-size: var(--ui-size);
-    min-height: 38px;
-  }
-  .root :global(.shortcut-menu summary) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.shortcut-options strong) {
-    font-size: var(--ui-size);
-  }
-  .root :global(.shortcut-options small) {
-    font-size: var(--ui-small);
   }
   .root :global(.shortcut-options) {
     width: 290px;
   }
-  .root :global(.send-button) {
-    width: 36px;
-    height: 36px;
-  }
   .nextStage {
-    font-size: var(--ui-size);
     min-height: 40px;
   }
-  .footerRow :global(.composer-note),
-  .lastStage {
-    font-size: var(--ui-small);
-  }
 }
-
-.root :global(.chat-composer textarea) {
-  font-size: var(--body-size);
-  line-height: 1.6;
-}
-.root :global(.composer-select-control .ui-select-trigger),
-.root :global(.shortcut-menu summary),
-.nextStage {
-  font-size: var(--ui-size);
-}
-.root :global(.composer-select-control .ui-select-trigger) {
-  min-height: var(--control-height);
-}
-.root :global(.send-button) {
-  width: 36px;
-  height: 36px;
-}
-.root .footerRow :global(.composer-note) {
-  font-size: var(--ui-caption);
+.root :global(.chat-composer textarea::placeholder) {
+  font: inherit;
+  color: var(--muted);
+  opacity: 1;
 }

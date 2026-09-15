@@ -21,8 +21,8 @@
 .templateHint {
   margin: 0 0 10px;
   color: var(--muted);
-  font-size: 12px;
   line-height: 1.5;
+  font-size: var(--ui-caption);
 }
 @media (max-width: 600px) {
   .download {

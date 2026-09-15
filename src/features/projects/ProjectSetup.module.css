@@ -8,18 +8,18 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.project-form-grid label:last-child) {
   grid-column: 1 / -1;
 }
 .root :global(.project-form-grid input) {
   width: 100%;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.project-form-grid .ui-select-trigger) {
   width: 100%;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 @media (max-width: 760px) {
   .root :global(.project-form-grid) {
@@ -32,6 +32,7 @@
   justify-content: center;
   gap: 8px;
   padding: 11px 17px;
+  font-size: var(--ui-size);
 }
 .root:global(.project-setup-page) {
   min-height: 100dvh;
@@ -56,7 +57,7 @@
   align-items: center;
   gap: 9px;
   border: 0;
-  font-size: var(--ui-caption);
+  font-size: var(--ui-size);
 }
 .root :global(.project-setup) {
   max-width: 580px;
@@ -64,9 +65,9 @@
   padding: 64px 26px;
 }
 .root :global(.project-setup > h1) {
-  font-size: 27px;
   font-weight: 550;
   margin: 20px 0 10px;
+  font-size: 1.5rem;
 }
 .root :global(.project-setup > p) {
   line-height: 1.7;
@@ -83,8 +84,8 @@
   grid-column: 1 / -1;
 }
 .root :global(.project-setup .project-form-grid label) {
-  font-size: var(--ui-small);
   gap: 8px;
+  font-size: var(--ui-size);
 }
 .root :global(.project-setup .project-form-grid input) {
   font-size: var(--ui-size);
@@ -128,12 +129,6 @@
   .root :global(.project-setup .project-form-grid) {
     grid-template-columns: 1fr;
     gap: 18px;
-  }
-  .root :global(.project-setup h1) {
-    font-size: 24px;
-  }
-  .root :global(.setup-actions button) {
-    font-size: var(--ui-small);
   }
 }
 .root:global(.project-setup-page > header > span > svg) {
