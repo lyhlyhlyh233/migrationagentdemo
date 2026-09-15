@@ -51,9 +51,7 @@ export function RiskStrategyEditor({
     {
       value: "recommended" as const,
       label: "采用评估建议",
-      description:
-        single?.recommendation ??
-        "按每条风险的建议分别处理，保留各自迁移方式。",
+      description: "按每条风险的建议分别处理，保留各自迁移方式。",
     },
     ...(["ignore", "remediate", "exclude", "custom"] as const).map((value) => ({
       value,
@@ -105,22 +103,20 @@ export function RiskStrategyEditor({
       <div className={dockStyles.body}>
         <header>
           <span>
-            {t("{0} 条风险 · {1} 台虚拟机", targets.length, vmCount(targets))}
-            {onlyUndecided &&
-              ` · ${t("本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。", targets.length, risks.length - targets.length, targets.filter(hasRiskDecision).length)}`}
+            {onlyUndecided
+              ? t(
+                  "本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。",
+                  targets.length,
+                  risks.length - targets.length,
+                  targets.filter(hasRiskDecision).length,
+                )
+              : t(
+                  "{0} 条风险 · {1} 台虚拟机",
+                  targets.length,
+                  vmCount(targets),
+                )}
           </span>
         </header>
-        {onlyUndecided && (
-          <label className={styles.overwrite}>
-            <input
-              type="checkbox"
-              checked={overwrite}
-              disabled={saving || locked}
-              onChange={(e) => setOverwrite(e.target.checked)}
-            />
-            {t("覆盖已有策略")}
-          </label>
-        )}
         {!!targets.filter((r) => r.closed).length && (
           <p className={styles.note}>
             {t(
@@ -143,6 +139,7 @@ export function RiskStrategyEditor({
             <label
               key={option.value}
               className={styles.option}
+              title={t(option.description)}
               data-selected={choice === option.value}
               data-disabled={option.value === "ignore" && !canIgnore}
             >
@@ -168,14 +165,17 @@ export function RiskStrategyEditor({
             </label>
           ))}
         </fieldset>
-        <p className={styles.note} id={`${uid}-strategy-hint`}>
-          {t(options.find((option) => option.value === choice)!.description)}
-        </p>
-        {!canIgnore && (
-          <p className={styles.note} id={`${uid}-ignore-reason`}>
-            {t("所选风险含阻塞或整改项，不能直接忽略。")}
+        <details className={styles.guidance}>
+          <summary>{t("查看策略说明")}</summary>
+          <p className={styles.note} id={`${uid}-strategy-hint`}>
+            {t(options.find((option) => option.value === choice)!.description)}
           </p>
-        )}
+          {!canIgnore && (
+            <p className={styles.note} id={`${uid}-ignore-reason`}>
+              {t("所选风险含阻塞或整改项，不能直接忽略。")}
+            </p>
+          )}
+        </details>
         {choice !== "recommended" && (
           <div className={styles.details}>
             {choice !== "exclude" && (
@@ -221,9 +221,17 @@ export function RiskStrategyEditor({
         )}
       </div>
       <footer className={dockStyles.actions}>
-        <span className={dockStyles.footnote}>
-          {t("选择整改不代表已完成验证。")}
-        </span>
+        {onlyUndecided && (
+          <label className={dockStyles.overwrite}>
+            <input
+              type="checkbox"
+              checked={overwrite}
+              disabled={saving || locked}
+              onChange={(e) => setOverwrite(e.target.checked)}
+            />
+            {t("覆盖已有策略")}
+          </label>
+        )}
         <Button onClick={onCancel} disabled={saving}>
           {t("取消")}
         </Button>

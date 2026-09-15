@@ -17,7 +17,7 @@ import { RiskSidePanel } from "@/features/risks/RiskSidePanel";
 import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { ManagementView } from "./ManagementView";
 import { workspacePresentation } from "./presentation";
 import { ProgressRail } from "./ProgressRail";
@@ -38,6 +38,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     return () => media.removeEventListener("change", update);
   }, []);
   const [riskPanel, setRiskPanel] = useState<string | null>(null);
+  const [riskPanelWidth, setRiskPanelWidth] = useState<number>();
   const [navOpen, setNavOpen] = useState(false);
   const scrollViewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -133,6 +134,11 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   );
   return (
     <main
+      style={
+        riskPanelWidth === undefined
+          ? undefined
+          : ({ "--risk-panel-size": `${riskPanelWidth}px` } as CSSProperties)
+      }
       className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "" : "inspector-collapsed"} ${management ? "management-view" : ""} ${showRiskPanel ? "risk-panel-open" : ""}`}
     >
       <a className="skip-link" href="#workspace-content">
@@ -360,6 +366,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       {showRiskPanel && (
         <RiskSidePanel
           key={riskPanel}
+          onWidthChange={setRiskPanelWidth}
           snapshot={s}
           onCommand={a.execute}
           onClose={() => setRiskPanel(null)}

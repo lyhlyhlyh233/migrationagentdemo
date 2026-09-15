@@ -1922,12 +1922,20 @@
 
 /* Risk review shares the workspace with chat, replacing the execution inspector. */
 .root:global(.workspace.risk-panel-open) {
-  grid-template-columns: 256px minmax(0, 1fr) min(50vw, 1320px);
+  --risk-nav-width: 256px;
+  --risk-panel-width: clamp(
+    560px,
+    var(--risk-panel-size, min(50vw, 1320px)),
+    calc(100% - var(--risk-nav-width) - 360px)
+  );
+  grid-template-columns: var(--risk-nav-width) minmax(0, 1fr) var(
+      --risk-panel-width
+    );
   --conversation-width: 100%;
   --conversation-gutter: 20px;
 }
 .root:global(.workspace.risk-panel-open.nav-collapsed) {
-  grid-template-columns: 56px minmax(0, 1fr) min(50vw, 1320px);
+  --risk-nav-width: 56px;
 }
 .root:global(.risk-panel-open) :global(.conversation-workspace) {
   container-type: inline-size;
@@ -1944,10 +1952,10 @@
 }
 @media (min-width: 1920px) {
   .root:global(.workspace.risk-panel-open) {
-    grid-template-columns: 292px minmax(0, 1fr) min(50vw, 1320px);
+    --risk-nav-width: 292px;
   }
   .root:global(.workspace.risk-panel-open.nav-collapsed) {
-    grid-template-columns: 64px minmax(0, 1fr) min(50vw, 1320px);
+    --risk-nav-width: 64px;
   }
 }
 @media (max-width: 1180px) {
@@ -2011,4 +2019,10 @@
     min-width: 0;
     overflow-wrap: anywhere;
   }
+}
+
+.root:has([data-resizing="true"]),
+.root:has([data-resizing="true"]) * {
+  cursor: col-resize !important;
+  user-select: none;
 }

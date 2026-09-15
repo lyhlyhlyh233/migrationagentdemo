@@ -2,18 +2,6 @@
   color: var(--text);
   font-size: 13px;
 }
-.overwrite {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 6px 0;
-  font-size: 13px;
-}
-.overwrite input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
 .root header {
   margin-bottom: 6px;
 }
@@ -152,26 +140,6 @@
   line-height: 1.5;
   margin: 6px 0;
 }
-@media (min-width: 1920px) {
-  .root {
-    font-size: 15px;
-  }
-  .root header > strong {
-    font-size: 17px;
-  }
-  .root header > span,
-  .option small,
-  .details > label,
-  .methods legend,
-  .methods label,
-  .note {
-    font-size: 14px;
-  }
-  .option em {
-    font-size: 12px;
-  }
-}
-
 @container (max-width: 540px) {
   .options {
     flex-direction: column;
@@ -189,4 +157,15 @@
   color: var(--danger);
   margin: 8px 0;
   font-size: 13px;
+}
+
+.guidance {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.guidance summary {
+  cursor: pointer;
+  width: fit-content;
+  padding-block: 2px;
 }

@@ -266,51 +266,38 @@ export function RiskWorkspace({
               </button>
             </div>
           )}
-        </div>
-        <div className={styles.filters}>
-          <label className={styles.search}>
-            <Icon name="search" size={16} />
-            <input
-              value={query}
+          <div className={styles.filters}>
+            <Select
+              value={level}
               disabled={scopeLocked}
-              onChange={(e) => {
-                setQuery(e.target.value);
+              onValueChange={(value) => {
+                setLevel(value);
                 resetFilters();
               }}
-              placeholder={t("搜索风险、规则或虚拟机")}
-              aria-label={t("搜索风险、规则或虚拟机")}
-            />
-          </label>
-          <Select
-            value={level}
-            disabled={scopeLocked}
-            onValueChange={(value) => {
-              setLevel(value);
-              resetFilters();
-            }}
-            aria-label={t("风险级别")}
-          >
-            <option value="all">{t("全部级别")}</option>
-            {(["high", "medium", "low"] as const).map((value) => (
-              <option key={value} value={value}>
-                {t(value)}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={status}
-            disabled={scopeLocked}
-            onValueChange={(value) => {
-              setStatus(value);
-              resetFilters();
-            }}
-            aria-label={t("处置状态")}
-          >
-            <option value="all">{t("全部状态")}</option>
-            <option value="undecided">{t("未选策略")}</option>
-            <option value="excluded">{t("暂时排除")}</option>
-            <option value="decided">{t("已选策略")}</option>
-          </Select>
+              aria-label={t("风险级别")}
+            >
+              <option value="all">{t("全部级别")}</option>
+              {(["high", "medium", "low"] as const).map((value) => (
+                <option key={value} value={value}>
+                  {t(value)}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={status}
+              disabled={scopeLocked}
+              onValueChange={(value) => {
+                setStatus(value);
+                resetFilters();
+              }}
+              aria-label={t("处置状态")}
+            >
+              <option value="all">{t("全部状态")}</option>
+              <option value="undecided">{t("未选策略")}</option>
+              <option value="excluded">{t("暂时排除")}</option>
+              <option value="decided">{t("已选策略")}</option>
+            </Select>
+          </div>
         </div>
         {!editable && !!s.risks.length && (
           <p className={styles.hint}>
@@ -330,12 +317,52 @@ export function RiskWorkspace({
         role="region"
         aria-label={t("策略操作区")}
       >
-        {editing ? (
+        <RiskBulkToolbar
+          search={
+            <label className={styles.search}>
+              <Icon name="search" size={16} />
+              <input
+                value={query}
+                disabled={scopeLocked}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  resetFilters();
+                }}
+                placeholder={t("搜索风险、规则或虚拟机")}
+                aria-label={t("搜索风险、规则或虚拟机")}
+              />
+            </label>
+          }
+          selected={selectedRisks}
+          available={available}
+          saving={scopeLocked}
+          editable={editable}
+          onClear={clearSelection}
+          onAction={(action) => {
+            beginEditing({
+              key: "bulk",
+              ids: (selectedRisks.length ? selectedRisks : available).map(
+                (r) => r.id,
+              ),
+              onlyUndecided: true,
+              quick: action === "custom" ? undefined : action,
+            });
+          }}
+        />
+        {editing && (
           <RiskStrategyDock
             key={editing.key}
             title={
               editing.key === "bulk"
-                ? t("批量设置策略")
+                ? t(
+                    editing.quick === "recommended"
+                      ? "确认采用评估建议"
+                      : editing.quick === "ignore-or-exclude"
+                        ? "确认忽略与不迁策略"
+                        : editing.quick === "exclude"
+                          ? "确认本次不迁"
+                          : "批量设置策略",
+                  )
                 : editing.key.startsWith("vm:")
                   ? t("虚拟机：{0}", editing.name ?? "")
                   : t("风险事项：{0}", t(editing.name ?? ""))
@@ -364,34 +391,14 @@ export function RiskWorkspace({
               />
             )}
           </RiskStrategyDock>
-        ) : (
-          <>
-            <RiskBulkToolbar
-              selected={selectedRisks}
-              available={available}
-              saving={saving}
-              editable={editable}
-              onClear={clearSelection}
-              onAction={(action) => {
-                beginEditing({
-                  key: "bulk",
-                  ids: (selectedRisks.length ? selectedRisks : available).map(
-                    (r) => r.id,
-                  ),
-                  onlyUndecided: true,
-                  quick: action === "custom" ? undefined : action,
-                });
-              }}
-            />
-            {feedback && (
-              <p
-                role={failed ? "alert" : "status"}
-                className={failed ? styles.error : styles.feedback}
-              >
-                {t(feedback)}
-              </p>
-            )}
-          </>
+        )}
+        {!editing && feedback && (
+          <p
+            role={failed ? "alert" : "status"}
+            className={failed ? styles.error : styles.feedback}
+          >
+            {t(feedback)}
+          </p>
         )}
       </div>
       <div

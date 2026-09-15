@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { ProjectSnapshot, RiskItem } from "@/domain/models";
 import {
   previewRiskDecisions,
@@ -13,6 +13,7 @@ import dockStyles from "./RiskStrategyDock.module.css";
 import styles from "./RiskPanel.module.css";
 
 export function RiskBulkToolbar({
+  search,
   selected,
   available,
   saving,
@@ -20,6 +21,7 @@ export function RiskBulkToolbar({
   onClear,
   onAction,
 }: {
+  search?: ReactNode;
   selected: RiskItem[];
   available: RiskItem[];
   saving: boolean;
@@ -36,6 +38,40 @@ export function RiskBulkToolbar({
       role="region"
       aria-label={t("批量风险操作")}
     >
+      <div className={styles.bulkControlRow}>
+        <div className={styles.bulkButtons}>
+          <Button
+            className={styles.bulkPrimary}
+            data-risk-trigger="bulk-custom"
+            disabled={disabled || !selected.length}
+            onClick={() => onAction("custom")}
+          >
+            {t("批量设置策略")}
+          </Button>
+          <Button
+            data-risk-trigger="bulk-recommended"
+            disabled={disabled}
+            onClick={() => onAction("recommended")}
+          >
+            {t("采用评估建议")}
+          </Button>
+          <Button
+            data-risk-trigger="bulk-ignore"
+            disabled={disabled}
+            onClick={() => onAction("ignore-or-exclude")}
+          >
+            {t(selected.length ? "忽略所选" : "全部忽略")}
+          </Button>
+          <Button
+            data-risk-trigger="bulk-exclude"
+            disabled={disabled}
+            onClick={() => onAction("exclude")}
+          >
+            {t(selected.length ? "所选不迁" : "全部不迁")}
+          </Button>
+        </div>
+        {search}
+      </div>
       <div className={styles.selectionSummary} aria-live="polite">
         <span>
           {selected.length
@@ -61,37 +97,6 @@ export function RiskBulkToolbar({
             {t("清空选择")}
           </button>
         )}
-      </div>
-      <div className={styles.bulkButtons}>
-        <Button
-          className={styles.bulkPrimary}
-          data-risk-trigger="bulk-custom"
-          disabled={disabled || !selected.length}
-          onClick={() => onAction("custom")}
-        >
-          {t("批量设置策略")}
-        </Button>
-        <Button
-          data-risk-trigger="bulk-recommended"
-          disabled={disabled}
-          onClick={() => onAction("recommended")}
-        >
-          {t("采用评估建议")}
-        </Button>
-        <Button
-          data-risk-trigger="bulk-ignore"
-          disabled={disabled}
-          onClick={() => onAction("ignore-or-exclude")}
-        >
-          {t(selected.length ? "忽略所选" : "全部忽略")}
-        </Button>
-        <Button
-          data-risk-trigger="bulk-exclude"
-          disabled={disabled}
-          onClick={() => onAction("exclude")}
-        >
-          {t(selected.length ? "所选不迁" : "全部不迁")}
-        </Button>
       </div>
     </div>
   );
@@ -144,31 +149,6 @@ export function RiskBulkConfirmation({
       }}
     >
       <div className={dockStyles.body}>
-        <p>
-          {t(
-            action === "recommended"
-              ? "确认采用评估建议"
-              : action === "ignore-or-exclude"
-                ? "确认忽略与不迁策略"
-                : "确认本次不迁",
-          )}
-        </p>
-        <p>
-          {t(
-            "所选范围：{0} 条风险 · {1} 台虚拟机",
-            risks.length,
-            vmCount(risks),
-          )}
-        </p>
-        <label className={styles.overwrite}>
-          <input
-            type="checkbox"
-            checked={overwrite}
-            disabled={saving || locked}
-            onChange={(event) => setOverwrite(event.target.checked)}
-          />
-          {t("覆盖已有策略")}
-        </label>
         <p aria-live="polite">
           {t(
             "本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。",
@@ -212,6 +192,16 @@ export function RiskBulkConfirmation({
         )}
       </div>
       <footer className={dockStyles.actions}>
+        <label className={dockStyles.overwrite}>
+          <input
+            type="checkbox"
+            checked={overwrite}
+            disabled={saving || locked}
+            onChange={(event) => setOverwrite(event.target.checked)}
+          />
+          {t("覆盖已有策略")}
+        </label>
+
         <Button disabled={saving} onClick={onCancel}>
           {t("取消")}
         </Button>

@@ -2,14 +2,15 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
   color: var(--ink);
 }
 .root > h3 {
   flex: 0 0 auto;
   margin: 0;
   padding: 10px 0 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   overflow-wrap: anywhere;
   max-height: 72px;
@@ -43,24 +44,25 @@
   padding: 8px 0;
   border-top: 1px solid var(--line);
 }
-.footnote {
-  color: var(--secondary);
+.overwrite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
   font-size: 12px;
-  margin-right: auto;
+  color: var(--secondary);
 }
-@media (min-width: 1920px) {
-  .root > h3 {
-    font-size: 17px;
-  }
-  .footnote {
-    font-size: 13px;
-  }
+.overwrite input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 @container (max-width: 540px) {
-  .root > h3 {
-    font-size: 14px;
+  .root footer.actions {
+    flex-wrap: wrap;
   }
-  .footnote {
-    display: none;
+  .overwrite {
+    margin-right: auto;
   }
 }
