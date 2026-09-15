@@ -5,11 +5,11 @@ import { Icon } from "@/shared/ui/icons";
 import { BrandName } from "@/shared/ui/BrandName";
 import { useState, type FormEvent } from "react";
 import styles from "./ProjectSetup.module.css";
-const blankProject: ProjectInfo = {
+const initialProject: ProjectInfo = {
   industry: "金融",
   region: "中国地区部",
-  office: "",
-  siteName: "",
+  office: "上海代表处",
+  siteName: "华东数据中心迁移",
   migrationType: "虚拟化",
 };
 export function ProjectSetup({
@@ -24,7 +24,7 @@ export function ProjectSetup({
   onCancel: () => void;
 }) {
   const t = useTranslation();
-  const [draft, setDraft] = useState<ProjectInfo>(blankProject);
+  const [draft, setDraft] = useState<ProjectInfo>(initialProject);
   function submit(event: FormEvent) {
     event.preventDefault();
     if (draft.office.trim() && draft.siteName.trim())

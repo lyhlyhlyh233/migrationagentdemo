@@ -511,7 +511,7 @@
     z-index: var(--z-drawer);
     border-left: 1px solid var(--line-strong);
   }
-  .root:global(.workspace:has(> .agent-inspector) .conversation-workspace) {
+  .root:global(.workspace.inspector-open .conversation-workspace) {
     padding-right: 0;
   }
 }
@@ -872,12 +872,12 @@
   .root:global(.workspace.inspector-collapsed) {
     grid-template-columns: 240px minmax(0, 1fr);
   }
-  .root:global(.workspace:has(> .agent-inspector)) {
+  .root:global(.workspace.inspector-open) {
     grid-template-columns: 240px minmax(0, 1fr) 250px;
   }
 }
 @media (max-width: 980px) and (min-width: 761px) {
-  .root:global(.workspace:has(> .agent-inspector)) {
+  .root:global(.workspace.inspector-open) {
     grid-template-columns: 240px minmax(0, 1fr);
   }
 }
@@ -1600,12 +1600,12 @@
   }
 }
 @media (min-width: 981px) {
-  .root:global(.workspace.nav-collapsed:has(> .agent-inspector)) {
+  .root:global(.workspace.nav-collapsed.inspector-open) {
     grid-template-columns: 56px minmax(0, 1fr) 282px;
   }
 }
 @media (min-width: 981px) and (max-width: 1180px) {
-  .root:global(.workspace.nav-collapsed:has(> .agent-inspector)) {
+  .root:global(.workspace.nav-collapsed.inspector-open) {
     grid-template-columns: 56px minmax(0, 1fr) 250px;
   }
 }
@@ -1776,7 +1776,7 @@
   .root:global(.workspace.nav-collapsed) {
     grid-template-columns: 64px minmax(0, 1fr);
   }
-  .root:global(.workspace.nav-collapsed:has(> .agent-inspector)) {
+  .root:global(.workspace.nav-collapsed.inspector-open) {
     grid-template-columns: 64px minmax(0, 1fr) 384px;
   }
   .root :global(.conversation-workspace > .progress-rail) {
@@ -1920,7 +1920,7 @@
   min-height: 0;
 }
 
-/* One resizable tabbed panel, narrower than chat by default. */
+/* Risk tabs use the resizable panel; execution details remain a narrow rail. */
 .root:global(.workspace.side-panel-open) {
   --side-nav-width: 256px;
   --side-panel-width: clamp(
@@ -2030,7 +2030,7 @@
   user-select: none;
 }
 
-.root :global(.workspace-side-panel .agent-inspector) {
+.root :global(.agent-inspector) {
   display: flex;
   flex-direction: column;
   position: static;
@@ -2040,27 +2040,90 @@
   border: 0;
   background: transparent;
 }
-.root :global(.workspace-side-panel .inspector-scroll) {
+.root :global(.inspector-scroll) {
   padding: 20px;
 }
 
-.root :global(.workspace-side-panel .inspector-section h3),
-.root :global(.workspace-side-panel .work-steps strong),
-.root :global(.workspace-side-panel .artifact-list strong) {
+.root :global(.inspector-section h3),
+.root :global(.work-steps strong),
+.root :global(.artifact-list strong) {
   font-size: var(--ui-size);
 }
-.root :global(.workspace-side-panel .work-steps p),
-.root :global(.workspace-side-panel .inspector-stats),
-.root :global(.workspace-side-panel .inspector-stats dt),
-.root :global(.workspace-side-panel .inspector-stats dd),
-.root :global(.workspace-side-panel .inspector-status),
-.root :global(.workspace-side-panel .activity-event p),
-.root :global(.workspace-side-panel .inspector-empty) {
+.root :global(.work-steps p),
+.root :global(.inspector-stats),
+.root :global(.inspector-stats dt),
+.root :global(.inspector-stats dd),
+.root :global(.inspector-status),
+.root :global(.activity-event p),
+.root :global(.inspector-empty) {
   font-size: var(--ui-small);
 }
-.root :global(.workspace-side-panel .inspector-section) {
+.root :global(.inspector-section) {
   margin-top: 22px;
 }
-.root :global(.workspace-side-panel .inspector-section > header) {
+.root :global(.inspector-section > header) {
   margin-bottom: 12px;
+}
+
+.root:global(.workspace) > :global(.agent-inspector[hidden]) {
+  display: none;
+}
+.root:global(.workspace.inspector-open) {
+  --inspector-nav-width: 256px;
+  --inspector-width: 280px;
+  grid-template-columns: var(--inspector-nav-width) minmax(0, 1fr) var(
+      --inspector-width
+    );
+}
+.root:global(.workspace.inspector-open.nav-collapsed) {
+  --inspector-nav-width: 56px;
+  grid-template-columns: var(--inspector-nav-width) minmax(0, 1fr) var(
+      --inspector-width
+    );
+}
+.root:global(.workspace.inspector-open) > :global(.agent-inspector) {
+  display: flex;
+  position: static;
+  width: 100%;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+}
+.root :global(.agent-inspector .inspector-header) {
+  height: 52px;
+  margin-inline: 16px;
+  font-size: var(--ui-size);
+}
+.root :global(.agent-inspector .inspector-scroll) {
+  padding: 16px;
+}
+@media (min-width: 1920px) {
+  .root:global(.workspace.inspector-open) {
+    --inspector-nav-width: 292px;
+    --inspector-width: 320px;
+  }
+  .root:global(.workspace.inspector-open.nav-collapsed) {
+    --inspector-nav-width: 64px;
+  }
+}
+@media (max-width: 1180px) {
+  .root:global(.workspace.inspector-open) {
+    --inspector-nav-width: 240px;
+    --inspector-width: 250px;
+  }
+}
+@media (max-width: 980px) {
+  .root:global(.workspace.inspector-open),
+  .root:global(.workspace.inspector-open.nav-collapsed) {
+    grid-template-columns: var(--inspector-nav-width) minmax(0, 1fr);
+  }
+  .root:global(.inspector-open) :global(.conversation-workspace) {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .root:global(.workspace.inspector-open),
+  .root:global(.workspace.inspector-open.nav-collapsed) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

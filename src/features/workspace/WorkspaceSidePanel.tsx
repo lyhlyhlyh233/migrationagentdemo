@@ -2,31 +2,21 @@ import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
 import styles from "./WorkspaceSidePanel.module.css";
-export type WorkspaceSideTab = "execution" | "risks";
-const tabs = [
-  { id: "execution", label: "执行详情", icon: "agent" },
-  { id: "risks", label: "迁移风险", icon: "shield" },
-] as const;
 
 export function WorkspaceSidePanel({
   open,
-  activeTab,
-  onTabChange,
   onWidthChange,
   onCollapse,
-  execution,
+  onClose,
   risks,
 }: {
   open: boolean;
-  activeTab: WorkspaceSideTab;
-  onTabChange: (tab: WorkspaceSideTab) => void;
   onWidthChange: (width: number) => void;
   onCollapse: () => void;
-  execution: ReactNode;
+  onClose: () => void;
   risks: ReactNode;
 }) {
   const t = useTranslation();
-  const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const panel = useRef<HTMLElement>(null);
   const panelId = useId();
   const [resizing, setResizing] = useState(false);
@@ -53,10 +43,6 @@ export function WorkspaceSidePanel({
   }, []);
   const resize = (width: number) =>
     onWidthChange(Math.round(Math.max(420, Math.min(size.max, width))));
-  function selectTab(index: number) {
-    onTabChange(tabs[index].id);
-    tabButtons.current[index]?.focus();
-  }
   return (
     <aside
       ref={panel}
@@ -121,42 +107,33 @@ export function WorkspaceSidePanel({
           role="tablist"
           aria-label={t("侧面板页签")}
         >
-          {tabs.map((tab, index) => (
+          <div className={styles.tabItem} role="presentation">
             <button
-              key={tab.id}
-              ref={(element) => {
-                tabButtons.current[index] = element;
-              }}
               type="button"
               role="tab"
-              id={`${panelId}-${tab.id}-tab`}
-              aria-selected={activeTab === tab.id}
-              aria-controls={`${panelId}-${tab.id}`}
-              tabIndex={activeTab === tab.id ? 0 : -1}
-              onClick={() => onTabChange(tab.id)}
+              id={`${panelId}-risks-tab`}
+              aria-selected="true"
+              aria-controls={`${panelId}-risks`}
               onKeyDown={(event) => {
-                if (
-                  !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
-                    event.key,
-                  )
-                )
-                  return;
-                event.preventDefault();
-                selectTab(
-                  event.key === "Home"
-                    ? 0
-                    : event.key === "End"
-                      ? tabs.length - 1
-                      : (index +
-                          (event.key === "ArrowRight" ? 1 : tabs.length - 1)) %
-                        tabs.length,
-                );
+                if (event.key === "Delete") {
+                  event.preventDefault();
+                  onClose();
+                }
               }}
             >
-              <Icon name={tab.icon} size={16} />
-              {t(tab.label)}
+              <Icon name="shield" size={16} />
+              {t("迁移风险")}
             </button>
-          ))}
+            <button
+              type="button"
+              className={styles.closeTab}
+              aria-label={t("关闭迁移风险页签")}
+              title={t("关闭迁移风险页签")}
+              onClick={onClose}
+            >
+              <Icon name="close" size={14} />
+            </button>
+          </div>
         </div>
         <button
           type="button"
@@ -170,18 +147,8 @@ export function WorkspaceSidePanel({
       </header>
       <section
         role="tabpanel"
-        id={`${panelId}-execution`}
-        aria-labelledby={`${panelId}-execution-tab`}
-        hidden={activeTab !== "execution"}
-        className={styles.content}
-      >
-        {execution}
-      </section>
-      <section
-        role="tabpanel"
         id={`${panelId}-risks`}
         aria-labelledby={`${panelId}-risks-tab`}
-        hidden={activeTab !== "risks"}
         className={`${styles.content} ${styles.risks}`}
       >
         {risks}

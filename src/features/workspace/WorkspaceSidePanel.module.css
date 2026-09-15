@@ -26,31 +26,45 @@
 }
 .tabs {
   display: flex;
-  align-self: stretch;
-  gap: 16px;
+  align-items: center;
   min-width: 0;
 }
-.tabs button {
+.tabItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 5px 3px 10px;
+  border-radius: 8px;
+  background: var(--hover);
+}
+.tabItem > button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  padding: 0 2px;
+  border-radius: 5px;
+  min-height: var(--control-compact);
+  padding: 0;
   background: transparent;
   color: var(--secondary);
   font-size: var(--ui-size);
   white-space: nowrap;
 }
-.tabs button[aria-selected="true"] {
+.tabItem > button[aria-selected="true"] {
   color: var(--ink);
-  border-bottom-color: var(--ink);
-  font-weight: 600;
+  font-weight: 550;
 }
-.tabs button:hover {
+.tabItem > button:hover {
   color: var(--ink);
-  background: var(--hover);
+}
+.tabItem > .closeTab {
+  justify-content: center;
+  width: 28px;
+  min-height: 28px;
+  flex-shrink: 0;
+}
+.closeTab:hover {
+  background: var(--accent-soft);
 }
 .header > button {
   flex: 0 0 auto;

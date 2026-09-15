@@ -13,7 +13,11 @@ export function AgentPanel({
   stats,
   artifacts,
   events,
+  hidden,
+  onCollapse,
 }: {
+  hidden: boolean;
+  onCollapse: () => void;
   running: boolean;
   status: string;
   steps: WorkStep[];
@@ -30,11 +34,24 @@ export function AgentPanel({
   const t = useTranslation();
   const completed = steps.filter((step) => step.state === "done").length;
   return (
-    <section
+    <aside
+      hidden={hidden}
       className="agent-inspector"
       data-running={running}
-      aria-label={t("子智能体执行详情")}
+      aria-label={t("执行详情")}
     >
+      <header className="inspector-header">
+        <span>{t("执行详情")}</span>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={t("收起执行详情")}
+          title={t("收起执行详情")}
+          onClick={onCollapse}
+        >
+          <Icon name="panel" size={18} />
+        </button>
+      </header>
       <div className="inspector-scroll">
         <div
           className={`state-label inspector-status ${running ? "is-active" : ""}`}
@@ -143,6 +160,6 @@ export function AgentPanel({
           )}
         </section>
       </div>
-    </section>
+    </aside>
   );
 }
