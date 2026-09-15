@@ -307,6 +307,12 @@
   border-color: transparent;
   color: var(--muted);
 }
+.stopIcon {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: currentColor;
+}
 @media (prefers-reduced-motion: reduce) {
   .root :global(.shortcut-menu[open] .shortcut-options) {
     animation: none;

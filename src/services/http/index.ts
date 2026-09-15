@@ -21,6 +21,7 @@ export function createHttpService(_config: {
     createConversation: missing,
     renameConversation: missing,
     sendMessage: missing,
+    stopReply: missing,
     execute: missing,
     upload: missing,
     download: missing,

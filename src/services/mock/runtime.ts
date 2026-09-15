@@ -17,6 +17,10 @@ export class MockRuntime {
   listeners = new Set<(event: ServiceEvent) => void>();
   account: AccountState = { configured: false, verified: false };
   private timers = new Map<ReturnType<typeof setTimeout>, () => void>();
+  private runs = new Map<
+    string,
+    { controller: AbortController; done: Promise<void>; stopped: boolean }
+  >();
   disposed = false;
   state(id: string) {
     if (this.disposed) throw new ServiceError("ABORTED", "会话已结束");
@@ -121,7 +125,11 @@ export class MockRuntime {
   async run(
     c: OperationContext,
     key: string,
-    work: (s: ProjectSnapshot) => Promise<void>,
+    work: (
+      s: ProjectSnapshot,
+      options: RequestOptions,
+      runId: string,
+    ) => Promise<void>,
     options: RequestOptions = {},
   ) {
     const s = this.context(c);
@@ -136,10 +144,23 @@ export class MockRuntime {
       planningStatus: s.planningStatus,
       mdStatus: s.mdStatus,
     };
+    const runId = crypto.randomUUID();
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    options.signal?.addEventListener("abort", abort, { once: true });
+    let finish!: () => void;
+    const run = {
+      controller,
+      done: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+      stopped: false,
+    };
+    this.runs.set(runId, run);
     s.operations[key] = "running";
     this.publish(s);
     try {
-      await work(s);
+      await work(s, { signal: controller.signal }, runId);
       if (this.disposed) return;
       s.operations[key] = "completed";
       this.publish(s);
@@ -156,19 +177,33 @@ export class MockRuntime {
         }
       delete s.operations[key];
       const pending = s.pending[c.conversationId];
-      if (
-        pending &&
-        (pending.runId === key || `reply-${pending.runId}` === key)
-      )
-        delete s.pending[c.conversationId];
+      if (pending?.runId === runId) delete s.pending[c.conversationId];
+      if (run.stopped && !this.disposed)
+        this.message(c, "system", "已停止回复");
       this.publish(s);
+      if (run.stopped) throw new ServiceError("STOPPED", "已停止回复");
       throw error;
+    } finally {
+      options.signal?.removeEventListener("abort", abort);
+      this.runs.delete(runId);
+      finish();
     }
+  }
+  async stopReply(c: OperationContext, runId: string) {
+    const s = this.context(c);
+    // Stale clicks must not stop a newer reply, even when retrying the same operation.
+    if (s.pending[c.conversationId]?.runId !== runId) return;
+    const run = this.runs.get(runId);
+    if (!run) return;
+    run.stopped = true;
+    run.controller.abort();
+    await run.done;
   }
   dispose() {
     this.disposed = true;
     for (const abort of [...this.timers.values()]) abort();
     this.timers.clear();
+    this.runs.clear();
     this.listeners.clear();
     this.projects.clear();
     this.files.clear();

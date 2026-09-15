@@ -19,7 +19,7 @@ export async function plan(
   await rt.run(
     c,
     "planning",
-    async () => {
+    async (_s, runOptions, runId) => {
       rt.message(c, "user", `根据规划资料“${filename}”生成迁移批次。`, {
         operation: true,
       });
@@ -27,19 +27,17 @@ export async function plan(
       s.planningStatus = "generating";
       s.pending[c.conversationId] = {
         startedAt: Date.now(),
-        runId: "planning",
+        runId,
       };
       rt.publish(s);
-      await rt.sleep(1600, options);
+      await rt.sleep(1600, runOptions);
       s.batchTasks = buildBatchTasks(
         migrationScope(s).map((r) => String(r[0])),
       ).filter((b) => b.vmNames.length);
-      s.vmTasks = s.batchTasks
-        .flatMap(buildVmTasks)
-        .map((task) => ({
-          ...task,
-          migrationMethod: migrationMethod(s, task.name),
-        }));
+      s.vmTasks = s.batchTasks.flatMap(buildVmTasks).map((task) => ({
+        ...task,
+        migrationMethod: migrationMethod(s, task.name),
+      }));
       s.risks = s.risks
         .filter((r) => r.stage !== "planning")
         .concat(

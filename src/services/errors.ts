@@ -6,6 +6,7 @@ export type ErrorCode =
   | "VALIDATION"
   | "NETWORK"
   | "ABORTED"
+  | "STOPPED"
   | "HTTP";
 export class ServiceError extends Error {
   constructor(

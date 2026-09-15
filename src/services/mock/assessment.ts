@@ -21,7 +21,7 @@ export async function assess(
   await rt.run(
     c,
     "assessment",
-    async () => {
+    async (_s, runOptions, runId) => {
       rt.message(c, "user", "开始评估已准备的 RVTools 采集表和迁移调研表。", {
         operation: true,
         activity: "assessment-preparation",
@@ -29,10 +29,10 @@ export async function assess(
       s.assessmentStatus = "running";
       s.pending[c.conversationId] = {
         startedAt: Date.now(),
-        runId: "assessment",
+        runId,
       };
       rt.publish(s);
-      await rt.sleep(1600, options);
+      await rt.sleep(1600, runOptions);
       s.risks = buildAssessmentRisks(s);
       s.assessmentStatus = "completed";
       const report = assessmentReportReply(s);

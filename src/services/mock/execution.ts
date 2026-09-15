@@ -19,7 +19,7 @@ export async function checkMd(
   await rt.run(
     c,
     "md-check",
-    async () => {
+    async (_s, runOptions, runId) => {
       rt.message(
         c,
         "user",
@@ -29,10 +29,10 @@ export async function checkMd(
       s.mdStatus = "checking-connection";
       s.pending[c.conversationId] = {
         startedAt: Date.now(),
-        runId: "md-check",
+        runId,
       };
       rt.publish(s);
-      await rt.sleep(900, options);
+      await rt.sleep(900, runOptions);
       s.mdStatus = "checking-config";
       s.mdHistory.push({
         id: Date.now(),
@@ -41,7 +41,7 @@ export async function checkMd(
         detail: "源端、目标端与端口组检查中",
       });
       rt.publish(s);
-      await rt.sleep(1300, options);
+      await rt.sleep(1300, runOptions);
       s.mdStatus = "ready";
       const eligible = new Set(migrationScope(s).map((r) => String(r[0])));
       s.batchTasks = s.batchTasks
@@ -112,7 +112,7 @@ export async function executeTasks(
   await rt.run(
     c,
     `execute-${kind}`,
-    async () => {
+    async (_s, runOptions) => {
       rt.message(
         c,
         "user",
@@ -162,7 +162,7 @@ export async function executeTasks(
             : index >= metric.completed,
       );
       for (const id of remaining) {
-        await rt.sleep(1400, options);
+        await rt.sleep(1400, runOptions);
         metric.completed++;
         metric.running = Math.min(2, metric.total - metric.completed);
         metric.queued = metric.total - metric.completed - metric.running;

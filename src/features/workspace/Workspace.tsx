@@ -281,6 +281,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onAgent={(agentId) => a.view({ agentId })}
             onModel={(modelId) => a.view({ modelId })}
             onSend={(text) => a.send(text, agent, model)}
+            onStop={() => void a.stop()}
             onWork={() => {
               if (chat.stageId === "research")
                 void a.send(t("查看评估资料"), agent, model);

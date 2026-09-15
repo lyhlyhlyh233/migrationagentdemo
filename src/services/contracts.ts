@@ -95,6 +95,12 @@ export interface MigrationService {
     },
     options?: RequestOptions,
   ): Promise<void>;
+  // Stop only the matching pending reply; completed work and background tasks remain.
+  stopReply(
+    context: OperationContext,
+    runId: string,
+    options?: RequestOptions,
+  ): Promise<void>;
   execute(
     context: OperationContext,
     command: ProjectCommand,

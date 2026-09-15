@@ -7,7 +7,7 @@ import {
   findStageConversation,
 } from "@/domain/conversations";
 import type { FilePurpose, ProjectCommand } from "@/services/contracts";
-import { errorMessage } from "@/services/errors";
+import { errorMessage, ServiceError } from "@/services/errors";
 import { saveDownload } from "@/shared/files";
 import { readPreference } from "@/shared/preferences";
 export function useWorkspaceActions(projectId: string) {
@@ -40,7 +40,8 @@ export function useWorkspaceActions(projectId: string) {
       await work();
       return true;
     } catch (error) {
-      notify(errorMessage(error));
+      if (!(error instanceof ServiceError && error.code === "STOPPED"))
+        notify(errorMessage(error));
       return false;
     }
   }
@@ -51,6 +52,12 @@ export function useWorkspaceActions(projectId: string) {
     invoke,
     notify,
     view,
+    stop: () => {
+      const pending = id ? s.pending[id] : undefined;
+      return pending
+        ? invoke(() => service.stopReply(context, pending.runId))
+        : Promise.resolve(false);
+    },
     execute: (cmd: ProjectCommand) =>
       invoke(() =>
         service.execute({ ...context, operationId: crypto.randomUUID() }, cmd),
@@ -111,10 +118,22 @@ export function useWorkspaceActions(projectId: string) {
       const requestId =
         conversationState[projectId]?.[id]?.requestId ?? crypto.randomUUID();
       view({ draft: "", requestId });
-      const ok = await invoke(() =>
-        service.sendMessage(context, { text, agentId, modelId, requestId }),
-      );
-      view(ok ? { requestId: undefined } : { draft: text, requestId });
+      try {
+        await service.sendMessage(context, {
+          text,
+          agentId,
+          modelId,
+          requestId,
+        });
+        view({ requestId: undefined });
+      } catch (error) {
+        if (error instanceof ServiceError && error.code === "STOPPED")
+          view({ requestId: undefined });
+        else {
+          notify(errorMessage(error));
+          view({ draft: text, requestId });
+        }
+      }
     },
   };
 }

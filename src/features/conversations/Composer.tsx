@@ -21,6 +21,7 @@ export function Composer({
   onAgent,
   onModel,
   onSend,
+  onStop,
   onWork,
   onPanel,
   nextLabel,
@@ -39,6 +40,7 @@ export function Composer({
   onAgent: (id: string) => void;
   onModel: (id: string) => void;
   onSend: (text: string) => void;
+  onStop: () => void;
   onWork: () => void;
   onPanel: (panel: PanelId) => void;
 }) {
@@ -146,7 +148,7 @@ export function Composer({
         className="chat-composer"
         onSubmit={(e) => {
           e.preventDefault();
-          onSend(draft);
+          if (!busy) onSend(draft);
         }}
       >
         <textarea
@@ -174,16 +176,6 @@ export function Composer({
               value={agentId}
               onChange={onAgent}
             />
-            {stage && (
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={t("查看当前阶段资料")}
-                onClick={onWork}
-              >
-                <Icon name="plus" size={19} />
-              </button>
-            )}
           </div>
           <div className="composer-right">
             <ModelPicker
@@ -193,11 +185,17 @@ export function Composer({
             />
             <button
               className="send-button"
-              type="submit"
-              disabled={busy || !draft.trim()}
-              aria-label={t("发送消息")}
+              type={busy ? "button" : "submit"}
+              disabled={!busy && !draft.trim()}
+              aria-label={t(busy ? "停止回复" : "发送消息")}
+              title={t(busy ? "停止回复" : "发送消息")}
+              onClick={busy ? onStop : undefined}
             >
-              <Icon name="arrow" size={18} />
+              {busy ? (
+                <span className={styles.stopIcon} aria-hidden="true" />
+              ) : (
+                <Icon name="arrow" size={18} />
+              )}
             </button>
           </div>
         </div>

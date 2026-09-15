@@ -119,13 +119,13 @@ export class MockMigrationService implements MigrationService {
         operation: true,
       });
       void this.runtime
-        .run(c, "assessment-intro", async () => {
+        .run(c, "assessment-intro", async (_s, options, runId) => {
           s.pending[c.conversationId] = {
             startedAt: Date.now(),
-            runId: "assessment-intro",
+            runId,
           };
           this.runtime.publish(s);
-          await this.runtime.sleep(1200);
+          await this.runtime.sleep(1200, options);
           this.runtime.result(
             c,
             assessmentWelcome,
@@ -135,7 +135,10 @@ export class MockMigrationService implements MigrationService {
           delete s.pending[c.conversationId];
         })
         .catch((error) => {
-          if (!this.runtime.disposed)
+          if (
+            !this.runtime.disposed &&
+            !(error instanceof ServiceError && error.code === "STOPPED")
+          )
             this.runtime.notice(
               c,
               error instanceof Error
@@ -231,6 +234,14 @@ export class MockMigrationService implements MigrationService {
       "智能体或模型不可用",
     );
     return reply(this.runtime, c, input, options);
+  }
+  async stopReply(
+    c: OperationContext,
+    runId: string,
+    options: RequestOptions = {},
+  ) {
+    this.active(options);
+    await this.runtime.stopReply(c, runId);
   }
   async execute(
     c: OperationContext,

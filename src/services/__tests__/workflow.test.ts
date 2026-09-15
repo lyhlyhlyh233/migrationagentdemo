@@ -63,6 +63,144 @@ async function migration() {
   return m;
 }
 describe("project service boundaries", () => {
+  it("stops the automatic opening reply without a late answer or failure notice", async () => {
+    const s = await service.createProject(info, "en");
+    const c = {
+      projectId: s.id,
+      conversationId: s.conversations[0].id,
+      stageId: "research" as const,
+      language: "en" as const,
+    };
+    const events = vi.fn();
+    service.subscribe(events);
+    await service.stopReply(c, s.pending[c.conversationId].runId);
+    await vi.runAllTimersAsync();
+    const stopped = await service.getProject(s.id);
+    expect(stopped.pending).toEqual({});
+    expect(stopped.operations["assessment-intro"]).toBeUndefined();
+    expect(stopped.messages.at(-1)?.text).toBe("Response stopped");
+    expect(stopped.messages.some((m) => m.role === "agent")).toBe(false);
+    expect(
+      events.mock.calls.every(([event]) => event.type === "snapshot"),
+    ).toBe(true);
+  });
+  it("stops only the matching conversation and ignores stale stop requests after retry", async () => {
+    const c = await project();
+    const otherProject = await project();
+    const child = await service.createConversation(
+      c.projectId,
+      "research",
+      "zh-CN",
+    );
+    const otherChat = { ...c, conversationId: child.id };
+    const input = {
+      text: "解释当前评估范围",
+      agentId: "research",
+      modelId: "glm-5.1",
+      requestId: "stop-test",
+    };
+    const pending = service.sendMessage(c, input);
+    const rejected = expect(pending).rejects.toMatchObject({ code: "STOPPED" });
+    const childReply = service.sendMessage(otherChat, {
+      ...input,
+      requestId: "child-reply",
+    });
+    const projectReply = service.sendMessage(otherProject, input);
+    const runId = (await service.getProject(c.projectId)).pending[
+      c.conversationId
+    ].runId;
+    await service.stopReply(otherChat, runId);
+    await service.stopReply(otherProject, runId);
+    expect(
+      (await service.getProject(c.projectId)).pending[c.conversationId],
+    ).toBeDefined();
+    await Promise.all([
+      service.stopReply(c, runId),
+      service.stopReply(c, runId),
+    ]);
+    await rejected;
+    const stopped = await service.getProject(c.projectId);
+    expect(stopped.pending[c.conversationId]).toBeUndefined();
+    expect(
+      stopped.messages.filter((m) => m.text === "已停止回复"),
+    ).toHaveLength(1);
+    const retry = service.sendMessage(c, input);
+    const newRun = (await service.getProject(c.projectId)).pending[
+      c.conversationId
+    ].runId;
+    expect(newRun).not.toBe(runId);
+    await service.stopReply(c, runId);
+    expect(
+      (await service.getProject(c.projectId)).pending[c.conversationId].runId,
+    ).toBe(newRun);
+    await vi.runAllTimersAsync();
+    await Promise.all([retry, childReply, projectReply]);
+    const result = await service.getProject(c.projectId);
+    expect(result.pending).toEqual({});
+    expect(
+      result.messages
+        .filter((m) => m.requestId === input.requestId)
+        .map((m) => m.role),
+    ).toEqual(["user", "agent"]);
+    expect(
+      result.messages.find(
+        (m) => m.role === "agent" && m.requestId === "child-reply",
+      )?.conversationId,
+    ).toBe(child.id);
+    expect(
+      (await service.getProject(otherProject.projectId)).messages.at(-1)?.role,
+    ).toBe("agent");
+  });
+  it("stopping assessment restores its state and files without producing a report", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    const before = await service.getProject(c.projectId);
+    const pending = service.execute(c, { type: "assessment.start" });
+    const rejected = expect(pending).rejects.toMatchObject({ code: "STOPPED" });
+    const runId = (await service.getProject(c.projectId)).pending[
+      c.conversationId
+    ].runId;
+    await service.stopReply(c, runId);
+    await rejected;
+    await vi.runAllTimersAsync();
+    const stopped = await service.getProject(c.projectId);
+    expect(stopped.assessmentStatus).toBe(before.assessmentStatus);
+    expect(stopped.files).toEqual(before.files);
+    expect(stopped.artifacts).toEqual(before.artifacts);
+    expect(stopped.operations.assessment).toBeUndefined();
+    await finish(service.execute(c, { type: "assessment.start" }));
+    expect((await service.getProject(c.projectId)).assessmentStatus).toBe(
+      "completed",
+    );
+  });
+  it("stopping a reply leaves already confirmed background tasks running", async () => {
+    const c = await migration();
+    const task = service.execute(c, {
+      type: "execution.confirm",
+      kind: "creation",
+    });
+    const reply = service.sendMessage(c, {
+      text: "当前进度",
+      agentId: "migration",
+      modelId: "glm-5.1",
+      requestId: "background-chat",
+    });
+    const rejected = expect(reply).rejects.toMatchObject({ code: "STOPPED" });
+    const runId = (await service.getProject(c.projectId)).pending[
+      c.conversationId
+    ].runId;
+    await service.stopReply(c, runId);
+    await rejected;
+    expect(
+      (await service.getProject(c.projectId)).operations["execute-creation"],
+    ).toBe("running");
+    await finish(task);
+    expect(
+      (await service.getProject(c.projectId)).creationTasks.every(
+        (t) => t.status === "created",
+      ),
+    ).toBe(true);
+  });
   it("allows optional risk decisions while keeping an explicit, single stage handoff", async () => {
     const c = await project();
     await service.execute(c, { type: "assessment.useSamples" });

@@ -19,7 +19,7 @@
 | 项目 | listProjects、createProject、getProject | 返回列表/完整项目快照，保留项目隔离 |
 | 会话 | createConversation、renameConversation | 独立 ID、所属阶段、主/子/临时类型 |
 | Agent、模型 | catalog | 目录 ID、默认值及可选 stageAgents 映射 |
-| 回复 | sendMessage | requestId 重试去重；文本、思考摘要、领域结果、耗时 |
+| 回复 | sendMessage、stopReply | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
 | 评估/规划/交接 | execute 的 assessment、planning、stage 命令 | 阶段条件、人工确认、不可重复启动 |
 | MD/实施/验收 | md.check、execution.confirm、creation.update、cutover.complete、validation.confirm | 共享任务与审批状态，按资源 ID 操作 |
 | 风险/任务 | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action | 最新状态校验、批量原子性与阶段锁定 |
@@ -71,6 +71,8 @@
 项目操作日志由消息中的 operation 标记及来源会话生成，没有独立审计后端。`getAccount` 只返回 configured、verified 和方式；Mock 只保存此状态，设置表单本次内存保存用户输入，退出清除，不落 localStorage。真实凭据的传输、保管、验证和登录态按内网平台规范在适配器/后端实现，配置成功不能等同于 verified。
 
 ## 取消、错误与退出
+
+`stopReply(context, runId)` 停止指定会话中匹配的 pending 回复，包含自动开场和评估/规划/MD 检查等待；已结束或不匹配的 runId 无副作用。每次运行（包括重试）使用新 runId，与消息重试的 requestId 分开。停止完成后发布清除 pending 的快照及一条“已停止回复”，被停止的原请求拒绝为 STOPPED；UI 不将主动停止显示为失败或恢复成待重试输入。其他错误仍保留输入。后台迁移任务不属于 pending 回复，不受停止按钮影响。真实适配器须按协议停止生成并忽略后续迟到结果，不能只隐藏加载状态。
 
 所有请求接受可选 `RequestOptions.signal`。初始化重试/卸载会取消旧读取，切换项目和会话不取消业务任务。JSON 工具区分 NETWORK、HTTP、ABORTED，连同读取响应体时的取消；领域校验使用 PRECONDITION/VALIDATION，重复执行使用 CONFLICT，缺失资源使用 NOT_FOUND，未接入使用 NOT_CONFIGURED。
 

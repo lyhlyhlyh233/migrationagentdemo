@@ -24,11 +24,11 @@ export async function reply(
   await rt.run(
     c,
     `reply-${input.requestId}`,
-    async () => {
+    async (_s, runOptions, runId) => {
       const start = Date.now();
       s.pending[c.conversationId] = {
         startedAt: start,
-        runId: input.requestId,
+        runId,
       };
       if (
         !s.messages.some(
@@ -52,7 +52,7 @@ export async function reply(
       )
         conversation.title = input.text.trim().slice(0, 22);
       rt.publish(s);
-      if (!openingRisks) await rt.sleep(1400, options);
+      if (!openingRisks) await rt.sleep(1400, runOptions);
       let text: string = previewDiscussionReply(input.text, input.agentId);
       const results: BusinessResult[] = [];
       if (s.info && c.stageId) {
