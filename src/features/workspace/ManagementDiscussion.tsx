@@ -11,6 +11,8 @@ export function ManagementDiscussion({
   collapsed,
   onCollapse,
   onReturn,
+  contextLabel,
+  onClearContext,
 }: {
   children: ReactNode;
   conversation: ReactNode;
@@ -19,6 +21,8 @@ export function ManagementDiscussion({
   collapsed: boolean;
   onCollapse: (collapsed: boolean) => void;
   onReturn: () => void;
+  contextLabel?: string;
+  onClearContext?: () => void;
 }) {
   const t = useTranslation();
   const [mobileChat, setMobileChat] = useState(false);
@@ -32,7 +36,7 @@ export function ManagementDiscussion({
         <Button onClick={onReturn}>{t("返回阶段会话")}</Button>
         <Button
           onClick={() => {
-            if (window.matchMedia("(max-width: 1100px)").matches) {
+            if (window.matchMedia("(max-width: 1280px)").matches) {
               setMobileChat(!mobileChat);
               onCollapse(false);
             } else onCollapse(!collapsed);
@@ -64,6 +68,14 @@ export function ManagementDiscussion({
               <Icon name="panel" size={16} />
             </button>
           </header>
+          {contextLabel && (
+            <div className={styles.context}>
+              <span>{contextLabel}</span>
+              <button onClick={onClearContext} aria-label={t("清除对话上下文")}>
+                ×
+              </button>
+            </div>
+          )}
           <div className={styles.messages}>{conversation}</div>
           {composer}
         </aside>

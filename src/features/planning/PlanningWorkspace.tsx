@@ -1,3 +1,4 @@
+import { PlanningSummary } from "./PlanningSummary";
 import { useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
 import { migrationScope } from "@/domain/assessment";
@@ -26,6 +27,7 @@ export interface PlanningWorkspaceProps {
   onUpload: (purpose: FilePurpose, file: File) => Promise<boolean>;
   conversationId: string | null;
   compact?: boolean;
+  onManage?: () => void;
 }
 export function PlanningWorkspace({
   snapshot: s,
@@ -36,6 +38,7 @@ export function PlanningWorkspace({
   onUpload,
   conversationId,
   compact = false,
+  onManage,
 }: PlanningWorkspaceProps) {
   const t = useTranslation();
   const [busy, setBusy] = useState(false);
@@ -104,6 +107,23 @@ export function PlanningWorkspace({
       change,
     });
   }
+  if (compact)
+    return (
+      <PlanningSummary
+        snapshot={s}
+        view={view}
+        onView={onView}
+        onSave={save}
+        onCommand={execute}
+        onUpload={onUpload}
+        onDownload={onDownload}
+        onManage={onManage}
+        locked={locked}
+        unsaved={unsaved}
+        error={error}
+        conversationId={conversationId}
+      />
+    );
   return (
     <section
       className={styles.root}

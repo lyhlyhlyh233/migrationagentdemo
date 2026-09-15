@@ -155,6 +155,61 @@ export function workspacePresentation(s: ProjectSnapshot) {
     ],
   };
 
+  if (s.execution) {
+    const e = s.execution,
+      total = e.tasks.length;
+    const cutover = e.tasks.filter((t) => t.phase === "validation").length;
+    const passed = e.validations.filter((v) => v.business === "passed").length;
+    stageSteps.migration = [
+      step(
+        "检测 Migration 连接",
+        "连接配置与目标资源",
+        e.connectionStatus === "ready",
+        e.connectionStatus === "checking",
+      ),
+      step(
+        "创建与全量同步",
+        `${e.tasks.filter((t) => t.created).length} / ${total}`,
+        total > 0 && e.tasks.every((t) => t.created),
+        e.tasks.some((t) => ["creating", "full"].includes(t.phase)),
+      ),
+      step(
+        "保持增量与人工割接",
+        `${cutover} / ${total} 已割接`,
+        total > 0 && cutover === total,
+        e.tasks.some((t) =>
+          ["incremental", "ready", "cutover"].includes(t.phase),
+        ),
+      ),
+      step(
+        "处理执行问题",
+        `${e.issues.filter((i) => i.state !== "resolved").length} 项待处理`,
+        total > 0 &&
+          cutover === total &&
+          e.issues.every((i) => i.state === "resolved"),
+      ),
+    ];
+    stageSteps.validation = [
+      step(
+        "核对技术结果",
+        `${e.validations.filter((v) => v.technical !== "different").length} / ${total}`,
+        total > 0 &&
+          e.validations.length === total &&
+          e.validations.every((v) => v.technical !== "different"),
+      ),
+      step("业务验证", `${passed} / ${total}`, total > 0 && passed === total),
+      step(
+        "问题反馈与复查",
+        `${e.feedback.filter((f) => f.status !== "resolved").length} 项待处理`,
+        total > 0 &&
+          passed === total &&
+          e.feedback
+            .filter((f) => f.blocking)
+            .every((f) => f.status === "resolved"),
+      ),
+      step("确认最终交付", "阶段性结果持续更新", e.finalized),
+    ];
+  }
   const progress = Object.fromEntries(
     Object.entries(stageSteps).map(([id, steps]) => [
       id,

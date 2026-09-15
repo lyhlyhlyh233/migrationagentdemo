@@ -1,4 +1,9 @@
 import type {
+  ExecutionAction,
+  MigrationConnectionInput,
+  SimulationScenario,
+} from "@/domain/execution";
+import type {
   AccountState,
   Artifact,
   Catalog,
@@ -15,6 +20,70 @@ import type {
 } from "@/domain/models";
 import type { PlanningAdjustment, PlanningInputPatch } from "@/domain/planning";
 export type ProjectCommand =
+  | {
+      type: "execution.connection";
+      values: MigrationConnectionInput;
+      simulateFailure?: boolean;
+    }
+  | {
+      type: "execution.preview";
+      action: ExecutionAction;
+      taskIds: string[];
+      targetBatchId?: string;
+      window?: string;
+      computeResource?: string;
+      network?: string;
+      scenario?: SimulationScenario;
+    }
+  | { type: "execution.apply"; previewId: string }
+  | { type: "execution.cancel"; previewId: string }
+  | {
+      type: "execution.diagnose";
+      issueId: string;
+      simulate?: "log-failed" | "inconclusive";
+    }
+  | {
+      type: "execution.remedy";
+      issueId: string;
+      solution: "automatic" | "manual";
+      note: string;
+      simulateFailure?: boolean;
+    }
+  | {
+      type: "execution.recheck";
+      issueId: string;
+      note: string;
+      simulateFailure?: boolean;
+    }
+  | {
+      type: "validation.record";
+      expectedRevision?: number;
+      taskIds: string[];
+      status: "pending" | "passed" | "failed";
+      note: string;
+    }
+  | {
+      type: "validation.acceptDifference";
+      expectedRevision?: number;
+      taskIds: string[];
+      note: string;
+    }
+  | {
+      type: "validation.feedback";
+      expectedRevision?: number;
+      taskIds: string[];
+      batchId?: string;
+      description: string;
+      blocking: boolean;
+    }
+  | {
+      type: "validation.feedbackReview";
+      expectedRevision?: number;
+      feedbackId: string;
+      resolution: string;
+      confirm?: boolean;
+    }
+  | { type: "validation.finalize" }
   | {
       type: "planning.save";
       expectedRevision: number;
@@ -54,7 +123,13 @@ export type ProjectCommand =
       action: "sync" | "pause" | "delete" | "schedule" | "cancel-schedule";
       taskIds: string[];
     };
-export type FilePurpose = "rvtools" | "presales" | "scope" | "planning";
+export type FilePurpose =
+  | "rvtools"
+  | "presales"
+  | "scope"
+  | "planning"
+  | `issue:${string}`
+  | `feedback:${string}`;
 export interface RequestOptions {
   // Cancels this request; switching the visible workspace does not cancel work.
   signal?: AbortSignal;
@@ -105,6 +180,7 @@ export interface MigrationService {
       agentId: string;
       modelId: string;
       requestId: string;
+      context?: string;
     },
     options?: RequestOptions,
   ): Promise<void>;

@@ -4,14 +4,9 @@ import {
   migrationScope,
   riskReadyForExecution,
 } from "@/domain/assessment";
-import { canExecute, stageEligibility } from "@/domain/policies";
+import { stageEligibility } from "@/domain/policies";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MockMigrationService } from "../mock";
-import {
-  buildBatchTasks,
-  buildVmTasks,
-  createStageConversation,
-} from "../mock/fixtures";
 const info = {
   industry: "金融",
   region: "中国地区部",
@@ -45,26 +40,51 @@ async function finish(p: Promise<unknown>) {
   await vi.runAllTimersAsync();
   return checked;
 }
+const connection = {
+  type: "execution.connection" as const,
+  values: {
+    ip: "192.0.2.10",
+    port: 443,
+    username: "sample",
+    password: "test-only",
+  },
+};
 async function migration() {
   const c = await project();
-  const s = service.runtime.state(c.projectId);
-  s.enteredStages = ["research", "planning", "migration"];
-  s.conversations.push(
-    createStageConversation("planning"),
-    createStageConversation("migration"),
-  );
-  s.assessmentStatus = "completed";
-  s.planningStatus = "completed";
-  s.batchConfirmation = "confirmed";
-  s.batchTasks = buildBatchTasks(s.scopeRows.map((r) => String(r[0])));
-  s.vmTasks = s.batchTasks.flatMap(buildVmTasks);
+  await service.execute(c, { type: "assessment.useSamples" });
+  await finish(service.execute(c, { type: "assessment.start" }));
+  await service.execute(c, { type: "stage.confirm", target: "planning" });
+  const p = {
+    ...c,
+    stageId: "planning" as const,
+    conversationId: "stage-planning-main",
+  };
+  await finish(service.execute(p, { type: "planning.useSample" }));
+  await service.execute(p, { type: "stage.confirm", target: "migration" });
   const m = {
     ...c,
     stageId: "migration" as const,
     conversationId: "stage-migration-main",
   };
-  await finish(service.execute(m, { type: "md.check" }));
+  await finish(service.execute(m, connection));
   return m;
+}
+async function action(
+  c: Awaited<ReturnType<typeof migration>>,
+  action: "start" | "cutover",
+  taskIds: string[],
+) {
+  await service.execute(c, {
+    type: "execution.preview",
+    action,
+    taskIds,
+    computeResource: "pool",
+    network: "network",
+  });
+  await service.execute(c, {
+    type: "execution.apply",
+    previewId: service.runtime.state(c.projectId).execution!.preview!.id,
+  });
 }
 describe("project service boundaries", () => {
   it("stops the automatic opening reply without a late answer or failure notice", async () => {
@@ -179,10 +199,11 @@ describe("project service boundaries", () => {
   });
   it("stopping a reply leaves already confirmed background tasks running", async () => {
     const c = await migration();
-    const task = service.execute(c, {
-      type: "execution.confirm",
-      kind: "creation",
-    });
+    const ids = service.runtime
+      .state(c.projectId)
+      .execution!.tasks.slice(0, 3)
+      .map((t) => t.id);
+    await action(c, "start", ids);
     const reply = service.sendMessage(c, {
       text: "当前进度",
       agentId: "migration",
@@ -196,13 +217,17 @@ describe("project service boundaries", () => {
     await service.stopReply(c, runId);
     await rejected;
     expect(
-      (await service.getProject(c.projectId)).operations["execute-creation"],
-    ).toBe("running");
-    await finish(task);
+      service.runtime
+        .state(c.projectId)
+        .execution!.tasks.filter((t) => ids.includes(t.id))
+        .every((t) => t.phase === "creating"),
+    ).toBe(true);
+    await vi.advanceTimersByTimeAsync(9000);
     expect(
-      (await service.getProject(c.projectId)).creationTasks.every(
-        (t) => t.status === "created",
-      ),
+      service.runtime
+        .state(c.projectId)
+        .execution!.tasks.filter((t) => ids.includes(t.id))
+        .every((t) => t.phase === "ready"),
     ).toBe(true);
   });
   it("allows optional risk decisions while keeping an explicit, single stage handoff", async () => {
@@ -273,7 +298,7 @@ describe("project service boundaries", () => {
       stageId: "migration" as const,
       conversationId: "stage-migration-main",
     };
-    await finish(service.execute(m, { type: "md.check" }));
+    await finish(service.execute(m, connection));
     const ready = await service.getProject(c.projectId);
     expect(ready.vmTasks.every((v) => !excluded.has(v.name))).toBe(true);
     expect(ready.creationTasks.every((v) => !excluded.has(v.vmName))).toBe(
@@ -287,7 +312,7 @@ describe("project service boundaries", () => {
     ).toBe(true);
     expect(
       ready.messages.findLast((m) =>
-        m.results?.some((r) => r.kind === "approval"),
+        m.results?.some((r) => r.kind === "execution-work"),
       )?.conversationId,
     ).toBe(m.conversationId);
   });
@@ -487,43 +512,58 @@ describe("project service boundaries", () => {
       "migration",
       "zh-CN",
     );
-    const pending = service.execute(c, {
-      type: "execution.confirm",
-      kind: "creation",
+    const ids = service.runtime
+      .state(c.projectId)
+      .execution!.tasks.slice(0, 3)
+      .map((t) => t.id);
+    await service.execute(c, {
+      type: "execution.preview",
+      action: "start",
+      taskIds: ids,
+      computeResource: "pool",
+      network: "network",
     });
+    const previewId = service.runtime.state(c.projectId).execution!.preview!.id;
     await expect(
       service.execute(
         { ...c, conversationId: child.id },
-        { type: "execution.confirm", kind: "creation" },
+        { type: "execution.apply", previewId },
       ),
     ).rejects.toThrow();
-    await finish(pending);
-    const s = await service.getProject(c.projectId);
-    expect(s.creationTasks).toHaveLength(12);
-    expect(s.creationTasks.every((t) => t.status === "created")).toBe(true);
-    expect(canExecute(s, "creation")).toBe(false);
-    expect(
-      s.messages.filter((m) =>
-        m.results?.some((r) => r.kind === "tasks" && r.taskKind === "creation"),
+    await service.execute(c, { type: "execution.apply", previewId });
+    await expect(
+      service.execute(
+        { ...c, conversationId: child.id },
+        {
+          type: "execution.preview",
+          action: "start",
+          taskIds: ids,
+          computeResource: "pool",
+          network: "network",
+        },
       ),
-    ).toHaveLength(1);
+    ).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(9000);
+    const state = await service.getProject(c.projectId);
+    expect(
+      state.creationTasks.filter((t) => t.status === "created"),
+    ).toHaveLength(3);
+    expect(
+      state
+        .execution!.tasks.filter((t) => ids.includes(t.id))
+        .every((t) => t.phase === "ready"),
+    ).toBe(true);
   });
   it("partial cutover resumes only remaining resources and offers handoff without navigating", async () => {
     const c = await migration();
     const s = service.runtime.state(c.projectId);
-    const ids = s.vmTasks
-      .filter(
-        (v) =>
-          s.batchTasks.find((b) => b.id === v.batchId)?.stageType === "cutover",
-      )
-      .map((v) => v.id);
-    await service.execute(c, {
-      type: "cutover.complete",
-      taskIds: [ids.at(-1)!],
-    });
-    await finish(
-      service.execute(c, { type: "execution.confirm", kind: "cutover" }),
-    );
+    const ids = s.execution!.tasks.slice(0, 3).map((t) => t.id);
+    await action(c, "start", ids);
+    await vi.advanceTimersByTimeAsync(9000);
+    await action(c, "cutover", [ids[2]]);
+    await vi.advanceTimersByTimeAsync(2500);
+    await action(c, "cutover", ids.slice(0, 2));
+    await vi.advanceTimersByTimeAsync(2500);
     const result = await service.getProject(c.projectId);
     expect(new Set(result.validationTasks.map((v) => v.id)).size).toBe(
       ids.length,

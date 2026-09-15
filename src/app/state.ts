@@ -1,3 +1,9 @@
+import {
+  initialExecutionView,
+  initialValidationView,
+  type ExecutionView,
+  type ValidationView,
+} from "@/features/migration/state";
 import type { Catalog, ProjectSnapshot, StageId } from "@/domain/models";
 import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import type { RiskLocation } from "@/features/risks/presentation";
@@ -5,8 +11,12 @@ import {
   initialPlanningView,
   type PlanningView,
 } from "@/features/planning/state";
+export type SidePanelTab = "risk" | "planning" | "execution" | "validation";
 export type PanelId =
   | "planning"
+  | "execution"
+  | "connection"
+  | "issues"
   | "tasks"
   | "risk"
   | "deliverables"
@@ -29,9 +39,14 @@ export interface ProjectUi {
   planningOpened: boolean;
   planningView: PlanningView;
   managementChatCollapsed: boolean;
+  contextLabel: string;
+  executionView: ExecutionView;
+  validationView: ValidationView;
+  executionOpened: boolean;
+  validationOpened: boolean;
   sidePanel: {
-    tabs: ("risk" | "planning")[];
-    active: "risk" | "planning";
+    tabs: SidePanelTab[];
+    active: SidePanelTab;
     open: boolean;
   };
 }
@@ -47,6 +62,11 @@ export const projectUi = (): ProjectUi => ({
   planningOpened: false,
   planningView: initialPlanningView(),
   managementChatCollapsed: false,
+  contextLabel: "",
+  executionView: initialExecutionView(),
+  validationView: initialValidationView(),
+  executionOpened: false,
+  validationOpened: false,
   sidePanel: { tabs: [], active: "risk", open: false },
 });
 export interface UiState {

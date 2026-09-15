@@ -157,7 +157,7 @@ export function Conversation({
         chat.stageId &&
         chat.stageId !== "planning" &&
         chat.stageId !== "research" &&
-        (view.workOpen ?? chat.kind === "main") && (
+        view.workOpen && (
           <div className={styles.work}>
             {chat.kind === "child" && (
               <div className={styles.workHeader}>

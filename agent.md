@@ -21,6 +21,8 @@
 
 规划改动从 `domain/planning.ts` → `services/mock/planning-data.ts` / `planning.ts` / `planning-files.ts` → `features/planning/PlanningWorkspace.tsx` 阅读。视图草稿按项目存在 `app/state.ts`；管理页小对话由 `ManagementDiscussion` 复用阶段记录。先读接口文档的规划 revision 和预览归属约定，不把 Mock 估算当成真实计算。
 
+实施/验证从 `domain/execution.ts` → `mock/execution-state.ts` / `execution.ts` / `execution-engine.ts` → `execution-issues.ts` / `validation.ts` → `ExecutionWorkspace` / `ValidationWorkspace` 阅读。旧任务读模型由新执行状态投影，不再独立执行。实际附件在 runtime 内存，密码仅用于请求；实施安排与批准计划分离。精简规划侧面板在 `PlanningSummary`，不要再塞回完整工作台。
+
 ## 修改时必须保留
 
 - 项目与会话隔离；切换页面不丢草稿、不串异步回复。

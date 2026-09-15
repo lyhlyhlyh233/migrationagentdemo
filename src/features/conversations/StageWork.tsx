@@ -1,6 +1,6 @@
 import type { PanelId } from "@/app/state";
 import type { ProjectSnapshot, StageId } from "@/domain/models";
-import { MigrationForm } from "@/features/migration/MigrationForm";
+
 import { PlanningForm } from "@/features/planning/PlanningForm";
 import { AssessmentForm } from "@/features/research/AssessmentForm";
 import type { FilePurpose, ProjectCommand } from "@/services/contracts";
@@ -39,11 +39,12 @@ export function StageWork({
           onOpen={() => onPanel("planning")}
         />
       ) : stage === "migration" ? (
-        <MigrationForm
-          snapshot={snapshot}
-          onCommand={onCommand}
-          onTasks={onPanel}
-        />
+        <div>
+          <p>{t("请选择批次并核对连接。复杂操作在右侧实施面板完成。")}</p>
+          <Button primary onClick={() => onPanel("execution")}>
+            {t("打开迁移实施面板")}
+          </Button>
+        </div>
       ) : (
         <ResultFrame
           title={t("结果验证")}

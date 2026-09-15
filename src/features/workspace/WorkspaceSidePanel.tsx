@@ -1,3 +1,4 @@
+import type { SidePanelTab } from "@/app/state";
 import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/shared/ui/primitives";
@@ -13,6 +14,8 @@ export function WorkspaceSidePanel({
   manageDisabled,
   risks,
   planning,
+  execution,
+  validation,
   tabs,
   active,
   onSelect,
@@ -20,12 +23,14 @@ export function WorkspaceSidePanel({
   open: boolean;
   onWidthChange: (width: number) => void;
   onCollapse: () => void;
-  onClose: (tab: "risk" | "planning") => void;
+  onClose: (tab: SidePanelTab) => void;
   risks: ReactNode;
   planning: ReactNode;
-  tabs: ("risk" | "planning")[];
-  active: "risk" | "planning";
-  onSelect: (tab: "risk" | "planning") => void;
+  execution: ReactNode;
+  validation: ReactNode;
+  tabs: SidePanelTab[];
+  active: SidePanelTab;
+  onSelect: (tab: SidePanelTab) => void;
   onManage: () => void;
   manageDisabled: boolean;
 }) {
@@ -160,13 +165,20 @@ export function WorkspaceSidePanel({
                 }}
               >
                 <Icon name={tab === "risk" ? "shield" : "file"} size={16} />
-                {t(tab === "risk" ? "迁移风险" : "规划设计")}
+                {t(
+                  {
+                    risk: "迁移风险",
+                    planning: "规划设计",
+                    execution: "迁移实施",
+                    validation: "结果验证",
+                  }[tab],
+                )}
               </button>
               <button
                 type="button"
                 className={styles.closeTab}
                 aria-label={t(
-                  tab === "risk" ? "关闭迁移风险页签" : "关闭规划设计页签",
+                  `关闭${{ risk: "迁移风险", planning: "规划设计", execution: "迁移实施", validation: "结果验证" }[tab]}页签`,
                 )}
                 onClick={() => onClose(tab)}
               >
@@ -177,7 +189,14 @@ export function WorkspaceSidePanel({
         </div>
         <div className={styles.headerActions}>
           <Button disabled={manageDisabled} onClick={onManage}>
-            {t(active === "risk" ? "打开迁移风险页面" : "打开迁移规划页面")}{" "}
+            {t(
+              {
+                risk: "打开迁移风险页面",
+                planning: "打开迁移规划页面",
+                execution: "打开迁移任务页面",
+                validation: "打开验证结果页面",
+              }[active],
+            )}{" "}
             <Icon name="open" size={14} />
           </Button>
           <button
@@ -212,6 +231,21 @@ export function WorkspaceSidePanel({
         >
           {planning}
         </section>
+      )}
+      {(["execution", "validation"] as const).map(
+        (tab) =>
+          tabs.includes(tab) && (
+            <section
+              key={tab}
+              role="tabpanel"
+              id={`${panelId}-${tab}`}
+              aria-labelledby={`${panelId}-${tab}-tab`}
+              hidden={active !== tab}
+              className={styles.content}
+            >
+              {tab === "execution" ? execution : validation}
+            </section>
+          ),
       )}
     </aside>
   );

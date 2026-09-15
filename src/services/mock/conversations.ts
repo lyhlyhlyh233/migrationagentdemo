@@ -1,3 +1,4 @@
+import { executionDiscussion } from "./execution-discussion";
 import type { BusinessResult, OperationContext } from "@/domain/models";
 import { translateText } from "@/shared/i18n/text";
 import type { RequestOptions } from "../contracts";
@@ -12,7 +13,13 @@ import type { MockRuntime } from "./runtime";
 export async function reply(
   rt: MockRuntime,
   c: OperationContext,
-  input: { text: string; agentId: string; modelId: string; requestId: string },
+  input: {
+    text: string;
+    agentId: string;
+    modelId: string;
+    requestId: string;
+    context?: string;
+  },
   options: RequestOptions,
 ) {
   const s = rt.context(c);
@@ -69,6 +76,15 @@ export async function reply(
             text = assessmentWelcome;
             results.push({ kind: "assessment-input", files: { ...s.files } });
           }
+        } else if (c.stageId === "migration" || c.stageId === "validation") {
+          const discussion = await executionDiscussion(
+            rt,
+            c,
+            input.text,
+            input.context,
+          );
+          text = discussion.text;
+          results.push(...discussion.results);
         } else if (
           c.stageId === "planning" &&
           !/风险|risk|报告|report|交付|deliverable/i.test(input.text)

@@ -4,7 +4,9 @@ import { stageName } from "@/shared/i18n/stages";
 import type { ProjectCommand, RequestOptions } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
 import { assess } from "./assessment";
-import { checkMd, executeTasks } from "./execution";
+import { executionIntro } from "./execution-state";
+import { validationCommand, validationIntro } from "./validation";
+import { checkMd, executeTasks, executionCommand } from "./execution";
 import { buildValidationTasks, createStageConversation } from "./fixtures";
 import { decideRisks } from "./risk-decisions";
 import { canChangeAssessmentDecision } from "@/domain/assessment";
@@ -22,6 +24,25 @@ export async function command(
   if (options.signal?.aborted) throw new ServiceError("ABORTED", "操作已取消");
   const s = rt.context(c);
   requireCondition(s.info, "请先创建项目");
+  if (cmd.type.startsWith("execution.") && cmd.type !== "execution.confirm")
+    return executionCommand(rt, c, cmd, options);
+  if (cmd.type.startsWith("validation.") && cmd.type !== "validation.confirm")
+    return validationCommand(rt, c, cmd);
+  if (
+    s.execution &&
+    [
+      "tasks.action",
+      "creation.update",
+      "cutover.complete",
+      "execution.confirm",
+      "validation.confirm",
+    ].includes(cmd.type)
+  )
+    throw new ServiceError(
+      "PRECONDITION",
+      "请使用当前实施或验证面板确认操作，旧入口已失效",
+    );
+
   if (
     cmd.type === "planning.save" ||
     cmd.type === "planning.preview" ||
@@ -161,14 +182,18 @@ export async function command(
           stageId: "planning",
           conversationId: chat.id,
         });
-      else
-        rt.message(
-          { ...c, stageId: cmd.target, conversationId: chat.id },
-          "agent",
-          cmd.target === "migration"
-            ? "请检查近端 MD 的连接、源端和目标端配置，再确认任务。"
-            : "请核对配置对比结果，逐台或批量完成人工验收。",
-        );
+      else if (cmd.target === "migration")
+        executionIntro(rt, {
+          ...c,
+          stageId: "migration",
+          conversationId: chat.id,
+        });
+      else if (cmd.target === "validation")
+        validationIntro(rt, {
+          ...c,
+          stageId: "validation",
+          conversationId: chat.id,
+        });
       break;
     }
     case "creation.update": {

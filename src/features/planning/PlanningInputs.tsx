@@ -22,12 +22,14 @@ export function PlanningInputs({
   onView: storeView,
   onSave,
   locked,
+  conditionsOnly = false,
 }: {
   planning: PlanningState;
   view: PlanningView;
   onView: (patch: Partial<PlanningView>) => void;
   onSave: (patch: PlanningInputPatch) => Promise<void>;
   locked: boolean;
+  conditionsOnly?: boolean;
 }) {
   const t = useTranslation();
   const view = { ...storedView, selected: storedView.attributeSelected ?? [] };
@@ -58,24 +60,26 @@ export function PlanningInputs({
   }
   return (
     <>
-      <nav className={styles.subtabs} aria-label={t("规划资料分类")}>
-        {(
-          [
-            ["attributes", "业务属性"],
-            ["dependencies", "业务依赖"],
-            ["conditions", "迁移约束"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            aria-current={view.section === id ? "page" : undefined}
-            onClick={() => onView({ section: id })}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </nav>
+      {!conditionsOnly && (
+        <nav className={styles.subtabs} aria-label={t("规划资料分类")}>
+          {(
+            [
+              ["attributes", "业务属性"],
+              ["dependencies", "业务依赖"],
+              ["conditions", "迁移约束"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={view.section === id ? "page" : undefined}
+              onClick={() => onView({ section: id })}
+            >
+              {t(label)}
+            </button>
+          ))}
+        </nav>
+      )}
       {view.section === "conditions" ? (
         <form
           onSubmit={(e) => {

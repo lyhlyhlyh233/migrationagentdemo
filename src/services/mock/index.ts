@@ -16,6 +16,7 @@ import type {
   ServiceEvent,
 } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
+import { uploadExecutionAttachment, validationReport } from "./validation";
 import { command } from "./commands";
 import { reply } from "./conversations";
 import { assessmentWelcome } from "./assessment-knowledge";
@@ -226,6 +227,7 @@ export class MockMigrationService implements MigrationService {
       agentId: string;
       modelId: string;
       requestId: string;
+      context?: string;
     },
     options: RequestOptions = {},
   ) {
@@ -261,6 +263,8 @@ export class MockMigrationService implements MigrationService {
   ) {
     this.active(options);
     const s = this.runtime.context(c);
+    if (purpose.startsWith("issue:") || purpose.startsWith("feedback:"))
+      return uploadExecutionAttachment(this.runtime, c, purpose, file);
     requireCondition(
       /\.(xlsx?|csv)$/i.test(file.name),
       "请选择 XLSX、XLS 或 CSV 文件",
@@ -335,6 +339,12 @@ export class MockMigrationService implements MigrationService {
   ) {
     this.active(options);
     const s = this.runtime.state(projectId);
+    if (artifactId === "validation-report")
+      validationReport(this.runtime, projectId);
+    const attachment = this.runtime.attachments.get(
+      `${projectId}/${artifactId}`,
+    );
+    if (attachment) return attachment;
     if (
       s.planning &&
       ["planning-template", "batch-plan", "runbook"].includes(artifactId)

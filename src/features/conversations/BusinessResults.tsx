@@ -11,6 +11,9 @@ import { Status } from "@/shared/ui/Status";
 import { useState } from "react";
 import styles from "./BusinessResults.module.css";
 export interface ResultActions {
+  onExecutionWork?: (
+    work: Extract<BusinessResult, { kind: "execution-work" }>,
+  ) => void;
   onPanel: (panel: PanelId) => void;
   onDownload: (id: string) => void;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
@@ -85,6 +88,7 @@ function BusinessResultBlock({
   activeInput = false,
   planningDraftDirty = false,
   onPlanningTimeline,
+  onExecutionWork,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -94,6 +98,28 @@ function BusinessResultBlock({
         (a) => a.id === r.approvalId && a.action.kind === "stage",
       ),
   );
+  if (r.kind === "execution-work")
+    return (
+      <div className={styles.quickActions}>
+        <Button
+          primary
+          onClick={() =>
+            onExecutionWork
+              ? onExecutionWork(r)
+              : onPanel(r.view === "tasks" ? "execution" : r.view)
+          }
+        >
+          {t(
+            {
+              connection: "配置 Migration 连接",
+              tasks: "查看与管理任务",
+              issues: "查看诊断与处理方案",
+              validation: "查看与确认验证",
+            }[r.view],
+          )}
+        </Button>
+      </div>
+    );
   if (r.kind === "planning-input")
     return (
       <PlanningForm

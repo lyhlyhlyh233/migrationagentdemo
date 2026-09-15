@@ -1,3 +1,4 @@
+import type { ExecutionState } from "./execution";
 import type { PlanningState } from "./planning";
 export interface ReplyPresentation {
   summary: string;
@@ -230,6 +231,12 @@ export interface Artifact {
   kind: "input" | "report" | "plan" | "template";
 }
 export type BusinessResult =
+  | {
+      kind: "execution-work";
+      view: "connection" | "tasks" | "issues" | "validation";
+      issueId?: string;
+      taskIds?: string[];
+    }
   | { kind: "planning-input" }
   | { kind: "planning-preview"; previewId: string }
   | { kind: "assessment-input"; files: { rvtools: string; presales: string } }
@@ -280,6 +287,7 @@ export interface ProjectSnapshot {
   assessmentPlan: AssessmentPlan | null;
   planningStatus: PlanningStatus;
   planning?: PlanningState;
+  execution?: ExecutionState;
   vmCount: number;
   files: { rvtools: string; presales: string };
   scopeRevisionFile: string;

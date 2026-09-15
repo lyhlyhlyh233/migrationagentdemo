@@ -3,7 +3,7 @@
   min-height: 0;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 28%, 480px);
+  grid-template-columns: minmax(0, 1fr) clamp(400px, 34%, 720px);
   grid-template-rows: auto minmax(0, 1fr);
 }
 .toolbar {
@@ -81,7 +81,7 @@
 .root[data-collapsed] {
   grid-template-columns: minmax(0, 1fr);
 }
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .root {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -95,4 +95,24 @@
   .root[data-mobile-chat] .content {
     display: none;
   }
+}
+
+.context {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: var(--ui-small);
+}
+.context button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 4px 8px;
+}
+.chat > header {
+  background: var(--surface);
 }

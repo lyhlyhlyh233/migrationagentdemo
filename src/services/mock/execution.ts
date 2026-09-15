@@ -1,196 +1,245 @@
-import type { ExecutionTaskKind, OperationContext } from "@/domain/models";
-import { migrationScope, migrationMethod } from "@/domain/assessment";
-import { canExecute } from "@/domain/policies";
-import type { RequestOptions } from "../contracts";
+import type { OperationContext, ExecutionTaskKind } from "@/domain/models";
+import {
+  actionLabels,
+  executionBlock,
+  hasActiveControl,
+  type ExecutionPreview,
+} from "@/domain/execution";
+import { eligiblePlanningAssets } from "@/domain/planning";
+import type { ProjectCommand, RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
-import { buildCreationTasks, buildValidationTasks } from "./fixtures";
-import { offerHandoff } from "./handoff";
 import type { MockRuntime } from "./runtime";
-export async function checkMd(
+import { initializeExecution, publishExecution } from "./execution-state";
+import { startExecutionLoop } from "./execution-engine";
+import { diagnose, issueCommand } from "./execution-issues";
+export async function executionCommand(
   rt: MockRuntime,
   c: OperationContext,
-  options: RequestOptions,
+  cmd: ProjectCommand,
+  options: RequestOptions = {},
 ) {
-  const s = rt.context(c);
-  requireCondition(
-    c.stageId === "migration" && s.batchConfirmation === "confirmed",
-    "请先确认规划阶段交接",
-  );
-  await rt.run(
-    c,
-    "md-check",
-    async (_s, runOptions, runId) => {
-      rt.message(
-        c,
-        "user",
-        "检查近端 MD 与迁移环境，排除受阻对象后准备任务。",
-        { operation: true },
-      );
-      s.mdStatus = "checking-connection";
-      s.pending[c.conversationId] = {
-        startedAt: Date.now(),
-        runId,
-      };
-      rt.publish(s);
-      await rt.sleep(900, runOptions);
-      s.mdStatus = "checking-config";
-      s.mdHistory.push({
-        id: Date.now(),
-        time: new Date().toLocaleTimeString(),
-        title: "近端连接正常",
-        detail: "源端、目标端与端口组检查中",
-      });
-      rt.publish(s);
-      await rt.sleep(1300, runOptions);
-      s.mdStatus = "ready";
-      const eligible = new Set(migrationScope(s).map((r) => String(r[0])));
-      s.batchTasks = s.batchTasks
-        .map((b) => ({
-          ...b,
-          vmNames: b.vmNames.filter((name) => eligible.has(name)),
-        }))
-        .filter((b) => b.vmNames.length);
-      s.vmTasks = s.vmTasks.filter((v) => eligible.has(v.name));
-      s.creationTasks = buildCreationTasks(s.batchTasks).map((task) => ({
-        ...task,
-        migrationMethod: migrationMethod(s, task.vmName),
-      }));
-      const count = s.vmTasks.filter(
-        (v) =>
-          s.batchTasks.find((b) => b.id === v.batchId)?.stageType === "cutover",
-      ).length;
-      for (const kind of ["creation", "sync", "cutover"] as const) {
-        const total =
-          kind === "creation"
-            ? s.creationTasks.length
-            : kind === "sync"
-              ? s.batchTasks.length
-              : count;
-        s.executionMetrics[kind] = {
-          total,
-          completed: 0,
-          running: 0,
-          queued: total,
-        };
-        const id = `execute-${kind}`;
-        s.approvals.push({
-          id,
-          title: {
-            creation: "确认新建迁移任务",
-            sync: "确认增量同步任务",
-            cutover: "确认割接任务",
-          }[kind],
-          description: "确认目标配置、业务窗口和回退准备后开始执行。",
-          checks: ["目标配置已核对", "实施窗口与回退条件已确认"],
-          status: "pending",
-          action: { kind: "execution", target: kind },
-        });
+  const s = rt.context(c),
+    e = initializeExecution(s);
+  requireCondition(!e.finalized, "项目已确认最终交付");
+  if (cmd.type === "execution.connection") {
+    const { ip, port, username, password } = cmd.values;
+    requireCondition(
+      /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) &&
+        ip.split(".").every((v) => Number(v) <= 255),
+      "请输入有效 IPv4 地址",
+    );
+    requireCondition(
+      Number.isInteger(port) &&
+        port > 0 &&
+        port <= 65535 &&
+        username.trim() &&
+        password.length,
+      "请填写有效端口、用户名和密码",
+    );
+    requireCondition(
+      e.connectionStatus !== "checking" &&
+        !(hasActiveControl(e) && e.connectionStatus === "ready"),
+      "存在正在执行的远程操作，请暂停或等待后应用",
+    );
+    const previousStatus = e.connectionStatus;
+    e.connectionStatus = "checking";
+    e.connectionError = undefined;
+    publishExecution(rt, s);
+    try {
+      await rt.sleep(1200, options);
+    } catch (error) {
+      if (!rt.disposed) {
+        e.connectionStatus = previousStatus;
+        publishExecution(rt, s);
       }
-      rt.result(
-        c,
-        "连接与配置检查通过。三类任务可以分别查看并确认，确认后独立执行。",
-        s.approvals
-          .filter((a) => a.action.kind === "execution")
-          .map((a) => ({ kind: "approval", approvalId: a.id })),
+      throw error;
+    }
+    if (cmd.simulateFailure) {
+      e.connectionStatus = previousStatus === "ready" ? "ready" : "failed";
+      e.connectionError = "模拟连接失败，原有效配置未更改。";
+      publishExecution(rt, s);
+      if (previousStatus === "ready") startExecutionLoop(rt, c);
+      throw new Error(e.connectionError);
+    }
+    // Credentials are used only by this request; snapshots retain no password.
+    e.connection = {
+      ip,
+      port,
+      username: username.trim(),
+      checkedAt: new Date().toISOString(),
+    };
+    e.connectionStatus = "ready";
+    e.revision++;
+    rt.result(
+      c,
+      "Migration 模拟连接检测通过。请选择批次，核对目标资源和网络映射后启动。",
+      [{ kind: "execution-work", view: "tasks" }],
+    );
+    publishExecution(rt, s);
+    startExecutionLoop(rt, c);
+    return;
+  }
+  if (cmd.type === "execution.diagnose")
+    return diagnose(rt, c, cmd.issueId, cmd.simulate);
+  if (cmd.type === "execution.remedy" || cmd.type === "execution.recheck")
+    return issueCommand(rt, c, cmd);
+  if (cmd.type === "execution.cancel") {
+    requireCondition(
+      e.preview?.id === cmd.previewId &&
+        e.preview.origin.conversationId === c.conversationId,
+      "当前预览已变更或属于其他会话",
+    );
+    delete e.preview;
+    publishExecution(rt, s);
+    return;
+  }
+  if (cmd.type === "execution.preview") {
+    requireCondition(!e.preview, "请先应用或取消当前调整预览");
+    const ids = [...new Set(cmd.taskIds)],
+      tasks = e.tasks.filter((t) => ids.includes(t.id));
+    requireCondition(
+      ids.length && tasks.length === ids.length,
+      "未找到所选任务",
+    );
+    for (const t of tasks)
+      requireCondition(
+        !executionBlock(s, t, cmd.action),
+        executionBlock(s, t, cmd.action) ?? "条件未满足",
       );
-      delete s.pending[c.conversationId];
-    },
-    options,
+    if (cmd.action === "move")
+      requireCondition(
+        s.planning?.batches.some((b) => b.id === cmd.targetBatchId),
+        "请选择有效目标批次",
+      );
+    if (cmd.action === "window")
+      requireCondition(cmd.window?.trim(), "请填写后续割接窗口");
+    if (cmd.action === "start")
+      requireCondition(
+        cmd.computeResource?.trim() && cmd.network?.trim(),
+        "请填写目标资源与网络映射",
+      );
+    const preview: ExecutionPreview = {
+      id: crypto.randomUUID(),
+      revision: e.revision,
+      origin: { ...c },
+      ...cmd,
+      taskIds: ids,
+      rows: [
+        {
+          label: "对象范围",
+          before: [...new Set(tasks.map((t) => t.batchId))].join("、"),
+          after: `${tasks.length} 台虚拟机`,
+        },
+        {
+          label: actionLabels[cmd.action],
+          before:
+            cmd.action === "window"
+              ? [...new Set(tasks.map((t) => t.window))].join("；")
+              : cmd.action === "move"
+                ? [...new Set(tasks.map((t) => t.batchId))].join("、")
+                : "保留已完成工作",
+          after:
+            cmd.action === "move"
+              ? cmd.targetBatchId!
+              : cmd.action === "window"
+                ? cmd.window!
+                : actionLabels[cmd.action],
+        },
+      ],
+    };
+    if (cmd.action === "cutover")
+      preview.rows.push(
+        {
+          label: "割接窗口",
+          before: [...new Set(tasks.map((t) => t.window))].join("；"),
+          after: "请确认实际窗口允许执行",
+        },
+        {
+          label: "同步与阻塞检查",
+          before: `${tasks.filter((t) => t.lastSync).length} 台同步就绪`,
+          after: "无未解决阻塞，提交时再次检查",
+        },
+      );
+    e.preview = preview;
+    publishExecution(rt, s);
+    return;
+  }
+  if (cmd.type !== "execution.apply") return;
+  const p = e.preview;
+  requireCondition(
+    p && p.id === cmd.previewId && p.origin.conversationId === c.conversationId,
+    "当前预览已变更或属于其他会话",
   );
+  requireCondition(
+    p.revision === e.revision,
+    "状态已变化，请取消预览后重新选择",
+  );
+  const tasks = e.tasks.filter((t) => p.taskIds.includes(t.id));
+  const eligible = new Set(eligiblePlanningAssets(s).map((a) => a.id));
+  for (const t of tasks) {
+    requireCondition(
+      !executionBlock(s, t, p.action),
+      executionBlock(s, t, p.action) ?? "条件未满足",
+    );
+    if (p.action === "start")
+      requireCondition(eligible.has(t.assetId), "所选对象已不满足迁移条件");
+  }
+  tasks.forEach((t, index) => {
+    if (p.action === "move") t.batchId = p.targetBatchId!;
+    else if (p.action === "window") t.window = p.window!.trim();
+    else if (p.action === "pause") {
+      t.resumePhase = t.phase;
+      t.phase = "paused";
+      t.speed = 0;
+    } else {
+      if (p.action === "start") {
+        t.phase = "creating";
+        t.computeResource = p.computeResource!;
+        t.network = p.network!;
+        t.scenario = index === 0 ? (p.scenario ?? "normal") : "normal";
+        t.startedAt = new Date().toISOString();
+      } else if (p.action === "cutover") {
+        t.phase = "cutover";
+        t.progress = 0;
+      } else if (p.action === "increment") {
+        t.phase = "incremental";
+        t.progress = 0;
+      } else t.phase = t.resumePhase ?? (t.created ? "full" : "creating");
+      t.sourceConversationId = c.conversationId;
+      rt.executionOrigins.set(`${s.id}/${t.id}`, { ...c, operationId: p.id });
+    }
+  });
+  delete e.preview;
+  e.revision++;
+  rt.message(
+    c,
+    "user",
+    `${actionLabels[p.action]}：${tasks.length} 台虚拟机。`,
+    { operation: true },
+  );
+  rt.result(
+    c,
+    p.action === "cutover"
+      ? "已人工确认所选范围，正在模拟割接。完成后进入技术核对与业务验证。"
+      : "所选操作已应用。已完成工作保持不变，后续状态将同步更新到任务列表。",
+    [{ kind: "execution-work", view: "tasks", taskIds: p.taskIds }],
+  );
+  publishExecution(rt, s);
+  startExecutionLoop(rt, c);
+}
+// Legacy commands may still exist in historical answers; they must not bypass the new confirmations.
+export async function checkMd(
+  _rt: MockRuntime,
+  _c: OperationContext,
+  _options: RequestOptions,
+) {
+  throw new Error("请在连接面板填写 Migration 配置并检测");
 }
 export async function executeTasks(
-  rt: MockRuntime,
-  c: OperationContext,
-  kind: ExecutionTaskKind,
-  options: RequestOptions,
+  _rt: MockRuntime,
+  _c: OperationContext,
+  _kind: ExecutionTaskKind,
+  _options: RequestOptions,
 ) {
-  const s = rt.context(c);
-  requireCondition(
-    c.stageId === "migration" && canExecute(s, kind),
-    "任务已执行或尚未满足前置条件",
-  );
-  await rt.run(
-    c,
-    `execute-${kind}`,
-    async (_s, runOptions) => {
-      rt.message(
-        c,
-        "user",
-        `确认执行${kind === "creation" ? "任务创建" : kind === "sync" ? "数据同步" : "割接任务"}。`,
-        { operation: true },
-      );
-      s.executionApprovals[kind] = true;
-      const a = s.approvals.find((a) => a.id === `execute-${kind}`);
-      if (a) a.status = "confirmed";
-      const ids =
-        kind === "creation"
-          ? s.creationTasks.map((t) => t.id)
-          : kind === "cutover"
-            ? s.vmTasks
-                .filter(
-                  (v) =>
-                    s.batchTasks.find((b) => b.id === v.batchId)?.stageType ===
-                    "cutover",
-                )
-                .map((v) => v.id)
-            : s.batchTasks.map((b) => b.id);
-      rt.result(
-        c,
-        "任务已确认并开始执行。可以继续处理其他事项，进度会同步更新。",
-        [
-          {
-            kind: "tasks",
-            title: {
-              creation: "新建任务",
-              sync: "增量同步任务",
-              cutover: "割接任务",
-            }[kind],
-            taskIds: ids,
-            taskKind: kind,
-          },
-        ],
-      );
-      const metric = s.executionMetrics[kind];
-      metric.running = Math.min(2, metric.total - metric.completed);
-      metric.queued = metric.total - metric.completed - metric.running;
-      rt.publish(s);
-      const remaining = ids.filter((id, index) =>
-        kind === "creation"
-          ? s.creationTasks.find((t) => t.id === id)?.status !== "created"
-          : kind === "cutover"
-            ? !s.validationTasks.some((t) => t.sourceTaskId === id)
-            : index >= metric.completed,
-      );
-      for (const id of remaining) {
-        await rt.sleep(1400, runOptions);
-        metric.completed++;
-        metric.running = Math.min(2, metric.total - metric.completed);
-        metric.queued = metric.total - metric.completed - metric.running;
-        if (kind === "creation")
-          s.creationTasks
-            .filter((t) => t.id === id)
-            .forEach((t) => (t.status = "created"));
-        if (kind === "cutover") {
-          const v = s.vmTasks.find((v) => v.id === id);
-          if (v) {
-            v.status = "succeeded";
-            v.progress = 100;
-            v.checkStatus = "passed";
-            const validation = buildValidationTasks([v], s.batchTasks)[0];
-            if (!s.validationTasks.some((t) => t.id === validation.id))
-              s.validationTasks.push(validation);
-          }
-        }
-        if (kind === "cutover") offerHandoff(rt, c);
-        rt.publish(s);
-      }
-      rt.notice(
-        c,
-        kind === "cutover"
-          ? "已有割接结果，人工确认交接后可进入结果验证"
-          : "任务已完成",
-      );
-    },
-    options,
-  );
+  throw new Error("请在实施面板选择批次并确认操作预览");
 }

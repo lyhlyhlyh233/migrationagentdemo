@@ -21,6 +21,12 @@ export class MockRuntime {
     string,
     { controller: AbortController; done: Promise<void>; stopped: boolean }
   >();
+  executionLoops = new Set<string>();
+  executionOrigins = new Map<string, OperationContext>();
+  attachments = new Map<
+    string,
+    { filename: string; mediaType: string; blob: Blob }
+  >();
   disposed = false;
   state(id: string) {
     if (this.disposed) throw new ServiceError("ABORTED", "会话已结束");
@@ -205,6 +211,9 @@ export class MockRuntime {
     this.timers.clear();
     this.runs.clear();
     this.listeners.clear();
+    this.executionLoops.clear();
+    this.executionOrigins.clear();
+    this.attachments.clear();
     this.projects.clear();
     this.files.clear();
     this.account = { configured: false, verified: false };

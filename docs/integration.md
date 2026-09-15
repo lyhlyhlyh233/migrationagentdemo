@@ -14,18 +14,18 @@
 
 ## 能力与返回内容
 
-| 能力           | 契约入口                                                                           | 适配重点                                                                  |
-| -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 项目           | listProjects、createProject、getProject                                            | 返回列表/完整项目快照，保留项目隔离                                       |
-| 会话           | createConversation、renameConversation                                             | 独立 ID、所属阶段、主/子/临时类型                                         |
-| Agent、模型    | catalog                                                                            | 目录 ID、默认值及可选 stageAgents 映射                                    |
-| 回复           | sendMessage、stopReply                                                             | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
-| 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                        | 阶段条件、人工确认、不可重复启动                                          |
-| MD/实施/验收   | md.check、execution.confirm、creation.update、cutover.complete、validation.confirm | 共享任务与审批状态，按资源 ID 操作                                        |
-| 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action        | 最新状态校验、批量原子性与阶段锁定                                        |
-| 文件           | upload(File)、download                                                             | File 输入，Blob、filename、mediaType 输出                                 |
-| 账户           | getAccount、configureAccount、logout                                               | 区分配置与真实验证，不回传明文凭据                                        |
-| 实时状态       | subscribe、dispose                                                                 | 统一事件、取消订阅、请求和连接清理                                        |
+| 能力           | 契约入口                                                                            | 适配重点                                                                  |
+| -------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 项目           | listProjects、createProject、getProject                                             | 返回列表/完整项目快照，保留项目隔离                                       |
+| 会话           | createConversation、renameConversation                                              | 独立 ID、所属阶段、主/子/临时类型                                         |
+| Agent、模型    | catalog                                                                             | 目录 ID、默认值及可选 stageAgents 映射                                    |
+| 回复           | sendMessage、stopReply                                                              | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
+| 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                         | 阶段条件、人工确认、不可重复启动                                          |
+| 实施/诊断/验收 | execution.connection/preview/apply、execution.diagnose/remedy/recheck、validation.* | 连接与批次控制、诊断确认、逐台验证与反馈，见下文                          |
+| 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action         | 最新状态校验、批量原子性与阶段锁定                                        |
+| 文件           | upload(File)、download                                                              | File 输入，Blob、filename、mediaType 输出                                 |
+| 账户           | getAccount、configureAccount、logout                                                | 区分配置与真实验证，不回传明文凭据                                        |
+| 实时状态       | subscribe、dispose                                                                  | 统一事件、取消订阅、请求和连接清理                                        |
 
 契约是前端能力边界，不需要拆成等量后端接口。`assessment.choosePlan` 是保留的兼容命令，当前页面已没有总体方案选择入口；`assessment-decision` 也是历史结果标记，不需要为其新增后端能力。
 
@@ -53,6 +53,29 @@
 
 `domain/risk-decisions.ts` 为预览与 Mock 共用判定：忽略可接受约束项，其余不迁；推荐逐项采用各自建议。`domain/assessment.ts` 从全部项目风险计算虚拟机资格；选择整改不等于完成验证，受阻/未验证/本次不迁对象仍排除。详细条件只在 [业务逻辑说明](../业务逻辑说明.md) 维护。
 
+## 实施、诊断与验证契约
+
+`ProjectSnapshot.execution` 保存脱敏 连接信息（不含密码）、任务、诊断、验证、反馈、趋势、revision 和可选 preview。稳定项目/任务/资产/批次/问题 ID 串联资源。`vmTasks/creationTasks/validationTasks` 是兼容读模型，只由执行快照投影，不能另起模拟状态。
+
+| 命令                                 | 语义                                                                                                                                      |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| execution.connection                 | 输入 IP、端口、用户名、密码；检测成功后应用，失败保留原有效配置。模拟权限故障下旧配置仍不可用；密码不回传。存在控制操作时禁止替换有效连接 |
+| execution.preview                    | action + taskIds，按操作附目标批次、窗口、目标资源、网络、演示场景；整体校验后固定 ID、发起会话和 revision，仅预览                        |
+| execution.apply / cancel             | previewId；应用前再查资源条件和版本，仅发起会话可处理，一次写入。创建/full/increment/cutover 均有前置条件，重复点击不得重复执行           |
+| execution.diagnose                   | issueId；再次模拟采集与诊断，可演示日志失败/无结论，同一问题不并发运行                                                                    |
+| execution.remedy / recheck           | issueId、方案与说明，可演示失败；自动方案需确认，人工方案需处理说明和复查，完成后不自动恢复任务                                           |
+| validation.acceptDifference / record | 固定 taskIds、说明、业务结论，UI 提交打开编辑时的 expectedRevision；整体校验技术与阻塞条件，冲突不覆盖                                    |
+| validation.feedback / feedbackReview | 固定关联范围、问题及阻塞标记；处理后再确认模拟复查。UI 编辑携带 expectedRevision，冲突保留输入                                            |
+| validation.finalize                  | 检查全部纳入范围均完成技术和业务验证，确认最终交付后只读                                                                                  |
+
+`execution.revision` 只随控制、问题和验证内容变化更新，正常同步数值不会让每份预览失效；每次应用仍检查最新资源状态。验证命令保留可选 expectedRevision 以兼容调用，当前 UI 总是携带打开表单时的值；适配真实服务应强制乐观并发校验。调页、筛选和聊天不改变业务版本。
+
+连接检测、创建/同步、日志获取、修复、复查均为 Mock，不构造真实端点。每项目一个执行循环，持续就绪任务保持增量心跳，手动割接才产生验证记录。配置差异和时间线是示例值，不代表远端核验或真实窗口检查。实施安排变化不修改已批准规划。具体业务门禁只在业务文档维护。
+
+消息的 `execution-work` 结果包含 view 及可选 issueId/taskIds，UI 用于打开当前操作，不代表执行授权。`sendMessage` 可附可清除的当前批次/VM context；示例语言操作只建立预览，仍须人工应用。阶段引导回复可停止，迁移循环不受聊天 stopReply 控制。
+
+原有 md.check / executeTasks / creation.update / cutover.complete 等兼容命令不能旁路新确认；旧 UI 已删除，接入新服务应使用上述契约，不恢复两套任务控制逻辑。
+
 ## 文件、日志与账户
 
 ### 规划契约
@@ -79,12 +102,18 @@
 
 ### 文件与账户行为
 
-`upload` 接收 File 和用途 `rvtools/presales/scope/planning`。真实适配器按已约定的上传和解析接口处理；组件不读 Excel。`download` 通过服务返回 Blob 与元信息，页面仅调用 `shared/files.ts` 触发保存。
+问题/反馈附件支持日志、文本、图片、PDF、Excel、DOCX、ZIP，大小须大于 0 且不超过 20MB；按项目和关联记录校验。Mock 的 File 仅保存在 runtime 内存，退出释放；读取不跨项目。诊断不解析附件内容。真实适配需实现服务端文件检测、授权与存储，不能因为接收文件就宣称已分析。
 
-除快照内的 artifact ID，当前下载契约还有两个保留资源格式：
+`validation-report` 生成和下载时从当前执行快照更新，列出配置、业务结论、问题和反馈，明确阶段性/最终状态。日志中不含连接密码。
+
+`upload` 接收 File 和用途 `rvtools/presales/scope/planning`，以及 `issue:问题ID` / `feedback:反馈ID`。真实适配器按已约定的上传和解析接口处理；组件不读 Excel。`download` 通过服务返回 Blob 与元信息，页面仅调用 `shared/files.ts` 触发保存。
+
+除快照内的 artifact ID，当前下载契约还有以下保留资源格式：
 
 | 资源标识                      | 含义                                                |
 | ----------------------------- | --------------------------------------------------- |
+| execution-log:问题ID          | 自动生成的模拟诊断日志，资源归属当前项目            |
+| attachment:附件ID             | 问题或反馈的实际 File 字节，不进行内容解析          |
 | research-template             | 原始迁移调研 XLSX 模板，Mock 从随应用打包的资源读取 |
 | task-log:后接逗号分隔的任务ID | 已选任务的日志下载，Mock 从当前项目任务生成文本     |
 
@@ -96,7 +125,7 @@
 
 ## 取消、错误与退出
 
-`stopReply(context, runId)` 停止指定会话中匹配的 pending 回复，包含自动开场和评估/规划/MD 检查等待；已结束或不匹配的 runId 无副作用。每次运行（包括重试）使用新 runId，与消息重试的 requestId 分开。停止完成后发布清除 pending 的快照及一条“已停止回复”，被停止的原请求拒绝为 STOPPED；UI 不将主动停止显示为失败或恢复成待重试输入。其他错误仍保留输入。后台迁移任务不属于 pending 回复，不受停止按钮影响。真实适配器须按协议停止生成并忽略后续迟到结果，不能只隐藏加载状态。
+`stopReply(context, runId)` 停止指定会话中匹配的 pending 回复，包含自动开场和评估/规划及阶段引导等待；已结束或不匹配的 runId 无副作用。每次运行（包括重试）使用新 runId，与消息重试的 requestId 分开。停止完成后发布清除 pending 的快照及一条“已停止回复”，被停止的原请求拒绝为 STOPPED；UI 不将主动停止显示为失败或恢复成待重试输入。其他错误仍保留输入。后台迁移任务不属于 pending 回复，不受停止按钮影响。真实适配器须按协议停止生成并忽略后续迟到结果，不能只隐藏加载状态。
 
 所有请求接受可选 `RequestOptions.signal`。初始化重试/卸载会取消旧读取，切换项目和会话不取消业务任务。JSON 工具区分 NETWORK、HTTP、ABORTED，连同读取响应体时的取消；领域校验使用 PRECONDITION/VALIDATION，重复执行使用 CONFLICT，缺失资源使用 NOT_FOUND，未接入使用 NOT_CONFIGURED。
 

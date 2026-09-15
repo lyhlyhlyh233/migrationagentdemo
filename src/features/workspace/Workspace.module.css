@@ -1834,12 +1834,12 @@
   }
 }
 
-/* Risk management owns its list scroll and bottom editor; other pages keep document scroll. */
-.root :global(.conversation-scroll[data-risk-view="true"]) {
+/* Management workspaces own their list and discussion scroll regions. */
+.root :global(.conversation-scroll[data-workbench="true"]) {
   overflow: hidden;
 }
 .root
-  :global(.conversation-scroll[data-risk-view="true"] > .conversation-content) {
+  :global(.conversation-scroll[data-workbench="true"] > .conversation-content) {
   height: 100%;
   min-height: 0;
   padding: 0;

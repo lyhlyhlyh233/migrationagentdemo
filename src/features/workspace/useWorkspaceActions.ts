@@ -22,7 +22,15 @@ export function useWorkspaceActions(projectId: string) {
   const s = data.snapshots[projectId];
   const p = ui.projects[projectId] ?? projectUi();
   const chat =
-    (p.panel === "planning" || p.panel === "risk"
+    ([
+      "planning",
+      "risk",
+      "tasks",
+      "execution",
+      "connection",
+      "issues",
+      "validation",
+    ].includes(p.panel ?? "")
       ? findStageConversation(
           s?.conversations ?? [],
           p.activeStage,
@@ -44,6 +52,7 @@ export function useWorkspaceActions(projectId: string) {
   const notify = (notice: string) =>
     dispatchUi({ type: "project", id: projectId, patch: { notice } });
   async function invoke(work: () => Promise<unknown>) {
+    notify("");
     try {
       await work();
       return true;
@@ -132,6 +141,7 @@ export function useWorkspaceActions(projectId: string) {
           agentId,
           modelId,
           requestId,
+          context: p.panel ? p.contextLabel : undefined,
         });
         view({ requestId: undefined });
       } catch (error) {

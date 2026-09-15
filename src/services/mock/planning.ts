@@ -349,7 +349,7 @@ export function planningIntro(rt: MockRuntime, c: OperationContext) {
   rt.message(c, "user", "开始迁移项目的规划设计", { operation: true });
   rt.result(
     c,
-    `已接续评估结果：${p.assets.length} 台虚拟机，当前可纳入 ${migrationScope(s).length} 台。\n\n**先明确范围，再补充业务信息。** 我已保留评估策略；受阻和未完成整改验证的对象继续排除。业务属性与依赖可以稍后填写，我会标出尚未核对的部分。\n\n右侧可以补充业务属性、依赖和迁移约束，也可以直接生成模拟初稿。`,
+    `已接续评估结果：${p.assets.length} 台虚拟机，当前可纳入 ${migrationScope(s).length} 台。\n\n**先明确范围，再补充业务信息。** 我已保留评估策略；受阻和未完成整改验证的对象继续排除。业务属性与依赖可以稍后填写，我会标出尚未核对的部分。\n\n右侧可以填写迁移约束或直接生成模拟初稿。业务属性与依赖等详细资料，请在迁移规划页面补充。`,
     [{ kind: "planning-input" }],
     {
       reply: {
