@@ -1,3 +1,13 @@
+export type ConversationConfirmation =
+  | { kind: "planning"; id: string }
+  | { kind: "execution"; id: string }
+  | { kind: "stage"; id: string }
+  | { kind: "issue"; id: string }
+  | {
+      kind: "tasks";
+      taskIds: string[];
+      action?: import("@/domain/execution").ExecutionAction;
+    };
 /** Conversation-local interaction state. Business replies and task state belong to the service. */
 export interface ConversationView {
   draft: string;
@@ -6,6 +16,16 @@ export interface ConversationView {
   modelId?: string;
   workOpen?: boolean;
   requestId?: string;
+  confirmation?: ConversationConfirmation;
+  handledConfirmation?: string;
+  connectionOpen?: boolean;
+  issueDraft?: {
+    issueId: string;
+    solution: "automatic" | "manual";
+    note: string;
+    simulateFailure: boolean;
+    diagnosticFailure: "" | "log-failed" | "inconclusive";
+  };
 }
 export type ConversationState = Record<
   string,

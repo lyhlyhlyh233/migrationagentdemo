@@ -21,6 +21,14 @@
   font-size: var(--ui-caption);
   color: var(--muted);
 }
+.summary[data-stage="planning"] .metrics div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.summary[data-stage="planning"] .metrics {
+  padding-block: 12px;
+}
 .metrics dd {
   margin: 0;
   font-size: var(--ui-title);

@@ -102,7 +102,6 @@ export function PlanningWorkspace({
       <PlanningSummary
         snapshot={s}
         onDownload={onDownload}
-        onManage={onManage}
         onBatch={(id) => {
           onView({
             tab: "batches",

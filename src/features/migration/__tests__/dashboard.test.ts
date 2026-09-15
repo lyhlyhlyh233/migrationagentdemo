@@ -35,11 +35,13 @@ const state = (tasks: ExecutionTask[]): ExecutionState => ({
   finalized: false,
 });
 describe("actual execution dashboard", () => {
-  it("partitions task states without counting ready VMs as syncing", () => {
+  it("separates creation and confirmation gates from active synchronization", () => {
     const phases: ExecutionTask["phase"][] = [
       "pending",
       "creating",
+      "created",
       "full",
+      "full-complete",
       "incremental",
       "ready",
       "cutover",
@@ -50,8 +52,36 @@ describe("actual execution dashboard", () => {
     const d = executionDashboard(
       state(phases.map((p, i) => task(String(i), p))),
     );
-    expect(d.distribution.map((g) => g.count)).toEqual([1, 3, 1, 1, 1, 1, 1]);
-    expect(d.distribution.reduce((s, g) => s + g.count, 0)).toBe(9);
+    expect(d.distribution.find((group) => group.id === "syncing")?.count).toBe(
+      2,
+    );
+    expect(
+      d.distribution
+        .filter((group) => group.id !== "syncing")
+        .every((group) => group.count === 1),
+    ).toBe(true);
+    expect(d.distribution.reduce((s, g) => s + g.count, 0)).toBe(11);
+  });
+  it("shows waiting batch labels and counts created tasks independently of starts", () => {
+    const data = executionDashboard(
+      state([
+        task("a", "creating", {
+          created: false,
+          startedAt: "2026-09-20T01:00:00Z",
+        }),
+        task("b", "created", {
+          batchId: "B02",
+          startedAt: "2026-09-20T01:00:00Z",
+        }),
+        task("c", "full-complete", {
+          batchId: "B03",
+          startedAt: "2026-09-20T01:00:00Z",
+        }),
+      ]),
+    );
+    expect(data.batches[0]).toMatchObject({ started: 1, created: 0 });
+    expect(data.batches[1]).toMatchObject({ label: "待全量", created: 1 });
+    expect(data.batches[2]).toMatchObject({ label: "待增量", created: 1 });
   });
   it("uses recorded timestamps, keeps unstarted batches blank and marks paused/failed batches", () => {
     const s = state([

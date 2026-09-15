@@ -1,19 +1,21 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  font-size: var(--ui-size);
+  gap: 14px;
+  min-width: 0;
+  font-size: var(--ui-small);
+  line-height: 1.5;
 }
 .heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .heading h3 {
   margin: 0;
-  font-size: var(--ui-title);
+  font-size: var(--ui-size);
   font-weight: 600;
 }
 .heading > span,
@@ -21,41 +23,131 @@
   color: var(--muted);
   font-size: var(--ui-caption);
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.5;
 }
-.distribution {
-  display: flex;
-  height: 10px;
-  gap: 2px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--surface-hover);
+.root [data-tone="info"] {
+  color: var(--info);
 }
-.distribution span,
-.states i,
-.bar {
-  background: currentColor;
+.root [data-tone="warning"] {
+  color: var(--warning);
+}
+.root [data-tone="success"] {
+  color: var(--success);
+}
+.root [data-tone="danger"] {
+  color: var(--danger);
 }
 .root [data-tone="muted"] {
   color: var(--muted);
 }
+.timeline {
+  min-width: 0;
+}
+.timelineHead,
+.batchRow {
+  display: grid;
+  grid-template-columns: 45px 57px 57px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+.timelineHead {
+  background: var(--surface);
+  padding: 7px 8px;
+  font-size: var(--ui-caption);
+  color: var(--secondary);
+  border-radius: 6px 6px 0 0;
+}
+.axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.batchRow {
+  width: 100%;
+  min-height: 38px;
+  padding: 5px 8px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.batchRow > span {
+  font-variant-numeric: tabular-nums;
+}
+.batchRow strong {
+  font-weight: 550;
+}
+.batchRow:hover {
+  background: var(--surface-hover);
+}
+.batchRow[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+.batchRow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 27px;
+  min-width: 0;
+}
+.bar {
+  position: absolute;
+  height: 6px;
+  bottom: 2px;
+  min-width: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.status {
+  position: relative;
+  align-self: flex-start;
+  font-size: var(--ui-caption);
+  line-height: 18px;
+  white-space: nowrap;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+.distribution {
+  display: flex;
+  height: 7px;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--surface-hover);
+}
+.distribution span,
+.states i {
+  background: currentColor;
+}
 .states {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-  gap: 10px 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 12px;
   margin: 0;
 }
 .states > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 5px;
 }
 .states dt {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--muted);
+  gap: 5px;
+  color: var(--secondary);
 }
 .states dd {
   margin: 0;
@@ -63,83 +155,124 @@
   font-variant-numeric: tabular-nums;
 }
 .states i {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
   border-radius: 2px;
 }
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-block: 0 16px;
-  border-bottom: 1px solid var(--line);
+.tasks {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--ui-small);
 }
-.scale {
-  display: flex;
-  justify-content: space-between;
-  margin-left: 180px;
+.stateCol {
+  width: 84px;
+}
+.progressCol {
+  width: 100px;
+}
+.rateCol {
+  width: 75px;
+}
+.tasks th {
+  text-align: left;
+  padding: 7px 6px;
+  background: var(--surface);
+  color: var(--secondary);
   font-size: var(--ui-caption);
-  color: var(--muted);
+  font-weight: 500;
 }
-.row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  min-height: 70px;
-  border-top: 1px solid var(--line);
-  gap: 12px;
+.tasks td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 6px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
-.batch {
+.taskName,
+.issueLink {
   border: 0;
   background: transparent;
-  color: var(--text);
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  line-height: inherit;
   text-align: left;
-  padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  cursor: pointer;
 }
-.batch strong {
+.taskName {
+  overflow-wrap: anywhere;
+}
+.taskName:hover,
+.issueLink:hover {
+  text-decoration: underline;
+}
+.taskName:focus-visible,
+.issueLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.taskProgress {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--ui-size);
+  gap: 5px;
 }
-.batch span {
-  font-size: var(--ui-caption);
-  color: var(--muted);
-}
-.track {
-  position: relative;
-  background: var(--surface-subtle);
-  margin-block: 8px;
-  border-radius: 4px;
+.taskProgress > span {
+  flex: 1;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
   overflow: hidden;
 }
-.bar {
-  position: absolute;
-  height: 10px;
-  top: 12px;
-  min-width: 3px;
-  border-radius: 3px;
-}
-.status {
-  position: absolute;
-  left: 8px;
-  top: 30px;
-  font-size: var(--ui-caption);
-}
-.pending {
+.taskProgress i {
   display: block;
-  padding: 16px 8px;
-  color: var(--muted);
+  height: 100%;
+  background: var(--info);
+}
+.taskProgress b {
+  font-weight: 400;
+  min-width: 31px;
   font-size: var(--ui-caption);
+  font-variant-numeric: tabular-nums;
+}
+.rate {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rate small {
+  font-size: var(--ui-caption);
+  color: var(--muted);
 }
 @container (max-width:460px) {
-  .row {
-    grid-template-columns: 140px minmax(0, 1fr);
-    gap: 8px;
+  .root {
+    gap: 12px;
   }
-  .scale {
-    margin-left: 148px;
+  .timelineHead,
+  .batchRow {
+    grid-template-columns: 38px 47px 47px minmax(0, 1fr);
+    gap: 4px;
+    padding-inline: 5px;
   }
+  .states {
+    gap: 6px 8px;
+  }
+  .stateCol {
+    width: 73px;
+  }
+  .progressCol {
+    width: 79px;
+  }
+  .rateCol {
+    width: 64px;
+  }
+  .tasks th,
+  .tasks td {
+    padding-inline: 4px;
+  }
+}
+
+.root .batchRow,
+.root .taskName,
+.root .issueLink {
+  font-size: var(--ui-small);
 }

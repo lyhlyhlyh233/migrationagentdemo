@@ -19,6 +19,16 @@ import type {
   RiskDecision,
 } from "@/domain/models";
 import type { PlanningAdjustment, PlanningInputPatch } from "@/domain/planning";
+export interface MessageInput {
+  text: string;
+  agentId: string;
+  modelId: string;
+  requestId: string;
+  context?: string;
+  attachment?: File;
+  /** Explicit management scope; IDs are validated in the current project. */
+  executionContext?: { taskIds?: string[]; batchId?: string };
+}
 export type ProjectCommand =
   | {
       type: "execution.connection";
@@ -176,14 +186,7 @@ export interface MigrationService {
   ): Promise<void>;
   sendMessage(
     context: OperationContext,
-    input: {
-      text: string;
-      agentId: string;
-      modelId: string;
-      requestId: string;
-      context?: string;
-      attachment?: File;
-    },
+    input: MessageInput,
     options?: RequestOptions,
   ): Promise<void>;
   // Stop only the matching pending reply; completed work and background tasks remain.

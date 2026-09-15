@@ -70,7 +70,9 @@ export function projectExecution(s: ProjectSnapshot) {
         ? "succeeded"
         : t.phase === "paused" || t.phase === "failed"
           ? "paused"
-          : t.phase === "pending"
+          : ["pending", "creating", "created", "full-complete"].includes(
+                t.phase,
+              )
             ? "pending-sync"
             : "syncing",
     checkStatus: t.phase === "validation" ? "passed" : "pending-check",
@@ -137,7 +139,23 @@ export function projectExecution(s: ProjectSnapshot) {
       running,
       queued: count - completed - running,
     };
-    s.executionApprovals[kind] = e.tasks.some((t) => t.created);
+    s.executionApprovals[kind] = e.tasks.some((t) => {
+      const phase =
+        t.phase === "paused" || t.phase === "failed" ? t.resumePhase : t.phase;
+      return kind === "creation"
+        ? t.created || phase === "creating"
+        : kind === "sync"
+          ? !!phase &&
+            [
+              "full",
+              "full-complete",
+              "incremental",
+              "ready",
+              "cutover",
+              "validation",
+            ].includes(phase)
+          : phase === "cutover" || phase === "validation";
+    });
   }
   s.mdStatus =
     e.connectionStatus === "ready"
@@ -161,7 +179,9 @@ export function executionIntro(rt: MockRuntime, c: OperationContext) {
       await rt.sleep(1200, options);
       rt.result(
         c,
-        `规划已交接，共 ${e.tasks.length} 台虚拟机。请先检测 Migration 连接，再选择批次启动。\n\n启动后自动完成全量并保持增量同步；割接前我会展示范围与检查结果，由你确认。连接与执行均为前端模拟。`,
+        c.language === "en"
+          ? `The approved plan covers ${e.tasks.length} VMs. Check the Migration connection first, then select a batch. Task creation, full sync, incremental sync and cutover each require your confirmation. Connection and execution are simulated.`
+          : `规划已交接，共 ${e.tasks.length} 台虚拟机。请先检测 Migration 连接，再选择批次。创建任务、全量同步、增量同步、割接分别由你确认，操作前会展示范围与检查结果。连接与执行均为前端模拟。`,
         [{ kind: "execution-work", view: "connection" }],
       );
       delete s.pending[c.conversationId];

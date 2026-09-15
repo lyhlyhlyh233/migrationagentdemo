@@ -67,6 +67,11 @@ export function Conversation({
   const latestInputId = messages.findLast((m) =>
     m.results?.some((r) => r.kind === "assessment-input"),
   )?.id;
+  const latestConnectionId = messages.findLast((m) =>
+    m.results?.some(
+      (r) => r.kind === "execution-work" && r.view === "connection",
+    ),
+  )?.id;
   const latestPlanningInputId = messages.findLast((m) =>
     m.results?.some(
       (r) =>
@@ -132,6 +137,11 @@ export function Conversation({
                         onUpload={onUpload}
                         activeInput={message.id === latestInputId}
                         {...actions}
+                        executionInput={
+                          message.id === latestConnectionId
+                            ? actions.executionInput
+                            : undefined
+                        }
                         planningInput={
                           message.id === latestPlanningInputId
                             ? actions.planningInput

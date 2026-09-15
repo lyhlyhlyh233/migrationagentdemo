@@ -1,0 +1,112 @@
+.root {
+  max-width: 680px;
+  padding: 12px 0;
+  font-size: var(--ui-size);
+  line-height: 1.5;
+}
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 14px;
+}
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--secondary);
+  font-weight: 400;
+}
+.fields input {
+  min-width: 0;
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  padding: 6px 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+.fields input::placeholder {
+  color: var(--muted);
+}
+.fields input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.status {
+  color: var(--muted);
+  font-size: var(--ui-caption);
+  margin-right: auto;
+}
+.status[data-tone="success"] {
+  color: var(--success);
+}
+.textButton {
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  padding: 6px 2px;
+  font: inherit;
+  cursor: pointer;
+}
+.textButton:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.textButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.note,
+.error {
+  font-size: var(--ui-caption);
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.note {
+  color: var(--muted);
+}
+.error {
+  color: var(--danger);
+}
+.simulation {
+  color: var(--muted);
+  font-size: var(--ui-caption);
+  margin-top: 8px;
+}
+.simulation summary {
+  cursor: pointer;
+}
+.simulation label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+@media (max-width: 600px) {
+  .fields {
+    gap: 10px;
+  }
+  .fields input {
+    height: 40px;
+  }
+  .footer {
+    gap: 8px;
+  }
+  .status {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 380px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

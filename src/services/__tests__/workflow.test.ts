@@ -72,7 +72,7 @@ async function migration() {
 }
 async function action(
   c: Awaited<ReturnType<typeof migration>>,
-  action: "start" | "cutover",
+  action: "start" | "full" | "increment" | "cutover",
   taskIds: string[],
 ) {
   await service.execute(c, {
@@ -347,7 +347,7 @@ describe("project service boundaries", () => {
       service.runtime
         .state(c.projectId)
         .execution!.tasks.filter((t) => ids.includes(t.id))
-        .every((t) => t.phase === "ready"),
+        .every((t) => t.phase === "created"),
     ).toBe(true);
   });
   it("allows optional risk decisions while keeping an explicit, single stage handoff", async () => {
@@ -671,7 +671,7 @@ describe("project service boundaries", () => {
     expect(
       state
         .execution!.tasks.filter((t) => ids.includes(t.id))
-        .every((t) => t.phase === "ready"),
+        .every((t) => t.phase === "created"),
     ).toBe(true);
   });
   it("partial cutover resumes only remaining resources and offers handoff without navigating", async () => {
@@ -680,6 +680,10 @@ describe("project service boundaries", () => {
     const ids = s.execution!.tasks.slice(0, 3).map((t) => t.id);
     await action(c, "start", ids);
     await vi.advanceTimersByTimeAsync(9000);
+    await action(c, "full", ids);
+    await vi.advanceTimersByTimeAsync(6000);
+    await action(c, "increment", ids);
+    await vi.advanceTimersByTimeAsync(4000);
     await action(c, "cutover", [ids[2]]);
     await vi.advanceTimersByTimeAsync(2500);
     await action(c, "cutover", ids.slice(0, 2));

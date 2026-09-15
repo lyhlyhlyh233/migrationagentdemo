@@ -46,8 +46,11 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
         }
         if (t.phase === "creating") {
           t.created = true;
-          t.phase = "full";
+          t.phase = "created";
           t.progress = 0;
+          t.speed = 0;
+          e.revision++;
+          finished.push(t);
         } else if (t.phase === "full") {
           t.progress = Math.min(100, t.progress + 25);
           t.syncedGB = (t.totalGB * t.progress) / 100;
@@ -56,8 +59,10 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
               Math.max(1, active.length),
           );
           if (t.progress === 100) {
-            t.phase = "incremental";
-            t.progress = 0;
+            t.phase = "full-complete";
+            t.speed = 0;
+            e.revision++;
+            finished.push(t);
           }
         } else if (t.phase === "incremental") {
           t.progress = Math.min(100, t.progress + 50);
@@ -65,6 +70,7 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
             t.phase = "ready";
             t.lastSync = new Date().toISOString();
             t.speed = 0;
+            e.revision++;
             finished.push(t);
           }
         } else if (t.phase === "cutover") {
@@ -118,27 +124,68 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
         const peers = e.tasks.filter(
           (p) =>
             p.batchId === t.batchId &&
-            p.sourceConversationId === t.sourceConversationId,
+            rt.executionOrigins.get(`${s.id}/${p.id}`)?.operationId ===
+              origin.operationId,
         );
         const marker = `milestone:${t.batchId}:${t.phase}:${origin.operationId}`;
         if (
           !s.operations[marker] &&
           peers.every((p) =>
-            ["ready", "validation", "failed", "paused"].includes(p.phase),
+            [
+              "created",
+              "full-complete",
+              "ready",
+              "validation",
+              "failed",
+              "paused",
+            ].includes(p.phase),
           )
         ) {
           s.operations[marker] = "completed";
+          const phase = t.phase as
+            "created" | "full-complete" | "ready" | "validation";
+          const descriptions = {
+            created: [
+              `${t.batchId} 任务创建已完成。尚未开始传输，请确认全量同步；异常对象需先处理。`,
+              `${t.batchId} tasks have been created. No transfer has started. Confirm full sync to continue; resolve any exceptions first.`,
+            ],
+            "full-complete": [
+              `${t.batchId} 全量同步已完成。任务停留在待增量状态，请单独确认增量同步。`,
+              `${t.batchId} full sync is complete. Tasks are waiting for your separate incremental-sync confirmation.`,
+            ],
+            ready: [
+              `${t.batchId} 增量同步已就绪，已授权对象保持持续增量。请核对窗口后人工确认割接；异常或暂停对象仍需处理。`,
+              `${t.batchId} incremental sync is ready and authorized tasks continue incremental sync. Review the window and confirm cutover; exceptions and paused tasks still require attention.`,
+            ],
+            validation: [
+              `${t.batchId} 割接结果已更新。请进入结果验证，技术核对与业务确认分别进行；其余批次可以继续实施。`,
+              `${t.batchId} cutover results are updated. Continue with technical checks and business validation; other batches may proceed independently.`,
+            ],
+          };
+          const prompts = {
+            created: [
+              `${t.batchId} 开始全量同步`,
+              `Start full sync for ${t.batchId}`,
+            ],
+            "full-complete": [
+              `${t.batchId} 开始增量同步`,
+              `Start incremental sync for ${t.batchId}`,
+            ],
+            ready: [`${t.batchId} 发起割接`, `Start cutover for ${t.batchId}`],
+            validation: ["查看结果验证", "View validation results"],
+          };
           rt.result(
             origin,
-            t.phase === "validation"
-              ? "本批次割接结果已更新。请进入结果验证，技术核对与业务确认分别进行。其余批次可以继续实施。"
-              : peers.every((p) => ["ready", "validation"].includes(p.phase))
-                ? "本批次全量与增量同步已完成，就绪对象保持增量同步。请核对窗口后人工确认割接，异常对象需先处理。"
-                : "本批次同步结果已更新。就绪对象保持增量同步；暂停或异常对象仍需处理，割接必须人工确认。",
+            descriptions[phase][origin.language === "en" ? 1 : 0],
             [
               {
                 kind: "execution-work",
                 view: t.phase === "validation" ? "validation" : "tasks",
+                taskIds: peers.map((p) => p.id),
+              },
+              {
+                kind: "execution-prompt",
+                text: prompts[phase][origin.language === "en" ? 1 : 0],
               },
             ],
           );

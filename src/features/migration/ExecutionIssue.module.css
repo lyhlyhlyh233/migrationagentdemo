@@ -1,0 +1,203 @@
+.root {
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--ui-size);
+  line-height: 1.5;
+}
+.root p {
+  margin: 8px 0;
+}
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.heading h3 {
+  margin: 0;
+  font-size: var(--ui-title);
+  font-weight: 600;
+}
+.heading > span,
+.scope,
+.note {
+  font-size: var(--ui-caption);
+  color: var(--muted);
+}
+.root [data-tone="success"] {
+  color: var(--success);
+}
+.root [data-tone="warning"] {
+  color: var(--warning);
+}
+.diagnosis {
+  line-height: 1.6;
+}
+.evidence {
+  font-size: var(--ui-small);
+  margin-block: 10px;
+}
+.evidence summary,
+.simulation summary {
+  cursor: pointer;
+  color: var(--secondary);
+}
+.options {
+  margin: 12px 0;
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.options legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.options label:hover {
+  background: var(--surface-hover);
+}
+.options label[data-selected="true"] {
+  background: var(--surface);
+}
+.options label[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.options label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.number {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--secondary);
+  font-size: var(--ui-small);
+}
+.options label[data-selected="true"] .number {
+  color: var(--text);
+  border-color: var(--text);
+}
+.options strong {
+  font-weight: 550;
+  display: block;
+}
+.options small {
+  display: block;
+  font-size: var(--ui-caption);
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.supplement {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-block: 10px;
+}
+.supplement label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: var(--ui-small);
+  color: var(--secondary);
+}
+.supplement textarea {
+  width: 100%;
+  min-height: 68px;
+  max-height: 160px;
+  resize: vertical;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+}
+.supplement textarea::placeholder {
+  color: var(--muted);
+}
+.upload input {
+  font: inherit;
+  max-width: 100%;
+}
+.upload input::file-selector-button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-right: 8px;
+}
+.simulation {
+  font-size: var(--ui-caption);
+  margin-top: 10px;
+}
+.simulation > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.simulation label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.textAction {
+  margin-right: auto;
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  font: inherit;
+  font-size: var(--ui-small);
+  padding: 6px 0;
+  cursor: pointer;
+}
+.textAction:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.textAction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.error {
+  color: var(--danger);
+  font-size: var(--ui-small);
+}
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

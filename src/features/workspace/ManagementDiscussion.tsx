@@ -13,6 +13,7 @@ export function ManagementDiscussion({
   onReturn,
   contextLabel,
   onClearContext,
+  activeOperation = false,
 }: {
   children: ReactNode;
   conversation: ReactNode;
@@ -23,6 +24,7 @@ export function ManagementDiscussion({
   onReturn: () => void;
   contextLabel?: string;
   onClearContext?: () => void;
+  activeOperation?: boolean;
 }) {
   const t = useTranslation();
   const [mobileChat, setMobileChat] = useState(false);
@@ -30,7 +32,7 @@ export function ManagementDiscussion({
     <div
       className={styles.root}
       data-collapsed={collapsed || undefined}
-      data-mobile-chat={mobileChat || undefined}
+      data-mobile-chat={mobileChat || activeOperation || undefined}
     >
       <div className={styles.toolbar}>
         <Button onClick={onReturn}>{t("返回阶段会话")}</Button>

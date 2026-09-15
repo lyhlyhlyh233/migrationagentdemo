@@ -1,0 +1,151 @@
+.root {
+  max-width: var(--reading-width);
+  margin: 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--panel);
+  font-size: var(--ui-size);
+  line-height: 1.5;
+  max-height: min(48vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.root:focus {
+  outline: none;
+}
+.root > section {
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.root h3 {
+  margin: 0;
+  font-size: var(--ui-title);
+  font-weight: 600;
+}
+.root p {
+  margin: 8px 0;
+  font-size: var(--ui-size);
+}
+.root button {
+  font-size: var(--ui-size);
+}
+.body {
+  display: grid;
+  gap: 12px;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.heading button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.scope {
+  color: var(--muted);
+  font-size: var(--ui-caption);
+}
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.option {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.option:has(input:checked) {
+  background: var(--accent-soft);
+}
+.option:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.number {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--secondary);
+}
+.option:has(input:checked) .number {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.fields label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.fields input {
+  width: 100%;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.checks {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--secondary);
+  display: grid;
+  gap: 6px;
+}
+.error {
+  color: var(--danger);
+}
+@media (max-width: 760px) {
+  .root {
+    max-height: 58vh;
+  }
+  .options {
+    grid-template-columns: 1fr;
+  }
+  .option {
+    min-height: 44px;
+  }
+}
+@container (max-width: 500px) {
+  .options,
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}

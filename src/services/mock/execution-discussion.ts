@@ -8,17 +8,22 @@ import {
 } from "@/domain/execution";
 import type { MockRuntime } from "./runtime";
 import { executionCommand } from "./execution";
+import type { MessageInput } from "../contracts";
+import { requireCondition } from "../errors";
 export async function executionDiscussion(
   rt: MockRuntime,
   c: OperationContext,
   text: string,
   pageContext = "",
+  scope?: MessageInput["executionContext"],
 ): Promise<{ text: string; results: BusinessResult[] }> {
   const s = rt.state(c.projectId),
     e = s.execution;
   if (!e)
     return { text: "请先确认规划交接，再配置 Migration 连接。", results: [] };
-  const input = `${text} ${pageContext}`,
+  // An explicitly cleared structured scope must not resurrect a stale display label.
+  const legacyContext = scope === undefined ? pageContext : "";
+  const input = `${text} ${scope?.batchId ?? ""} ${legacyContext}`,
     summary = executionSummary(e);
   const match = input.match(/B[- ]?0*(\d+)/i);
   const batch = match
@@ -26,25 +31,63 @@ export async function executionDiscussion(
         (b) => Number(b.id.replace(/\D/g, "")) === Number(match[1]),
       )
     : undefined;
-  const task = e.tasks.find((t) => input.includes(t.name));
-  const candidates = task
-    ? [task]
-    : batch
-      ? e.tasks.filter((t) => t.batchId === batch.id)
-      : [];
+  const selectedIds = new Set(scope?.taskIds);
+  const selected = e.tasks.filter((t) => selectedIds.has(t.id));
+  requireCondition(
+    selected.length === selectedIds.size,
+    "所选任务不属于当前项目或已不存在，请重新选择",
+  );
+  const task =
+    e.tasks.find((t) => text.includes(t.name)) ??
+    (!selected.length && !scope?.batchId
+      ? e.tasks.find((t) => legacyContext.includes(t.name))
+      : undefined);
+  const candidates = selected.length
+    ? selected
+    : task
+      ? [task]
+      : batch
+        ? e.tasks.filter((t) => t.batchId === batch.id)
+        : [];
   const action: ExecutionAction | undefined = /暂停|pause/i.test(text)
     ? "pause"
     : /恢复|resume/i.test(text)
       ? "resume"
-      : /重试任务|retry task/i.test(text)
+      : /重试.*任务|retry task/i.test(text)
         ? "retry"
         : /发起割接|执行割接|start cutover/i.test(text)
           ? "cutover"
-          : /立即增量|触发增量|increment now/i.test(text)
+          : /立即增量|触发增量|开始增量|increment now|start incremental/i.test(
+                text,
+              )
             ? "increment"
-            : /启动批次|启动 B|start batch/i.test(text)
-              ? "start"
-              : undefined;
+            : /开始全量|全量同步|start full/i.test(text)
+              ? "full"
+              : /创建.*任务|启动批次|启动\s*B|start batch|create tasks/i.test(
+                    text,
+                  )
+                ? "start"
+                : /调整窗口|窗口改|window.*(?:change|to)|change.*window/i.test(
+                      text,
+                    )
+                  ? "window"
+                  : /调整批次|移动.*批次|移到\s*B|移入\s*B|move.*batch|move.*B\d/i.test(
+                        text,
+                      )
+                    ? "move"
+                    : undefined;
+  if (
+    /修改.*连接|连接.*配置|检测.*连接|configure.*connection|change.*connection|test.*connection/i.test(
+      text,
+    )
+  )
+    return {
+      text:
+        c.language === "en"
+          ? "Update the connection below and test it before applying. The current working configuration is retained if the test fails."
+          : "请在下方修改连接并重新检测。检测失败会保留原有效配置，密码不会写入对话记录。",
+      results: [{ kind: "execution-work", view: "connection" }],
+    };
   if (/报告|交付件|report|deliverable/i.test(text))
     return {
       text: "以下是当前项目已生成的交付文件。",
@@ -54,7 +97,10 @@ export async function executionDiscussion(
     };
   if (action && /为什么|如何|解释|说明|原因|why|how|explain/i.test(text))
     return {
-      text: "暂停会保留已同步数据；恢复和重试从原位置继续。只有完成同步且没有阻塞的对象可割接，割接后仍须人工业务验证。",
+      text:
+        c.language === "en"
+          ? "Creation, full sync, incremental sync and cutover are separately confirmed. Resume or retry repeats only the interrupted operation. Cutover requires synchronization readiness and no unresolved blockers; business validation is still required afterward."
+          : "创建任务、全量同步、增量同步和割接分别确认。恢复或重试仅继续已中断的那一步，不会跳过下一步确认。只有同步就绪且没有阻塞的对象可割接，完成后仍须人工业务验证。",
       results: [{ kind: "execution-work", view: "tasks" }],
     };
   if (action) {
@@ -66,7 +112,10 @@ export async function executionDiscussion(
     if (e.preview)
       return {
         text: "已有待确认操作，请先应用或取消，避免覆盖当前选择。",
-        results: [{ kind: "execution-work", view: "tasks" }],
+        results:
+          e.preview.origin.conversationId === c.conversationId
+            ? [{ kind: "execution-preview", previewId: e.preview.id }]
+            : [],
       };
     const eligible = candidates.filter((t) => !executionBlock(s, t, action));
     if (!eligible.length)
@@ -74,23 +123,64 @@ export async function executionDiscussion(
         text: "当前对象不满足操作条件。请在任务列表查看同步状态、连接和未解决问题。",
         results: [{ kind: "execution-work", view: "tasks" }],
       };
+    const targetMatch = [...text.matchAll(/B[- ]?0*(\d+)/gi)].at(-1);
+    const targetBatchId =
+      targetMatch &&
+      s.planning?.batches.find(
+        (b) => Number(b.id.replace(/\D/g, "")) === Number(targetMatch[1]),
+      )?.id;
+    const window = text
+      .match(
+        /(?:窗口改为|窗口改到|调整窗口为|window to)\s*[：:]?\s*(.+)$/i,
+      )?.[1]
+      ?.trim();
+    if (
+      (action === "move" &&
+        (!targetBatchId ||
+          eligible.every((t) => t.batchId === targetBatchId))) ||
+      (action === "window" && !window)
+    )
+      return {
+        text:
+          c.language === "en"
+            ? "Please specify both source and target batches, or the exact new cutover window. No changes have been applied."
+            : "请补充原批次与目标批次，或具体的新割接窗口，例如“将 B001 移到 B002”“B001 窗口改为周六 22:00–次日 02:00”。尚未修改安排。",
+        results: [],
+      };
     await executionCommand(rt, c, {
       type: "execution.preview",
       action,
       taskIds: eligible.map((t) => t.id),
       computeResource: "目标资源池",
       network: "目标业务网络",
+      targetBatchId,
+      window,
     });
     return {
-      text: `已准备${actionLabels[action]}预览：${eligible.length} 台满足条件，${candidates.length - eligible.length} 台暂不满足。请核对面板后确认，尚未执行任务操作。`,
-      results: [{ kind: "execution-work", view: "tasks" }],
+      text:
+        c.language === "en"
+          ? `An operation preview is ready: ${eligible.length} VMs are eligible and ${candidates.length - eligible.length} are excluded from this action. Review and confirm below; no operation has started.`
+          : `已准备${actionLabels[action]}预览：${eligible.length} 台满足条件，${candidates.length - eligible.length} 台暂不满足。请在输入区核对并确认，尚未执行任务操作。`,
+      results: [
+        { kind: "execution-preview", previewId: s.execution!.preview!.id },
+      ],
     };
   }
   if (
     /报错|异常|错误|诊断|日志|方案|error|issue|diagnos|log|remedy/i.test(text)
   ) {
     const issue = e.issues.find(
-      (i) => i.state !== "resolved" && (!task || i.taskIds.includes(task.id)),
+      (i) =>
+        i.state !== "resolved" &&
+        (selectedIds.size
+          ? i.taskIds.some((id) => selectedIds.has(id))
+          : task
+            ? i.taskIds.includes(task.id)
+            : batch
+              ? i.taskIds.some((id) =>
+                  candidates.some((candidate) => candidate.id === id),
+                )
+              : true),
     );
     return {
       text: issue
@@ -110,7 +200,10 @@ export async function executionDiscussion(
     )
   )
     return {
-      text: `当前纳入 ${summary.total} 台，同步中 ${summary.syncing} 台，割接完成 ${summary.cutover} 台，异常 ${summary.failed} 台。\n\n${e.connectionStatus === "ready" ? "连接可用。请选择批次查看或操作，割接前需要人工确认。" : "请先填写并检测 Migration 连接。"}`,
+      text:
+        c.language === "en"
+          ? `Current scope: ${summary.total} VMs. ${summary.pending} await creation, ${summary.waitingFull} await full sync, ${summary.waitingIncrement} await incremental sync, ${summary.syncing} are syncing, ${summary.cutover} have cut over, and ${summary.failed} have errors. Each execution stage requires separate confirmation.`
+          : `当前纳入 ${summary.total} 台：待创建 ${summary.pending} 台、待全量 ${summary.waitingFull} 台、待增量 ${summary.waitingIncrement} 台、同步中 ${summary.syncing} 台、割接完成 ${summary.cutover} 台、异常 ${summary.failed} 台。\n\n${e.connectionStatus === "ready" ? "连接可用。请选择批次，创建、全量、增量、割接分别确认。" : "请先填写并检测 Migration 连接。"}`,
       results: [
         {
           kind: "execution-work",

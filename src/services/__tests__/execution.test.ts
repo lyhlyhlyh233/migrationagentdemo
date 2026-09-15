@@ -92,7 +92,11 @@ async function cutover() {
   await timed(service.execute(x.c, connection));
   const ids = x.s.execution!.tasks.slice(0, 3).map((t) => t.id);
   await act(x.c, "start", ids);
-  await vi.advanceTimersByTimeAsync(8000);
+  await vi.advanceTimersByTimeAsync(2000);
+  await act(x.c, "full", ids);
+  await vi.advanceTimersByTimeAsync(5000);
+  await act(x.c, "increment", ids);
+  await vi.advanceTimersByTimeAsync(3000);
   await act(x.c, "cutover", ids);
   await vi.advanceTimersByTimeAsync(2500);
   await service.execute(x.c, { type: "stage.confirm", target: "validation" });
@@ -107,6 +111,114 @@ async function cutover() {
   };
 }
 describe("batch execution and business validation", () => {
+  it("stops at all four human-confirmation gates; cancelling and waiting never grant the next action", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!,
+      task = e.tasks[0],
+      ids = [task.id];
+    await timed(service.execute(c, connection));
+    await expect(act(c, "full", ids)).rejects.toThrow();
+    await expect(act(c, "increment", ids)).rejects.toThrow();
+    await act(c, "start", ids);
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(task.phase).toBe("created");
+    expect(task.syncedGB).toBe(0);
+    expect(task.lastSync).toBeUndefined();
+    expect(s.executionApprovals.creation).toBe(true);
+    expect(s.executionApprovals.sync).toBe(false);
+    expect(s.executionApprovals.cutover).toBe(false);
+    await expect(act(c, "increment", ids)).rejects.toThrow();
+    await service.execute(c, {
+      type: "execution.preview",
+      action: "full",
+      taskIds: ids,
+    });
+    const cancelled = e.preview!.id;
+    await service.execute(c, {
+      type: "execution.cancel",
+      previewId: cancelled,
+    });
+    await expect(
+      service.execute(c, { type: "execution.apply", previewId: cancelled }),
+    ).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(task.phase).toBe("created");
+    await act(c, "full", ids);
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(task.phase).toBe("full-complete");
+    expect(task.syncedGB).toBe(task.totalGB);
+    expect(task.speed).toBe(0);
+    expect(task.lastSync).toBeUndefined();
+    expect(s.executionApprovals.sync).toBe(true);
+    expect(s.executionApprovals.cutover).toBe(false);
+    await expect(act(c, "full", ids)).rejects.toThrow();
+    await expect(act(c, "cutover", ids)).rejects.toThrow();
+    await act(c, "increment", ids);
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(task.phase).toBe("ready");
+    expect(e.validations).toHaveLength(0);
+    expect(s.executionApprovals.cutover).toBe(false);
+    await act(c, "cutover", ids);
+    await expect(act(c, "cutover", ids)).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(task.phase).toBe("validation");
+    expect(e.validations).toHaveLength(1);
+    expect(s.executionApprovals.cutover).toBe(true);
+  });
+  it("retry and resume use only an interrupted confirmed operation, never infer consent from created state", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!,
+      task = e.tasks[0],
+      ids = [task.id];
+    await timed(service.execute(c, connection));
+    await act(c, "start", ids);
+    await vi.advanceTimersByTimeAsync(2000);
+    task.phase = "failed";
+    delete task.resumePhase;
+    await expect(act(c, "retry", ids)).rejects.toThrow("没有可重试");
+    task.phase = "paused";
+    task.resumePhase = "created";
+    await expect(act(c, "resume", ids)).rejects.toThrow("没有可恢复");
+    task.phase = "created";
+    await act(c, "full", ids);
+    await vi.advanceTimersByTimeAsync(1000);
+    await act(c, "pause", ids);
+    expect(task.resumePhase).toBe("full");
+    await timed(service.execute(c, connection));
+    expect(task.phase).toBe("paused");
+    await act(c, "resume", ids);
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(task.phase).toBe("full-complete");
+    expect(task.lastSync).toBeUndefined();
+  });
+  it("repairs a failure during full sync without granting incremental-sync confirmation", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!,
+      task = e.tasks[0],
+      ids = [task.id];
+    await timed(service.execute(c, connection));
+    await act(c, "start", ids);
+    await vi.advanceTimersByTimeAsync(2000);
+    task.scenario = "network";
+    await act(c, "full", ids);
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(task.phase).toBe("failed");
+    expect(task.resumePhase).toBe("full");
+    await timed(
+      service.execute(c, {
+        type: "execution.remedy",
+        issueId: e.issues[0].id,
+        solution: "automatic",
+        note: "",
+      }),
+    );
+    expect(task.phase).toBe("failed");
+    await act(c, "retry", ids);
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(task.phase).toBe("full-complete");
+    expect(task.lastSync).toBeUndefined();
+    expect(e.validations).toHaveLength(0);
+  });
   it("inherits the complete eligible scope; connection failures preserve effective settings without leaking credentials", async () => {
     const { c, s } = await setup();
     expect(s.execution!.tasks).toHaveLength(186);
@@ -149,13 +261,16 @@ describe("batch execution and business validation", () => {
       act(c, "move", [id], { targetBatchId: s.planning!.batches[0].id }),
     ).rejects.toThrow();
     await vi.advanceTimersByTimeAsync(2000);
+    expect(e.tasks[0].phase).toBe("created");
+    await act(c, "full", [id]);
+    await vi.advanceTimersByTimeAsync(1000);
     await act(c, "pause", [id]);
     const progress = e.tasks[0].progress;
     await vi.advanceTimersByTimeAsync(2000);
     expect(e.tasks[0].progress).toBe(progress);
     await act(c, "resume", [id]);
     await vi.advanceTimersByTimeAsync(8000);
-    expect(e.tasks[0].phase).toBe("ready");
+    expect(e.tasks[0].phase).toBe("full-complete");
     expect(e.validations).toHaveLength(0);
     await act(c, "increment", [id]);
     await expect(act(c, "increment", [id])).rejects.toThrow();
@@ -202,7 +317,7 @@ describe("batch execution and business validation", () => {
     expect(e.tasks[0].phase).toBe("failed");
     await act(c, "retry", [ids[0]]);
     await vi.advanceTimersByTimeAsync(8000);
-    expect(e.tasks[0].phase).toBe("ready");
+    expect(e.tasks[0].phase).toBe("created");
     expect(e.issues).toHaveLength(1);
   });
   it("supports log failure, inconclusive diagnosis, manual evidence and isolated attachment downloads", async () => {
@@ -300,7 +415,7 @@ describe("batch execution and business validation", () => {
     await act(c, "start", ids);
     await vi.advanceTimersByTimeAsync(8000);
     const milestone = s.messages.filter((m) =>
-      m.text.includes("全量与增量同步已完成"),
+      m.text.includes("任务创建已完成"),
     );
     expect(milestone).toHaveLength(1);
     expect(milestone[0].conversationId).toBe(c.conversationId);
@@ -427,7 +542,7 @@ describe("batch execution and business validation", () => {
     expect(e.tasks[0].phase).toBe("failed");
     await act(c, "retry", [e.tasks[0].id]);
     await vi.advanceTimersByTimeAsync(8000);
-    expect(e.tasks[0].phase).toBe("ready");
+    expect(e.tasks[0].phase).toBe("created");
   });
   it("rejects stale validation edits without losing the current confirmation", async () => {
     const { s, ids, v } = await cutover(),
@@ -468,6 +583,12 @@ describe("batch execution and business validation", () => {
       }),
     );
     expect(e.preview?.action).toBe("start");
+    const originalPreviewId = e.preview!.id;
+    const result = s.messages.findLast((m) => m.role === "agent")!;
+    expect(result.results).toContainEqual({
+      kind: "execution-preview",
+      previewId: originalPreviewId,
+    });
     expect(e.tasks.every((t) => t.phase === "pending")).toBe(true);
     await service.execute(c, {
       type: "execution.cancel",
@@ -482,7 +603,149 @@ describe("batch execution and business validation", () => {
       }),
     );
     expect(e.preview).toBeUndefined();
+    expect(result.results).toContainEqual({
+      kind: "execution-preview",
+      previewId: originalPreviewId,
+    });
     expect(e.tasks.every((t) => t.phase === "pending")).toBe(true);
+  });
+  it("routes explicit task-management context from planning and research chats without changing their origins", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!;
+    await timed(service.execute(c, connection));
+    const planning = {
+      ...c,
+      stageId: "planning" as const,
+      conversationId: "stage-planning-main",
+    };
+    const conversations = s.conversations.map((chat) => chat.id);
+    await timed(
+      service.sendMessage(planning, {
+        text: "创建任务",
+        agentId: "planning",
+        modelId: "glm-5.1",
+        requestId: "manage-planning",
+        executionContext: { batchId: e.tasks[0].batchId },
+      }),
+    );
+    expect(e.preview?.action).toBe("start");
+    expect(e.preview?.origin.conversationId).toBe(planning.conversationId);
+    expect(e.preview?.origin.stageId).toBe("planning");
+    expect(e.tasks.every((task) => task.phase === "pending")).toBe(true);
+    await service.execute(planning, {
+      type: "execution.cancel",
+      previewId: e.preview!.id,
+    });
+    const research = {
+      ...c,
+      stageId: "research" as const,
+      conversationId: s.conversations.find(
+        (chat) => chat.stageId === "research",
+      )!.id,
+    };
+    await timed(
+      service.sendMessage(research, {
+        text: "修改 Migration 连接",
+        agentId: "research",
+        modelId: "glm-5.1",
+        requestId: "manage-research-connection",
+        executionContext: {},
+      }),
+    );
+    const result = s.messages.findLast((message) => message.role === "agent")!;
+    expect(result.conversationId).toBe(research.conversationId);
+    expect(result.results).toContainEqual({
+      kind: "execution-work",
+      view: "connection",
+    });
+    expect(s.conversations.map((chat) => chat.id)).toEqual(conversations);
+  });
+  it("fixes selected task IDs across a reply, rejects missing IDs, and lets explicit batches override only implicit batch context", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!;
+    await timed(service.execute(c, connection));
+    const batches = s.planning!.batches;
+    const selectedIds = [
+      e.tasks[0].id,
+      e.tasks.find((task) => task.batchId === batches[1].id)!.id,
+    ];
+    const fixedIds = [...selectedIds];
+    const pending = service.sendMessage(c, {
+      text: `创建 ${batches[2].id} 任务`,
+      agentId: "migration",
+      modelId: "glm-5.1",
+      requestId: "selected-scope",
+      executionContext: { taskIds: selectedIds, batchId: batches[3].id },
+    });
+    selectedIds.push(e.tasks[1].id);
+    await timed(pending);
+    expect(e.preview!.taskIds).toEqual(fixedIds);
+    await service.execute(c, {
+      type: "execution.cancel",
+      previewId: e.preview!.id,
+    });
+    await expect(
+      timed(
+        service.sendMessage(c, {
+          text: "创建任务",
+          agentId: "migration",
+          modelId: "glm-5.1",
+          requestId: "invalid-scope",
+          executionContext: {
+            taskIds: [fixedIds[0], "not-in-this-project"],
+            batchId: batches[0].id,
+          },
+        }),
+      ),
+    ).rejects.toThrow("所选任务不属于当前项目");
+    expect(e.preview).toBeUndefined();
+    await timed(
+      service.sendMessage(c, {
+        text: `创建 ${batches[2].id} 任务`,
+        agentId: "migration",
+        modelId: "glm-5.1",
+        requestId: "explicit-batch",
+        executionContext: { batchId: batches[3].id },
+      }),
+    );
+    expect(e.preview!.taskIds).toEqual(
+      e.tasks
+        .filter((task) => task.batchId === batches[2].id)
+        .map((task) => task.id),
+    );
+    expect(e.tasks.every((task) => task.phase === "pending")).toBe(true);
+  });
+  it("treats an explicitly cleared execution scope as authoritative over stale context labels", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!,
+      task = e.tasks[0];
+    await timed(service.execute(c, connection));
+    const context = `${task.batchId} · ${task.name}`;
+    await timed(
+      service.sendMessage(c, {
+        text: "创建任务",
+        context,
+        executionContext: {},
+        agentId: "migration",
+        modelId: "glm-5.1",
+        requestId: "cleared-execution-scope",
+      }),
+    );
+    expect(e.preview).toBeUndefined();
+    expect(
+      s.messages.findLast((message) => message.role === "agent")?.text,
+    ).toContain("请明确批次编号或虚拟机名称");
+    await timed(
+      service.sendMessage(c, {
+        text: "创建任务",
+        context,
+        agentId: "migration",
+        modelId: "glm-5.1",
+        requestId: "legacy-execution-scope",
+      }),
+    );
+    expect(e.preview?.taskIds).toEqual([task.id]);
+    expect(e.tasks.every((item) => item.phase === "pending")).toBe(true);
   });
   it("limits active work by concurrency and allows final delivery only after the complete eligible scope is validated", async () => {
     const { c, s } = await setup(),
@@ -493,7 +756,13 @@ describe("batch execution and business validation", () => {
     await act(c, "start", ids);
     await vi.advanceTimersByTimeAsync(1100);
     expect(e.tasks.filter((t) => t.created)).toHaveLength(cap);
-    await vi.advanceTimersByTimeAsync(1000 * Math.ceil(ids.length / cap) * 8);
+    await vi.advanceTimersByTimeAsync(1000 * Math.ceil(ids.length / cap) * 2);
+    expect(e.tasks.every((t) => t.phase === "created")).toBe(true);
+    await act(c, "full", ids);
+    await vi.advanceTimersByTimeAsync(1000 * Math.ceil(ids.length / cap) * 5);
+    expect(e.tasks.every((t) => t.phase === "full-complete")).toBe(true);
+    await act(c, "increment", ids);
+    await vi.advanceTimersByTimeAsync(1000 * Math.ceil(ids.length / cap) * 3);
     expect(e.tasks.every((t) => t.phase === "ready")).toBe(true);
     await act(c, "cutover", ids);
     await vi.advanceTimersByTimeAsync(1000 * Math.ceil(ids.length / cap) * 3);

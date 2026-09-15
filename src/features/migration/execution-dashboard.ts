@@ -1,11 +1,19 @@
 import type { ExecutionState, ExecutionTask } from "@/domain/execution";
 export const taskStateGroups = [
   { id: "pending", label: "待创建", tone: "muted", phases: ["pending"] },
+  { id: "creating", label: "创建中", tone: "info", phases: ["creating"] },
+  { id: "created", label: "待全量", tone: "warning", phases: ["created"] },
+  {
+    id: "full-complete",
+    label: "待增量",
+    tone: "warning",
+    phases: ["full-complete"],
+  },
   {
     id: "syncing",
     label: "同步中",
     tone: "info",
-    phases: ["creating", "full", "incremental"],
+    phases: ["full", "incremental"],
   },
   { id: "ready", label: "待割接", tone: "warning", phases: ["ready"] },
   { id: "cutover", label: "割接中", tone: "info", phases: ["cutover"] },
@@ -50,6 +58,7 @@ export function executionDashboard(e: ExecutionState) {
       id,
       total: tasks.length,
       started: tasks.filter((t) => t.created || !!t.startedAt).length,
+      created: tasks.filter((t) => t.created).length,
       complete,
       failed,
       paused,
@@ -62,9 +71,15 @@ export function executionDashboard(e: ExecutionState) {
           ? "暂停"
           : done
             ? "割接完成"
-            : starts.length
-              ? "运行中"
-              : "待执行",
+            : tasks.every((task) => task.phase === "created")
+              ? "待全量"
+              : tasks.every((task) => task.phase === "full-complete")
+                ? "待增量"
+                : tasks.every((task) => task.phase === "ready")
+                  ? "待割接"
+                  : starts.length
+                    ? "运行中"
+                    : "待执行",
     };
   });
   const starts = batches.flatMap((b) =>

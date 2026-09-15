@@ -2,7 +2,7 @@ import { riskOverview } from "@/domain/assessment";
 import { executionDiscussion } from "./execution-discussion";
 import type { BusinessResult, OperationContext } from "@/domain/models";
 import { translateText } from "@/shared/i18n/text";
-import type { RequestOptions } from "../contracts";
+import type { MessageInput, RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
 import {
   assessmentReportReply,
@@ -15,17 +15,19 @@ import type { MockRuntime } from "./runtime";
 export async function reply(
   rt: MockRuntime,
   c: OperationContext,
-  input: {
-    text: string;
-    agentId: string;
-    modelId: string;
-    requestId: string;
-    context?: string;
-    attachment?: File;
-  },
+  input: MessageInput,
   options: RequestOptions,
 ) {
   const s = rt.context(c);
+  // Keep the requested management scope stable while a reply is pending.
+  const executionContext = input.executionContext && {
+    ...input.executionContext,
+    taskIds: input.executionContext.taskIds
+      ? [...input.executionContext.taskIds]
+      : undefined,
+  };
+  const executionRequest =
+    !!executionContext && s.enteredStages.includes("migration");
   requireCondition(input.text.trim() || input.attachment, "请输入消息");
   if (input.attachment) {
     const error = messageAttachmentError(input.attachment);
@@ -90,7 +92,7 @@ export async function reply(
       if (!openingRisks) await rt.sleep(1400, runOptions);
       let text: string = previewDiscussionReply(input.text, input.agentId);
       const results: BusinessResult[] = [];
-      if (s.info && c.stageId) {
+      if (s.info && (c.stageId || executionRequest)) {
         if (input.attachment) {
           if (
             c.stageId === "planning" &&
@@ -112,6 +114,16 @@ export async function reply(
               c.stageId === "planning" && s.batchConfirmation === "confirmed"
                 ? "附件已保留在当前会话。规划已交接，当前只读，未修改规划或解析附件内容。"
                 : "附件已接收并保留在当前会话。尚未解析实际内容；请说明希望调整的对象和要求。";
+        } else if (executionRequest) {
+          const discussion = await executionDiscussion(
+            rt,
+            c,
+            input.text,
+            input.context,
+            executionContext,
+          );
+          text = discussion.text;
+          results.push(...discussion.results);
         } else if (c.stageId === "research") {
           if (openingRisks) {
             text =
@@ -168,7 +180,7 @@ export async function reply(
           const discussion = planningDiscussion(rt, c, input.text);
           text = discussion.text;
           results.push(...discussion.results);
-        } else if (/风险|risk/i.test(input.text)) {
+        } else if (c.stageId && /风险|risk/i.test(input.text)) {
           text =
             s.assessmentStatus === "completed"
               ? `当前有 ${s.risks.filter((r) => !r.closed).length} 项待处理风险。请优先核对高风险的处理措施与验证依据。`

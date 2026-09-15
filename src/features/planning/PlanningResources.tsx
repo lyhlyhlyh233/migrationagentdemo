@@ -178,67 +178,134 @@ export function PlanningTimeline({
   const start = Math.min(...p.batches.map((b) => planningTime(b.start)));
   const end = Math.max(...p.batches.map((b) => planningTime(b.end)));
   const span = Math.max(end - start, 86400000);
+  const day = 86400000;
+  const ticks = Array.from({ length: 9 }, (_, i) => start + (span * i) / 8);
+  const gridLines = Array.from(
+    { length: Math.ceil(span / day) },
+    (_, i) => Math.floor(start / day) * day + (i + 1) * day,
+  ).filter((time) => time < end);
   return (
     <div className={styles.timeline}>
-      <p className={styles.note}>
-        {t("模拟排程。点击批次查看虚拟机明细；日期与窗口需人工核对。")}
-      </p>
-      <div className={styles.timelineScale}>
-        <span>{new Date(start).toISOString().slice(0, 10)}</span>
-        <span>{new Date(start + span / 2).toISOString().slice(5, 10)}</span>
-        <span>{new Date(end).toISOString().slice(0, 10)}</span>
-      </div>
-      {p.batches.map((b) => (
-        <div className={styles.timelineRow} key={b.id}>
-          <button type="button" onClick={() => onBatch(b.id)}>
-            <strong>{b.id}</strong>
-            <small>
-              {t(planningPhaseLabels[b.phase])} · {b.assetIds.length} {t("台")}
-            </small>
-            <small>{b.window}</small>
-          </button>
-          <button
-            type="button"
-            className={styles.track}
-            onClick={() => onBatch(b.id)}
-            aria-label={`${b.id}: ${b.start} → ${b.end}`}
-            title={`${b.start.replace("T", " ")} → ${b.end.replace("T", " ")}`}
-          >
-            <span
-              className={styles.syncBar}
-              style={{
-                left: `${((planningTime(b.start) - start) / span) * 100}%`,
-                width: `${((planningTime(b.cutover) - planningTime(b.start)) / span) * 100}%`,
-              }}
-            />
-            <span
-              className={styles.bufferBar}
-              style={{
-                left: `${((planningTime(b.cutover) + Math.min(p.conditions.validationHours * 3600000, planningTime(b.end) - planningTime(b.cutover)) - start) / span) * 100}%`,
-                width: `${(Math.max(0, planningTime(b.end) - planningTime(b.cutover) - p.conditions.validationHours * 3600000) / span) * 100}%`,
-              }}
-            />
-            <span
-              className={styles.validationBar}
-              style={{
-                left: `${((planningTime(b.cutover) - start) / span) * 100}%`,
-                width: `${(Math.min(p.conditions.validationHours * 3600000, Math.max(0, planningTime(b.end) - planningTime(b.cutover))) / span) * 100}%`,
-              }}
-            />
-            <span
-              className={styles.cutoverMark}
-              style={{
-                left: `${((planningTime(b.cutover) - start) / span) * 100}%`,
-              }}
-            />
-          </button>
-        </div>
-      ))}
+      <p className={styles.note}>{t("模拟排程 · 点击批次查看详情")}</p>
+      <table className={styles.timelineTable} aria-label={t("批次甘特图")}>
+        <colgroup>
+          <col className={styles.batchColumn} />
+          <col className={styles.countColumn} />
+          <col className={styles.durationColumn} />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">{t("批次")}</th>
+            <th scope="col">VM</th>
+            <th scope="col">{t("周期")}</th>
+            <th scope="col" aria-label={t("迁移时间线")}>
+              <div className={styles.timelineScale}>
+                {ticks.map((time, i) => (
+                  <span
+                    key={i}
+                    data-tick={i}
+                    style={{ left: `${(i / 8) * 100}%` }}
+                    title={new Date(time).toISOString().slice(0, 10)}
+                  >
+                    {new Date(time).toISOString().slice(5, 10)}
+                  </span>
+                ))}
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {p.batches.map((b) => {
+            const batchStart = planningTime(b.start);
+            const cutover = planningTime(b.cutover);
+            const batchEnd = planningTime(b.end);
+            const validation = Math.min(
+              p.conditions.validationHours * 3600000,
+              Math.max(0, batchEnd - cutover),
+            );
+            const description = `${b.id} · ${t(planningPhaseLabels[b.phase])} · ${b.assetIds.length} ${t("台")} · ${b.window} · ${b.start.replace("T", " ")} → ${b.end.replace("T", " ")}`;
+            return (
+              <tr className={styles.timelineRow} key={b.id}>
+                <th scope="row">
+                  <button
+                    type="button"
+                    onClick={() => onBatch(b.id)}
+                    title={description}
+                  >
+                    {b.id}
+                  </button>
+                </th>
+                <td>{b.assetIds.length}</td>
+                <td>
+                  {Math.round(((batchEnd - batchStart) / day) * 10) / 10}{" "}
+                  {t("天")}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className={styles.track}
+                    onClick={() => onBatch(b.id)}
+                    aria-label={description}
+                    title={description}
+                  >
+                    {gridLines.map((time) => (
+                      <span
+                        key={time}
+                        className={styles.gridLine}
+                        aria-hidden="true"
+                        style={{ left: `${((time - start) / span) * 100}%` }}
+                      />
+                    ))}
+                    <span
+                      className={styles.syncBar}
+                      style={{
+                        left: `${((batchStart - start) / span) * 100}%`,
+                        width: `${((cutover - batchStart) / span) * 100}%`,
+                      }}
+                    />
+                    <span
+                      className={styles.bufferBar}
+                      style={{
+                        left: `${((cutover + validation - start) / span) * 100}%`,
+                        width: `${(Math.max(0, batchEnd - cutover - validation) / span) * 100}%`,
+                      }}
+                    />
+                    <span
+                      className={styles.validationBar}
+                      style={{
+                        left: `${((cutover - start) / span) * 100}%`,
+                        width: `${(validation / span) * 100}%`,
+                      }}
+                    />
+                    <span
+                      className={styles.cutoverMark}
+                      style={{ left: `${((cutover - start) / span) * 100}%` }}
+                    />
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
       <div className={styles.legend}>
-        <span data-tone="info">● {t("全量同步")}</span>
-        <span data-tone="warning">● {t("割接")}</span>
-        <span data-tone="success">● {t("业务验证")}</span>
-        <span>○ {t("缓冲")}</span>
+        <span>
+          <i data-tone="info" />
+          {t("全量同步")}
+        </span>
+        <span>
+          <i data-tone="warning" />
+          {t("割接")}
+        </span>
+        <span>
+          <i data-tone="success" />
+          {t("业务验证")}
+        </span>
+        <span>
+          <i />
+          {t("缓冲")}
+        </span>
       </div>
     </div>
   );

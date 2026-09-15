@@ -1,3 +1,8 @@
+import { ConversationConfirmation } from "@/features/conversations/ConversationConfirmation";
+import { useConversationConfirmation } from "@/features/conversations/useConversationConfirmation";
+import type { ConversationConfirmation as ConfirmationValue } from "@/features/conversations/state";
+import { ConnectionForm } from "@/features/migration/ConnectionForm";
+import { executionBlock } from "@/domain/execution";
 import { ExecutionWorkspace } from "@/features/migration/ExecutionWorkspace";
 import { ValidationWorkspace } from "@/features/validation/ValidationWorkspace";
 import type { ExecutionView, ValidationView } from "@/features/migration/state";
@@ -87,6 +92,36 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   p.conversationId = chat?.id ?? null;
   const view = conversationState[s.id]?.[p.conversationId ?? ""] ?? {
     draft: "",
+  };
+  const confirmation = useConversationConfirmation(s, chat?.id, view, a.view);
+  const openConfirmation = (value: ConfirmationValue) => {
+    if (!confirmation) {
+      const issue =
+        value.kind === "issue"
+          ? s.execution?.issues.find((item) => item.id === value.id)
+          : undefined;
+      a.view({
+        confirmation: value,
+        ...(issue && view.issueDraft?.issueId !== issue.id
+          ? {
+              issueDraft: {
+                issueId: issue.id,
+                solution:
+                  issue.solution ??
+                  (issue.category === "network" ? "automatic" : "manual"),
+                note: issue.note,
+                simulateFailure: false,
+                diagnosticFailure: "",
+              },
+            }
+          : {}),
+      });
+    }
+    dispatchUi({
+      type: "project",
+      id: s.id,
+      patch: { managementChatCollapsed: false },
+    });
   };
   const { stageSteps, progress } = workspacePresentation(s);
   const management = !!p.panel;
@@ -290,6 +325,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     } else if (panel === "planning") {
       if (planningPreparing) void a.send(t("补充规划资料"), agent, model);
       else openSidePanel("planning");
+    } else if (panel === "connection") {
+      a.view({ connectionOpen: true });
+      void a.send(t("修改 Migration 连接"), agent, model);
     } else if (
       [
         "execution",
@@ -302,12 +340,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       ].includes(panel ?? "")
     ) {
       executionViewChange({
-        tab:
-          panel === "connection"
-            ? "connection"
-            : panel === "issues"
-              ? "issues"
-              : "tasks",
+        tab: panel === "issues" ? "issues" : "tasks",
       });
       openSidePanel("execution");
     } else if (panel === "validation") openSidePanel("validation");
@@ -373,8 +406,106 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       conversationId={chat?.id ?? null}
     />
   ) : undefined;
+  const executionInput =
+    !s.execution?.connection || view.connectionOpen ? (
+      <ConnectionForm
+        snapshot={s}
+        view={p.executionView}
+        onView={executionViewChange}
+        onCommand={a.execute}
+        onDone={() => a.view({ connectionOpen: false })}
+      />
+    ) : undefined;
+  const confirmationContent =
+    confirmation && chat ? (
+      <ConversationConfirmation
+        key={`${s.id}-${chat.id}-${confirmation.kind}-${"id" in confirmation ? confirmation.id : confirmation.taskIds.join(",")}`}
+        value={confirmation}
+        onChange={(value) => a.view({ confirmation: value })}
+        snapshot={s}
+        conversationId={chat.id}
+        executionView={{
+          ...p.executionView,
+          ...(confirmation.kind === "issue" ? view.issueDraft : {}),
+        }}
+        onExecutionView={(patch) => {
+          if (confirmation.kind === "issue" && view.issueDraft)
+            a.view({ issueDraft: { ...view.issueDraft, ...patch } });
+          else executionViewChange(patch);
+        }}
+        onCommand={async (command) => {
+          const ok = await a.execute(command);
+          if (ok && command.type === "execution.apply")
+            executionViewChange({ selected: [] });
+          return ok;
+        }}
+        onStage={a.confirmStage}
+        onUpload={a.upload}
+        onDownload={a.download}
+        onClose={() => a.view({ confirmation: undefined })}
+      />
+    ) : undefined;
+  const batchId = p.executionView.batchId || s.planning?.batches[0]?.id;
+  const selectedTaskIds = new Set(p.executionView.selected);
+  const batchTasks =
+    s.execution?.tasks.filter((task) =>
+      selectedTaskIds.size
+        ? selectedTaskIds.has(task.id)
+        : task.batchId === batchId,
+    ) ?? [];
+  const executionPrompts =
+    s.enteredStages.includes("migration") &&
+    (stage === "migration" || ["tasks", "execution"].includes(p.panel ?? ""))
+      ? [
+          t("修改 Migration 连接"),
+          ...(batchTasks.some((task) => !executionBlock(s, task, "start"))
+            ? [
+                selectedTaskIds.size
+                  ? t("创建所选任务")
+                  : t("创建 {0} 任务", batchId ?? ""),
+              ]
+            : []),
+          ...(batchTasks.some((task) => !executionBlock(s, task, "full"))
+            ? [
+                selectedTaskIds.size
+                  ? t("所选任务开始全量同步")
+                  : t("{0} 开始全量同步", batchId ?? ""),
+              ]
+            : []),
+          ...(batchTasks.some((task) => !executionBlock(s, task, "increment"))
+            ? [
+                selectedTaskIds.size
+                  ? t("所选任务开始增量同步")
+                  : t("{0} 开始增量同步", batchId ?? ""),
+              ]
+            : []),
+          ...(batchTasks.some((task) => !executionBlock(s, task, "cutover"))
+            ? [
+                selectedTaskIds.size
+                  ? t("所选任务发起割接")
+                  : t("{0} 发起割接", batchId ?? ""),
+              ]
+            : []),
+          t("查看任务状态"),
+        ]
+      : [];
   const executionContent = (
     <ExecutionWorkspace
+      onRequest={(request) => {
+        if (confirmation) return;
+        if (request.kind === "connection") {
+          a.view({ connectionOpen: true });
+          void a.send(t("修改 Migration 连接"), agent, model);
+          dispatchUi({
+            type: "project",
+            id: s.id,
+            patch: { managementChatCollapsed: false },
+          });
+        } else if (request.kind === "issue") {
+          executionViewChange({ issueId: request.issueId });
+          openConfirmation({ kind: "issue", id: request.issueId });
+        } else openConfirmation({ kind: "tasks", taskIds: request.taskIds });
+      }}
       onManage={() => setPanel("tasks")}
       snapshot={s}
       view={p.executionView}
@@ -422,6 +553,18 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       { kind: "execution-work" }
     >,
   ) => {
+    if (confirmation && (work.view === "issues" || work.view === "connection"))
+      return;
+    if (work.view === "connection") {
+      a.view({ connectionOpen: true });
+      void a.send(t("修改 Migration 连接"), agent, model);
+      return;
+    }
+    if (work.view === "issues" && work.issueId) {
+      executionViewChange({ issueId: work.issueId });
+      openConfirmation({ kind: "issue", id: work.issueId });
+      return;
+    }
     const task = s.execution?.tasks.find((t) => work.taskIds?.includes(t.id));
     if (work.view === "validation") {
       if (task)
@@ -447,6 +590,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     <Conversation
       compact
       onExecutionWork={executionLocation}
+      onConfirmation={openConfirmation}
+      executionInput={executionInput}
       planningDraftDirty={planningDraftDirty}
       onPlanningTimeline={() => {
         planningViewChange({ tab: "timeline" });
@@ -467,6 +612,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   ) : null;
   const smallComposer = chat ? (
     <Composer
+      confirmation={confirmationContent}
+      executionPrompts={executionPrompts}
       compact
       catalog={data.catalog!}
       draft={view.draft}
@@ -639,13 +786,22 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               ].includes(p.panel ?? "") ? (
                 <ManagementDiscussion
                   key={s.id}
+                  activeOperation={!!confirmation || !!view.connectionOpen}
                   title={
                     t(chat?.title ?? "") === t(stageName[stage])
                       ? t(stageName[stage])
                       : `${t(stageName[stage])} · ${t(chat?.title ?? "")}`
                   }
                   contextLabel={p.contextLabel}
-                  onClearContext={() => setContext("")}
+                  onClearContext={() => {
+                    if (
+                      ["tasks", "execution", "connection", "issues"].includes(
+                        p.panel ?? "",
+                      )
+                    )
+                      executionViewChange({ selected: [], batchId: "" });
+                    setContext("");
+                  }}
                   collapsed={p.managementChatCollapsed}
                   onCollapse={(managementChatCollapsed) =>
                     dispatchUi({
@@ -712,6 +868,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               <Conversation
                 key={chat.id}
                 onExecutionWork={executionLocation}
+                onConfirmation={openConfirmation}
+                executionInput={executionInput}
                 planningInput={planningInput}
                 planningDraftDirty={planningDraftDirty}
                 onPlanningTimeline={() => {
@@ -755,6 +913,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         </div>
         {chat && !management && (
           <Composer
+            confirmation={confirmationContent}
+            executionPrompts={executionPrompts}
             catalog={data.catalog!}
             draft={view.draft}
             agentId={agent}

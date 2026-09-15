@@ -3,6 +3,7 @@ import {
   actionLabels,
   executionBlock,
   hasActiveControl,
+  executionSummary,
   type ExecutionPreview,
 } from "@/domain/execution";
 import { eligiblePlanningAssets } from "@/domain/planning";
@@ -70,10 +71,27 @@ export async function executionCommand(
     };
     e.connectionStatus = "ready";
     e.revision++;
+    const summary = executionSummary(e);
+    const next = e.tasks.find((t) => t.phase === "pending");
     rt.result(
       c,
-      "Migration 模拟连接检测通过。请选择批次，核对目标资源和网络映射后启动。",
-      [{ kind: "execution-work", view: "tasks" }],
+      c.language === "en"
+        ? `Migration mock connection passed. ${new Set(e.tasks.map((t) => t.batchId)).size} batches cover ${summary.total} VMs: ${summary.pending} pending creation, ${summary.syncing} syncing, ${summary.cutover} cut over. Task creation, full sync, incremental sync and cutover each require confirmation.`
+        : `Migration 模拟连接检测通过。当前 ${new Set(e.tasks.map((t) => t.batchId)).size} 个批次、${summary.total} 台虚拟机：待创建 ${summary.pending} 台，同步中 ${summary.syncing} 台，割接完成 ${summary.cutover} 台。创建任务、全量同步、增量同步、割接分别确认。`,
+      [
+        { kind: "execution-work", view: "tasks" },
+        ...(next
+          ? [
+              {
+                kind: "execution-prompt" as const,
+                text:
+                  c.language === "en"
+                    ? `Create tasks for ${next.batchId}`
+                    : `创建 ${next.batchId} 任务`,
+              },
+            ]
+          : []),
+      ],
     );
     publishExecution(rt, s);
     startExecutionLoop(rt, c);
@@ -175,6 +193,10 @@ export async function executionCommand(
     "状态已变化，请取消预览后重新选择",
   );
   const tasks = e.tasks.filter((t) => p.taskIds.includes(t.id));
+  requireCondition(
+    tasks.length === p.taskIds.length,
+    "所选任务范围已变化，请重新选择",
+  );
   const eligible = new Set(eligiblePlanningAssets(s).map((a) => a.id));
   for (const t of tasks) {
     requireCondition(
@@ -198,13 +220,19 @@ export async function executionCommand(
         t.network = p.network!;
         t.scenario = index === 0 ? (p.scenario ?? "normal") : "normal";
         t.startedAt = new Date().toISOString();
+      } else if (p.action === "full") {
+        t.phase = "full";
+        t.progress = 0;
       } else if (p.action === "cutover") {
         t.phase = "cutover";
         t.progress = 0;
       } else if (p.action === "increment") {
         t.phase = "incremental";
         t.progress = 0;
-      } else t.phase = t.resumePhase ?? (t.created ? "full" : "creating");
+      } else {
+        // executionBlock validates this exact interrupted operation. Never infer a phase.
+        t.phase = t.resumePhase!;
+      }
       t.sourceConversationId = c.conversationId;
       rt.executionOrigins.set(`${s.id}/${t.id}`, { ...c, operationId: p.id });
     }
@@ -221,7 +249,19 @@ export async function executionCommand(
     c,
     p.action === "cutover"
       ? "已人工确认所选范围，正在模拟割接。完成后进入技术核对与业务验证。"
-      : "所选操作已应用。已完成工作保持不变，后续状态将同步更新到任务列表。",
+      : p.action === "start"
+        ? c.language === "en"
+          ? "Task creation is confirmed. It will stop before full sync until you confirm again."
+          : "已确认创建任务。创建完成后等待全量同步确认，不会自动开始传输。"
+        : p.action === "full"
+          ? c.language === "en"
+            ? "Full sync is confirmed. It will stop before incremental sync until you confirm again."
+            : "已确认全量同步。完成后等待增量同步确认，不会自动进入下一步。"
+          : p.action === "increment"
+            ? c.language === "en"
+              ? "Incremental sync is confirmed. Ready tasks continue incremental sync; cutover still requires separate confirmation."
+              : "已确认增量同步。就绪后保持持续增量，割接仍须再次人工确认。"
+            : "所选操作已应用。已完成工作保持不变，后续状态将同步更新到任务列表。",
     [{ kind: "execution-work", view: "tasks", taskIds: p.taskIds }],
   );
   publishExecution(rt, s);
@@ -233,7 +273,7 @@ export async function checkMd(
   _c: OperationContext,
   _options: RequestOptions,
 ) {
-  throw new Error("请在连接面板填写 Migration 配置并检测");
+  throw new Error("请在对话中填写 Migration 配置并检测");
 }
 export async function executeTasks(
   _rt: MockRuntime,
@@ -241,5 +281,5 @@ export async function executeTasks(
   _kind: ExecutionTaskKind,
   _options: RequestOptions,
 ) {
-  throw new Error("请在实施面板选择批次并确认操作预览");
+  throw new Error("请在实施对话选择批次并确认操作预览");
 }

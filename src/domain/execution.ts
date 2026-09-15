@@ -2,7 +2,9 @@ import type { OperationContext, ProjectSnapshot } from "./models";
 export type ExecutionPhase =
   | "pending"
   | "creating"
+  | "created"
   | "full"
+  | "full-complete"
   | "incremental"
   | "ready"
   | "cutover"
@@ -11,6 +13,7 @@ export type ExecutionPhase =
   | "failed";
 export type ExecutionAction =
   | "start"
+  | "full"
   | "increment"
   | "cutover"
   | "pause"
@@ -138,7 +141,9 @@ export interface ExecutionState {
 export const phaseLabels: Record<ExecutionPhase, string> = {
   pending: "待创建",
   creating: "创建中",
+  created: "待全量同步",
   full: "全量同步",
+  "full-complete": "待增量同步",
   incremental: "增量同步",
   ready: "可割接",
   cutover: "割接中",
@@ -147,8 +152,9 @@ export const phaseLabels: Record<ExecutionPhase, string> = {
   failed: "异常",
 };
 export const actionLabels: Record<ExecutionAction, string> = {
-  start: "启动批次",
-  increment: "立即增量",
+  start: "创建任务",
+  full: "开始全量同步",
+  increment: "开始增量同步",
   cutover: "发起割接",
   pause: "暂停同步",
   resume: "恢复同步",
@@ -160,9 +166,12 @@ export function executionSummary(e?: ExecutionState) {
   const tasks = e?.tasks ?? [];
   return {
     total: tasks.length,
-    pending: tasks.filter((t) => !t.created).length,
+    pending: tasks.filter((t) => t.phase === "pending").length,
+    creating: tasks.filter((t) => t.phase === "creating").length,
+    waitingFull: tasks.filter((t) => t.phase === "created").length,
+    waitingIncrement: tasks.filter((t) => t.phase === "full-complete").length,
     syncing: tasks.filter((t) =>
-      ["creating", "full", "incremental", "ready"].includes(t.phase),
+      ["full", "incremental", "ready"].includes(t.phase),
     ).length,
     cutover: tasks.filter((t) => t.phase === "validation").length,
     failed: tasks.filter((t) => t.phase === "failed").length,
@@ -207,8 +216,14 @@ export function executionBlock(
       : "仅同步中的任务可暂停";
   if (e.connectionStatus !== "ready") return "请先检测 Migration 连接";
   if (action === "start")
-    return task.phase === "pending" ? undefined : "任务已经启动";
+    return task.phase === "pending" && !task.created
+      ? undefined
+      : "任务已经创建或正在创建";
   if (unresolvedTaskIssue(e, task.id)) return "请先完成问题处理与复查";
+  if (action === "full")
+    return task.phase === "created" && task.created
+      ? undefined
+      : "请先完成任务创建；全量同步须单独确认";
   if (action === "cutover") {
     if (task.phase !== "ready" || !task.lastSync)
       return "请先完成全量与增量同步";
@@ -226,11 +241,28 @@ export function executionBlock(
     return undefined;
   }
   if (action === "increment")
-    return task.phase === "ready" ? undefined : "任务尚未就绪或正在同步";
+    return ["full-complete", "ready"].includes(task.phase)
+      ? undefined
+      : "请先完成全量同步；增量同步须单独确认";
   if (action === "resume")
-    return task.phase === "paused" ? undefined : "任务未暂停";
+    return task.phase !== "paused"
+      ? "任务未暂停"
+      : canResumePhase(task.resumePhase)
+        ? undefined
+        : "没有可恢复的已确认操作，请重新选择阶段操作";
   if (action === "retry")
-    return task.phase === "failed" ? undefined : "任务未失败";
+    return task.phase !== "failed"
+      ? "任务未失败"
+      : canResumePhase(task.resumePhase)
+        ? undefined
+        : "没有可重试的已确认操作，请重新选择阶段操作";
+}
+/** Resume only the recorded interrupted operation; waiting states never imply consent. */
+export function canResumePhase(phase?: ExecutionPhase) {
+  return (
+    !!phase &&
+    ["creating", "full", "incremental", "ready", "cutover"].includes(phase)
+  );
 }
 export function canValidate(e: ExecutionState, v: BusinessValidation) {
   return v.technical !== "different" && !unresolvedTaskIssue(e, v.taskId);

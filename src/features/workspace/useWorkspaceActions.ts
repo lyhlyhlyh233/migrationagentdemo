@@ -50,7 +50,11 @@ export function useWorkspaceActions(projectId: string) {
     language: readPreference("language"),
   };
   const notify = (notice: string) =>
-    dispatchUi({ type: "project", id: projectId, patch: { actionError: notice } });
+    dispatchUi({
+      type: "project",
+      id: projectId,
+      patch: { actionError: notice },
+    });
   async function invoke(work: () => Promise<unknown>) {
     notify("");
     try {
@@ -154,6 +158,20 @@ export function useWorkspaceActions(projectId: string) {
           requestId,
           attachment,
           context: p.panel ? p.contextLabel : undefined,
+          ...(["tasks", "execution", "connection", "issues"].includes(
+            p.panel ?? "",
+          ) || chat?.stageId === "migration"
+            ? {
+                executionContext: {
+                  ...(p.executionView.selected.length
+                    ? { taskIds: p.executionView.selected }
+                    : {}),
+                  ...(p.executionView.batchId
+                    ? { batchId: p.executionView.batchId }
+                    : {}),
+                },
+              }
+            : {}),
         });
         if (withAttachment)
           view({ requestId: undefined, attachment: undefined });

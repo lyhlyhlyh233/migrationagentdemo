@@ -168,18 +168,40 @@ export function workspacePresentation(s: ProjectSnapshot) {
         e.connectionStatus === "checking",
       ),
       step(
-        "创建与全量同步",
+        "创建迁移任务",
         `${e.tasks.filter((t) => t.created).length} / ${total}`,
         total > 0 && e.tasks.every((t) => t.created),
-        e.tasks.some((t) => ["creating", "full"].includes(t.phase)),
+        e.tasks.some((t) => t.phase === "creating"),
       ),
       step(
-        "保持增量与人工割接",
+        "确认并执行全量同步",
+        `${e.tasks.filter((t) => ["full-complete", "incremental", "ready", "cutover", "validation"].includes(t.phase)).length} / ${total}`,
+        total > 0 &&
+          e.tasks.every((t) =>
+            [
+              "full-complete",
+              "incremental",
+              "ready",
+              "cutover",
+              "validation",
+            ].includes(t.phase),
+          ),
+        e.tasks.some((t) => t.phase === "full"),
+      ),
+      step(
+        "确认并执行增量同步",
+        `${e.tasks.filter((t) => ["ready", "cutover", "validation"].includes(t.phase)).length} / ${total}`,
+        total > 0 &&
+          e.tasks.every((t) =>
+            ["ready", "cutover", "validation"].includes(t.phase),
+          ),
+        e.tasks.some((t) => t.phase === "incremental"),
+      ),
+      step(
+        "人工确认割接",
         `${cutover} / ${total} 已割接`,
         total > 0 && cutover === total,
-        e.tasks.some((t) =>
-          ["incremental", "ready", "cutover"].includes(t.phase),
-        ),
+        e.tasks.some((t) => t.phase === "cutover"),
       ),
       step(
         "处理执行问题",

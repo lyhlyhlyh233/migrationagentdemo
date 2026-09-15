@@ -92,16 +92,13 @@ export function PlanningIntake({
           <Icon name="attach" size={15} />
           {t("导入规划资料")}
         </Button>
-        <Button
-          disabled={locked || unsaved}
-          onClick={() => void execute({ type: "planning.sampleInputs" })}
+        <button
+          type="button"
+          className={`${styles.textAction} ${styles.downloadLink}`}
+          onClick={() => onDownload("planning-template")}
         >
-          {t("使用样例数据")}
-        </Button>
-        <Button onClick={() => onDownload("planning-template")}>
-          <Icon name="download" size={15} />
           {t("下载模板")}
-        </Button>
+        </button>
       </div>
       <p className={styles.note}>
         {s.planningWorkbook || t("尚未导入资料")} ·{" "}
@@ -186,6 +183,14 @@ export function PlanningIntake({
           {t(s.planningStatus === "generating" ? "正在生成" : "生成规划初稿")}
           <Icon name="right" size={15} />
         </Button>
+        <button
+          type="button"
+          className={styles.textAction}
+          disabled={locked || unsaved}
+          onClick={() => void execute({ type: "planning.sampleInputs" })}
+        >
+          {t("使用样例数据")}
+        </button>
       </div>
     </section>
   );

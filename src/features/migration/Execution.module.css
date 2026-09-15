@@ -170,7 +170,7 @@
   text-align: left;
 }
 .table td {
-  padding: 11px 8px;
+  padding: 8px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
   overflow-wrap: anywhere;
@@ -413,4 +413,30 @@
   border: 1px solid var(--line-strong);
   border-radius: 6px;
   cursor: pointer;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.conversationPreview {
+  font-size: var(--ui-size);
+  line-height: 1.5;
+}
+.conversationPreview h3 {
+  font-size: var(--ui-title);
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.conversationPreview p {
+  margin: 8px 0;
+}
+.conversationPreview .notice {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--secondary);
 }

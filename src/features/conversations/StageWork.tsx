@@ -40,7 +40,7 @@ export function StageWork({
         />
       ) : stage === "migration" ? (
         <div>
-          <p>{t("请选择批次并核对连接。复杂操作在右侧实施面板完成。")}</p>
+          <p>{t("请选择批次，通过对话预览并确认下一步操作。")}</p>
           <Button primary onClick={() => onPanel("execution")}>
             {t("打开迁移实施面板")}
           </Button>

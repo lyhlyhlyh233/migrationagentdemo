@@ -8,6 +8,8 @@ export interface ExecutionView {
   batchId: string;
   issueId: string;
   expandedTask?: string;
+  dashboardPage: number;
+  dashboardSize: number;
   query: string;
   status: string;
   page: number;
@@ -26,6 +28,8 @@ export interface ExecutionView {
 }
 export const initialExecutionView = (): ExecutionView => ({
   tab: "connection",
+  dashboardPage: 1,
+  dashboardSize: 10,
   mode: "batches",
   batchId: "",
   issueId: "",

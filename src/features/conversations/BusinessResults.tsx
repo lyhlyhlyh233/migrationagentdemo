@@ -1,4 +1,5 @@
 import { RiskPromptPreview } from "./RiskPromptPreview";
+import type { ConversationConfirmation } from "./state";
 import { PlanningPreview } from "@/features/planning/PlanningPreview";
 import { planningIsStale } from "@/domain/planning";
 import { PlanningForm } from "@/features/planning/PlanningForm";
@@ -14,6 +15,8 @@ import { Status } from "@/shared/ui/Status";
 import { useState, type ReactNode } from "react";
 import styles from "./BusinessResults.module.css";
 export interface ResultActions {
+  onConfirmation?: (value: ConversationConfirmation) => void;
+  executionInput?: ReactNode;
   conversationId?: string;
   onExecutionWork?: (
     work: Extract<BusinessResult, { kind: "execution-work" }>,
@@ -97,6 +100,9 @@ function BusinessResultBlock({
   onPlanningTimeline,
   onExecutionWork,
   conversationId,
+  onConfirmation,
+  executionInput,
+  onAsk,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -108,6 +114,33 @@ function BusinessResultBlock({
   );
   if (r.kind === "risk-preview")
     return <RiskPromptPreview result={r} snapshot={s} onCommand={onCommand} />;
+  if (r.kind === "execution-prompt")
+    return (
+      <div className={styles.quickActions}>
+        <Button onClick={() => onAsk?.(r.text)}>
+          {t(r.text)}
+          <Icon name="right" size={15} />
+        </Button>
+      </div>
+    );
+  if (r.kind === "execution-preview")
+    return s.execution?.preview?.id === r.previewId ? (
+      <div className={styles.quickActions}>
+        <Button
+          onClick={() =>
+            onConfirmation?.({ kind: "execution", id: r.previewId })
+          }
+          disabled={
+            s.execution.preview.origin.conversationId !== conversationId
+          }
+        >
+          {t("查看确认事项")}
+          <Icon name="right" size={15} />
+        </Button>
+      </div>
+    ) : null;
+  if (r.kind === "execution-work" && r.view === "connection" && executionInput)
+    return executionInput;
   if (r.kind === "execution-work")
     return (
       <div className={styles.quickActions}>
@@ -163,14 +196,28 @@ function BusinessResultBlock({
     return planningInput;
   if (r.kind === "planning-preview")
     return s.planning?.preview?.id === r.previewId ? (
-      <PlanningPreview
-        preview={s.planning.preview}
-        canApply={
-          s.planning.preview.conversationId === conversationId &&
-          s.batchConfirmation !== "confirmed"
-        }
-        onCommand={onCommand}
-      />
+      onConfirmation && s.planning.batches.length ? (
+        <div className={styles.quickActions}>
+          <Button
+            disabled={s.planning.preview.conversationId !== conversationId}
+            onClick={() =>
+              onConfirmation({ kind: "planning", id: r.previewId })
+            }
+          >
+            {t("查看调整预览")}
+            <Icon name="right" size={15} />
+          </Button>
+        </div>
+      ) : (
+        <PlanningPreview
+          preview={s.planning.preview}
+          canApply={
+            s.planning.preview.conversationId === conversationId &&
+            s.batchConfirmation !== "confirmed"
+          }
+          onCommand={onCommand}
+        />
+      )
     ) : null;
   if (r.kind === "assessment-input")
     return activeInput && s.assessmentStatus !== "completed" && onUpload ? (
@@ -194,7 +241,11 @@ function BusinessResultBlock({
   if (r.kind === "assessment-decision") return null;
   if (r.kind === "summary")
     return (
-      <section className={styles.summary} aria-label={t(r.title)}>
+      <section
+        className={styles.summary}
+        data-stage={r.stageId}
+        aria-label={t(r.title)}
+      >
         <dl className={styles.metrics}>
           {r.metrics.map((m) => (
             <div key={m.label}>
@@ -276,6 +327,17 @@ function BusinessResultBlock({
   if (r.kind === "approval") {
     const a = s.approvals.find((a) => a.id === r.approvalId);
     if (!a) return null;
+    if (a.action.kind === "stage" && onConfirmation)
+      return a.status === "confirmed" ? (
+        <Status value="confirmed" />
+      ) : (
+        <div className={styles.quickActions}>
+          <Button onClick={() => onConfirmation({ kind: "stage", id: a.id })}>
+            {t("查看确认事项")}
+            <Icon name="right" size={15} />
+          </Button>
+        </div>
+      );
     const allowed =
       a.status === "pending" &&
       (a.action.kind === "stage"

@@ -237,6 +237,9 @@ export interface Artifact {
   kind: "input" | "report" | "plan" | "template";
 }
 export type BusinessResult =
+  | { kind: "execution-preview"; previewId: string }
+  | { kind: "execution-prompt"; text: string }
+  | { kind: "execution-prompt"; text: string }
   | {
       kind: "execution-work";
       view: "connection" | "tasks" | "issues" | "validation";

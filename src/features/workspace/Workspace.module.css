@@ -1857,7 +1857,7 @@
   --side-nav-width: 256px;
   --side-panel-width: clamp(
     420px,
-    var(--side-panel-size, calc((100% - var(--side-nav-width)) * 0.38)),
+    var(--side-panel-size, calc((100% - var(--side-nav-width)) * 0.30)),
     calc(100% - var(--side-nav-width) - 360px)
   );
   grid-template-columns: var(--side-nav-width) minmax(0, 1fr) var(

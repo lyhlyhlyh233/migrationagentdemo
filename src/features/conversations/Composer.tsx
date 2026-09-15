@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   messageAttachmentAccept,
   messageAttachmentError,
@@ -37,7 +37,11 @@ export function Composer({
   attachment,
   onAttachment,
   onPrompt = onSend,
+  confirmation,
+  executionPrompts = [],
 }: {
+  confirmation?: ReactNode;
+  executionPrompts?: string[];
   assessmentComplete?: boolean;
   planningGenerated?: boolean;
   attachment?: File;
@@ -69,7 +73,9 @@ export function Composer({
       ? ["跳过所有高风险", "接受所有中风险", "解读剩余风险"]
       : stage === "planning" && planningGenerated
         ? ["将 B02 割接改到周六", "降低单批次并发", "使用样例数据调整规划"]
-        : [];
+        : stage === "migration" || executionPrompts.length
+          ? executionPrompts
+          : [];
   const workNames = {
     research: "查看评估资料",
     planning: "查看规划工作台",
@@ -170,7 +176,7 @@ export function Composer({
           {t("回复未完成，输入已保留。发送以重试。")}
         </p>
       )}
-      {((stage && !compact) || !!prompts.length) && (
+      {!confirmation && ((stage && !compact) || !!prompts.length) && (
         <div className={styles.topRow}>
           <div
             className={styles.shortcutRow}
@@ -213,108 +219,110 @@ export function Composer({
           {t(fileError)}
         </p>
       )}
-      <form
-        className="chat-composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!busy) onSend(draft);
-        }}
-      >
-        <textarea
-          value={draft}
-          onChange={(e) => onDraft(e.target.value)}
-          disabled={busy}
-          onKeyDown={(e) => {
-            if (
-              e.key === "Enter" &&
-              !e.shiftKey &&
-              !e.nativeEvent.isComposing
-            ) {
-              e.preventDefault();
-              if (!busy) onSend(draft);
-            }
+      {confirmation ?? (
+        <form
+          className="chat-composer"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy) onSend(draft);
           }}
-          rows={2}
-          placeholder={t("描述你的任务，或选择上方快捷操作…")}
-          aria-label={t("向迁移智能体提问")}
-        />
-        {attachment && (
-          <div className={styles.attachment}>
-            <Icon name="file" size={15} />
-            <span title={attachment.name}>{attachment.name}</span>
-            <small>{t(busy ? "正在发送" : "待发送")}</small>
-            <button
-              type="button"
-              disabled={busy}
-              aria-label={t("移除附件")}
-              onClick={() => onAttachment?.(undefined)}
-            >
-              <Icon name="close" size={14} />
-            </button>
-          </div>
-        )}
-        <div className="composer-bottom">
-          <div className="composer-left">
-            {onAttachment && (
-              <>
-                <input
-                  ref={fileInput}
-                  type="file"
-                  disabled={busy}
-                  hidden
-                  accept={messageAttachmentAccept}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = "";
-                    if (!file) return;
-                    const error = messageAttachmentError(file);
-                    setFileError(error);
-                    if (!error) onAttachment(file);
-                  }}
-                />
-                <button
-                  type="button"
-                  className={styles.attachButton}
-                  disabled={busy}
-                  aria-label={t("添加附件")}
-                  title={t("添加附件 · 每条消息一个，最多 20 MB")}
-                  onClick={() => fileInput.current?.click()}
-                >
-                  <Icon name="attach" size={18} />
-                </button>
-              </>
-            )}
-
-            <AgentPicker
-              options={catalog.agents}
-              value={agentId}
-              onChange={onAgent}
-            />
-          </div>
-          <div className="composer-right">
-            <ModelPicker
-              options={catalog.models}
-              value={modelId}
-              onChange={onModel}
-            />
-            <button
-              className="send-button"
-              type={busy ? "button" : "submit"}
-              disabled={!busy && !draft.trim() && !attachment}
-              aria-label={t(busy ? "停止回复" : "发送消息")}
-              title={t(busy ? "停止回复" : "发送消息")}
-              onClick={busy ? onStop : undefined}
-            >
-              {busy ? (
-                <span className={styles.stopIcon} aria-hidden="true" />
-              ) : (
-                <Icon name="arrow" size={18} />
+        >
+          <textarea
+            value={draft}
+            onChange={(e) => onDraft(e.target.value)}
+            disabled={busy}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey &&
+                !e.nativeEvent.isComposing
+              ) {
+                e.preventDefault();
+                if (!busy) onSend(draft);
+              }
+            }}
+            rows={2}
+            placeholder={t("描述你的任务，或选择上方快捷操作…")}
+            aria-label={t("向迁移智能体提问")}
+          />
+          {attachment && (
+            <div className={styles.attachment}>
+              <Icon name="file" size={15} />
+              <span title={attachment.name}>{attachment.name}</span>
+              <small>{t(busy ? "正在发送" : "待发送")}</small>
+              <button
+                type="button"
+                disabled={busy}
+                aria-label={t("移除附件")}
+                onClick={() => onAttachment?.(undefined)}
+              >
+                <Icon name="close" size={14} />
+              </button>
+            </div>
+          )}
+          <div className="composer-bottom">
+            <div className="composer-left">
+              {onAttachment && (
+                <>
+                  <input
+                    ref={fileInput}
+                    type="file"
+                    disabled={busy}
+                    hidden
+                    accept={messageAttachmentAccept}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!file) return;
+                      const error = messageAttachmentError(file);
+                      setFileError(error);
+                      if (!error) onAttachment(file);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.attachButton}
+                    disabled={busy}
+                    aria-label={t("添加附件")}
+                    title={t("添加附件 · 每条消息一个，最多 20 MB")}
+                    onClick={() => fileInput.current?.click()}
+                  >
+                    <Icon name="attach" size={18} />
+                  </button>
+                </>
               )}
-            </button>
+
+              <AgentPicker
+                options={catalog.agents}
+                value={agentId}
+                onChange={onAgent}
+              />
+            </div>
+            <div className="composer-right">
+              <ModelPicker
+                options={catalog.models}
+                value={modelId}
+                onChange={onModel}
+              />
+              <button
+                className="send-button"
+                type={busy ? "button" : "submit"}
+                disabled={!busy && !draft.trim() && !attachment}
+                aria-label={t(busy ? "停止回复" : "发送消息")}
+                title={t(busy ? "停止回复" : "发送消息")}
+                onClick={busy ? onStop : undefined}
+              >
+                {busy ? (
+                  <span className={styles.stopIcon} aria-hidden="true" />
+                ) : (
+                  <Icon name="arrow" size={18} />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
-      {!compact && (
+        </form>
+      )}
+      {!compact && !confirmation && (
         <div className={styles.footerRow}>
           <p className="composer-note">
             {t("Enter 发送 · Shift + Enter 换行")}

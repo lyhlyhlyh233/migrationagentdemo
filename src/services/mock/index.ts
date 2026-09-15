@@ -10,6 +10,7 @@ import {
 } from "@/domain/models";
 import type {
   FilePurpose,
+  MessageInput,
   MigrationService,
   ProjectCommand,
   RequestOptions,
@@ -223,14 +224,7 @@ export class MockMigrationService implements MigrationService {
   }
   async sendMessage(
     c: OperationContext,
-    input: {
-      text: string;
-      agentId: string;
-      modelId: string;
-      requestId: string;
-      context?: string;
-      attachment?: File;
-    },
+    input: MessageInput,
     options: RequestOptions = {},
   ) {
     this.active(options);
