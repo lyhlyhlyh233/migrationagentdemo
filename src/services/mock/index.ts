@@ -24,6 +24,7 @@ import { researchTemplate, scopeArtifacts } from "./files";
 import { previewPlanning } from "./planning";
 import { initializePlanning } from "./planning-data";
 import { planningFiles } from "./planning-files";
+import { assessmentFileIds, assessmentFiles } from "./assessment-files";
 import { MockRuntime } from "./runtime";
 import { createStageConversation } from "./fixtures";
 const catalog: Catalog = {
@@ -339,6 +340,24 @@ export class MockMigrationService implements MigrationService {
   ) {
     this.active(options);
     const s = this.runtime.state(projectId);
+    if (assessmentFileIds.includes(artifactId)) {
+      requireCondition(s.assessmentStatus === "completed", "请先完成调研评估");
+      assessmentFiles(this.runtime, s);
+      if (artifactId === "assessment-report") {
+        const snapshot = structuredClone(s);
+        const { assessmentPresentation } =
+          await import("./assessment-presentation");
+        this.active(options);
+        const blob = await assessmentPresentation(snapshot);
+        this.active(options);
+        const artifact = snapshot.artifacts.find((a) => a.id === artifactId)!;
+        return {
+          filename: artifact.filename,
+          mediaType: artifact.mediaType,
+          blob,
+        };
+      }
+    }
     if (artifactId === "validation-report")
       validationReport(this.runtime, projectId);
     const attachment = this.runtime.attachments.get(

@@ -34,7 +34,12 @@ export function addArtifact(
   return artifact;
 }
 export function workbook(
-  sheets: { name: string; rows: (string | number)[][]; timeline?: boolean }[],
+  sheets: {
+    name: string;
+    rows: (string | number)[][];
+    timeline?: boolean;
+    widths?: number[];
+  }[],
 ) {
   const escape = (v: string | number) =>
     String(v)
@@ -42,7 +47,7 @@ export function workbook(
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
-  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#F0F1F2" ss:Pattern="Solid"/></Style><Style ss:ID="sync"><Interior ss:Color="#D7E6F7" ss:Pattern="Solid"/></Style><Style ss:ID="cutover"><Interior ss:Color="#F5E4BF" ss:Pattern="Solid"/></Style><Style ss:ID="verify"><Interior ss:Color="#D5EBDE" ss:Pattern="Solid"/></Style></Styles>${sheets.map((s) => `<Worksheet ss:Name="${escape(s.name)}"><Table>${s.rows.map((r, i) => `<Row>${r.map((v, j) => `<Cell${i === 0 ? ' ss:StyleID="header"' : s.timeline && j > 2 && ["同步", "割接", "验证"].includes(String(v)) ? ` ss:StyleID="${v === "同步" ? "sync" : v === "割接" ? "cutover" : "verify"}"` : ""}><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${escape(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`).join("")}</Workbook>`;
+  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="wrapped"><Alignment ss:Vertical="Top" ss:WrapText="1"/></Style><Style ss:ID="header"><Alignment ss:Vertical="Top" ss:WrapText="1"/><Font ss:Bold="1"/><Interior ss:Color="#F0F1F2" ss:Pattern="Solid"/></Style><Style ss:ID="sync"><Interior ss:Color="#D7E6F7" ss:Pattern="Solid"/></Style><Style ss:ID="cutover"><Interior ss:Color="#F5E4BF" ss:Pattern="Solid"/></Style><Style ss:ID="verify"><Interior ss:Color="#D5EBDE" ss:Pattern="Solid"/></Style></Styles>${sheets.map((s) => `<Worksheet ss:Name="${escape(s.name)}"><Table>${s.widths?.map((w) => `<Column ss:Width="${w}"/>`).join("") ?? ""}${s.rows.map((r, i) => `<Row>${r.map((v, j) => `<Cell${i === 0 ? ' ss:StyleID="header"' : s.timeline && j > 2 && ["同步", "割接", "验证"].includes(String(v)) ? ` ss:StyleID="${v === "同步" ? "sync" : v === "割接" ? "cutover" : "verify"}"` : s.widths ? ' ss:StyleID="wrapped"' : ""}><Data ss:Type="${typeof v === "number" ? "Number" : "String"}">${escape(v)}</Data></Cell>`).join("")}</Row>`).join("")}</Table></Worksheet>`).join("")}</Workbook>`;
 }
 export function scopeArtifacts(rt: MockRuntime, s: ProjectSnapshot) {
   const rows = migrationScope(s);

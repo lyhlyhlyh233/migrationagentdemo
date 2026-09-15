@@ -59,14 +59,16 @@ export function ValidationWorkspace({
       <section className={styles.root}>
         <div className={styles.empty}>
           <p>{t("首批割接完成后，请人工确认进入结果验证。")}</p>
-          <Button
-            onClick={() =>
-              void onCommand({ type: "stage.review", target: "validation" })
-            }
-          >
-            {t("查看验证交接条件")}
-          </Button>
-          <Button onClick={onReturn}>{t("返回迁移实施")}</Button>
+          <div className={styles.toolbar}>
+            <Button
+              onClick={() =>
+                void onCommand({ type: "stage.review", target: "validation" })
+              }
+            >
+              {t("查看验证交接条件")}
+            </Button>
+            <Button onClick={onReturn}>{t("返回迁移实施")}</Button>
+          </div>
         </div>
       </section>
     );
@@ -307,7 +309,7 @@ export function ValidationWorkspace({
                 {t("影响业务，需处理后重新验证")}
               </label>
             )}
-            <label>
+            <label className={styles.field}>
               {t(
                 v.editor === "difference"
                   ? "预期变更与接受原因"
@@ -536,7 +538,7 @@ export function ValidationWorkspace({
                     {t(f.blocking ? "影响业务" : "普通建议")}
                   </p>
                   {!e.finalized && (
-                    <label>
+                    <label className={styles.field}>
                       {t("补充反馈附件")}
                       <input
                         type="file"
@@ -554,7 +556,7 @@ export function ValidationWorkspace({
                   ))}
                   {f.status !== "resolved" && !e.finalized && (
                     <>
-                      <label>
+                      <label className={styles.field}>
                         {t("处理与复查说明")}
                         <textarea
                           value={

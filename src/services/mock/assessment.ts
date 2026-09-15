@@ -2,7 +2,7 @@ import type { OperationContext } from "@/domain/models";
 import type { RequestOptions } from "../contracts";
 import { requireCondition } from "../errors";
 import { offerHandoff } from "./handoff";
-import { addArtifact } from "./files";
+import { assessmentFiles } from "./assessment-files";
 import {
   buildAssessmentRisks,
   assessmentReportReply,
@@ -36,36 +36,11 @@ export async function assess(
       s.risks = buildAssessmentRisks(s);
       s.assessmentStatus = "completed";
       const report = assessmentReportReply(s);
-      addArtifact(
-        rt,
-        s,
-        "assessment-report",
-        "调研评估报告",
-        `# ${s.info!.siteName} · 调研评估
-
-${report.text}
-
-## 规则与发现
-
-${s.risks
-  .map(
-    (r) => `### ${r.description}
-虚拟机：${r.vmName}（${r.vmId}）
-${r.rule}
-${r.evidence}
-建议：${r.recommendation}`,
-  )
-  .join("\n\n")}
-
-说明：本文件为前端 Mock 输出，未执行真实文件解析或兼容性匹配。`,
-        "report",
-        "research",
-        "md",
-      );
+      assessmentFiles(rt, s);
       rt.result(c, report.text, report.results);
       delete s.pending[c.conversationId];
       offerHandoff(rt, c);
-      rt.notice(c, "评估完成，已生成风险与评估报告");
+      rt.notice(c, "评估完成，已生成 PPT 报告和 Excel 评估结果");
     },
     options,
   );

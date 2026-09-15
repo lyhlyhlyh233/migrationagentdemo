@@ -233,7 +233,10 @@ export function assessmentReportReply(
       ...(!question || /方案|strategy|plan/i.test(question)
         ? [{ kind: "assessment-decision" as const }]
         : []),
-      { kind: "artifacts", artifactIds: ["assessment-report"] },
+      {
+        kind: "artifacts",
+        artifactIds: ["assessment-report", "assessment-results"],
+      },
     ],
   };
 }

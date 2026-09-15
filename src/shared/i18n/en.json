@@ -172,7 +172,6 @@
   "请先创建项目": "Create a project first",
   "请先上传两份评估资料": "Upload both assessment files first",
   "当前项目已完成评估": "Assessment is already complete",
-  "评估完成，已生成风险与评估报告": "Assessment complete. Risks and the report are available.",
   "创建项目后自动开启评估会话": "An assessment conversation opens after project creation",
   "请先完成上一阶段的交付条件": "Complete the previous stage's prerequisites first",
   "等待近端 MD 配置": "Waiting for local MD setup",
@@ -1937,5 +1936,7 @@
   "主要补充业务系统、业务等级、集群类型与角色，也可一并填写业务依赖、带宽和迁移约束。业务资料可选。": "Use the workbook mainly for business systems, criticality, cluster types and roles. It also supports dependencies, bandwidth and migration constraints. Business information is optional.",
   "上传后展示示例解析预览，尚未读取实际表格内容；确认后才应用。": "Uploads show a sample preview, without reading the actual workbook contents. Confirm before applying.",
   "带宽与基础约束": "Bandwidth and basic constraints",
-  "有未保存的规划资料，请先保存或放弃修改再导入、生成。": "Save or discard your pending inputs before importing or generating a plan."
+  "有未保存的规划资料，请先保存或放弃修改再导入、生成。": "Save or discard your pending inputs before importing or generating a plan.",
+  "评估完成，已生成 PPT 报告和 Excel 评估结果": "Assessment complete. The PowerPoint report and Excel results are ready.",
+  "虚拟机评估结果": "VM assessment results"
 }

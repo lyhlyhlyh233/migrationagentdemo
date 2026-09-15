@@ -87,6 +87,32 @@ async function action(
   });
 }
 describe("project service boundaries", () => {
+  it("exports assessment as real PPTX plus a complete Excel results workbook", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const snapshot = await service.getProject(c.projectId);
+    const files = snapshot.artifacts.filter((a) => a.stageId === "research");
+    expect(files.map((a) => a.filename)).toEqual([
+      expect.stringMatching(/\.pptx$/),
+      expect.stringMatching(/\.xls$/),
+    ]);
+    const excel = await service.download(c.projectId, "assessment-results");
+    const xml = await excel.blob.text();
+    for (const sheet of ["迁移整体评估总览", "虚拟机评估总览", "风险评估详情"])
+      expect(xml).toContain(`ss:Name="${sheet}"`);
+    expect(xml).toContain("20 台风险虚拟机共涉及 26 条风险");
+    vi.useRealTimers();
+    const ppt = await service.download(c.projectId, "assessment-report");
+    expect(ppt.mediaType).toBe(
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    );
+    expect(ppt.blob.size).toBeGreaterThan(10000);
+    expect([
+      ...new Uint8Array(await ppt.blob.slice(0, 4).arrayBuffer()),
+    ]).toEqual([80, 75, 3, 4]);
+  });
+
   it("stops the automatic opening reply without a late answer or failure notice", async () => {
     const s = await service.createProject(info, "en");
     const c = {
@@ -584,7 +610,7 @@ describe("project service boundaries", () => {
     expect(s.messages.find((m) => m.results)?.results).toEqual(
       before.messages.find((m) => m.results)?.results,
     );
-    const file = await service.download(c.projectId, "assessment-report");
+    const file = await service.download(c.projectId, "assessment-results");
     expect(file.filename).toContain(info.siteName);
     expect(await file.blob.text()).toContain("CPU 架构检查");
     const another = await project();
@@ -642,7 +668,7 @@ describe("200 VM assessment sample", () => {
     });
     const eligible = migrationScope(assessed).map((row) => String(row[0]));
     expect(eligible).toHaveLength(186);
-    const file = await service.download(c.projectId, "assessment-report");
+    const file = await service.download(c.projectId, "assessment-results");
     const report = await file.blob.text();
     expect(report).toContain("180 台无风险，20 台风险虚拟机共涉及 26 条风险");
     for (const risk of assessed.risks) expect(report).toContain(risk.vmId);

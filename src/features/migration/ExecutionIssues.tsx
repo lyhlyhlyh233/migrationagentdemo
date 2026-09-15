@@ -139,7 +139,7 @@ export function ExecutionIssues({
                           {t("人工处理后复查")}
                         </label>
                       </div>
-                      <label>
+                      <label className={styles.field}>
                         {t("处理说明")}
                         <textarea
                           value={v.note}
@@ -147,7 +147,7 @@ export function ExecutionIssues({
                           placeholder={t("记录处理措施与复查依据")}
                         />
                       </label>
-                      <label>
+                      <label className={styles.field}>
                         {t("补充证据附件")}
                         <input
                           type="file"

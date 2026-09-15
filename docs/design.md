@@ -65,6 +65,10 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 ## 功能模块边界
 
+### 评估文件
+
+`services/mock/assessment-files.ts` 汇总评估、逐台资产和风险策略，生成 Excel 结果并登记两份交付件。`assessment-presentation.ts` 仅在 PPT 下载时动态导入，从同一快照生成 PPTX；页面仍只接收资源 ID 并调用统一下载服务。汇报内容与表格均明确标注 Mock，上传解析能力没有改变。
+
 ### 对话与结果
 
 `Conversation` 组织回答，`ConversationAnswer` 呈现正文、思考摘要及耗时，`BusinessResults` 根据领域联合类型呈现内容。服务不返回 HTML、JSX 或组件名称。

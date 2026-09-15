@@ -59,6 +59,16 @@
   overflow-y: auto;
   padding: 16px 18px;
 }
+/* Space direct sections without changing the table's own row layout. */
+.body > :not(:first-child) {
+  margin-block-start: 12px;
+}
+.body > :first-child {
+  margin-block-start: 0;
+}
+.body details[open] > summary {
+  margin-bottom: 12px;
+}
 .stack {
   display: flex;
   flex-direction: column;
@@ -106,10 +116,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-.form label {
+.form label,
+.field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 .full {
@@ -242,6 +253,7 @@
   color: var(--secondary);
 }
 .notice {
+  margin: 0;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -263,6 +275,15 @@
   border-radius: 10px;
   background: var(--surface);
   margin-block: 10px;
+}
+.notice:has(> button) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.editor > :not(:first-child) {
+  margin-block-start: 12px;
 }
 .editor h3 {
   font-size: var(--ui-title);
@@ -369,7 +390,11 @@
 }
 
 .issue > .stack {
+  margin-top: 12px;
   max-width: 850px;
+}
+.stack > p {
+  margin: 0;
 }
 .stack > button {
   align-self: flex-start;
