@@ -4,7 +4,7 @@
   gap: 5px;
   padding: 3px 7px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.4;
   color: var(--secondary);
   background: var(--surface);
@@ -32,7 +32,7 @@
   color: var(--secondary);
 }
 .empty strong {
-  font-size: 15px;
+  font-size: var(--ui-size);
   color: var(--ink);
 }
 .empty p {

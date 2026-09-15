@@ -318,6 +318,23 @@ export function RiskWorkspace({
         aria-label={t("策略操作区")}
       >
         <RiskBulkToolbar
+          navigationAction={
+            sidePanel &&
+            onManage && (
+              <button
+                className={`${styles.textAction} ${styles.manageLink}`}
+                title={t("打开迁移风险页面")}
+                aria-label={t("打开迁移风险页面")}
+                disabled={scopeLocked}
+                onClick={() =>
+                  onManage({ mode: "category", category: location.category })
+                }
+              >
+                {t("独立打开")}
+                <Icon name="open" size={14} />
+              </button>
+            )
+          }
           search={
             <label className={styles.search}>
               <Icon name="search" size={16} />

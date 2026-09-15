@@ -18,6 +18,7 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     shield: "M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7l-9-4Zm0 5v5m0 3h.01",
     tasks: "m3 6 2 2 4-4m-6 9 2 2 4-4m-6 9 2 2 4-4M12 6h9M12 13h9M12 20h9",
     sidebar: "M3 4h18v16H3V4Zm6 0v16",
+    open: "M14 3h7v7m0-7L10 14M11 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-7",
     panel: "M3 4h18v16H3V4Zm12 0v16",
     menu: "M4 6h16M4 12h16M4 18h16",
     chevron: "m8 10 4 4 4-4",

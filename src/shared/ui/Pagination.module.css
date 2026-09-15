@@ -5,12 +5,12 @@
   flex-wrap: wrap;
   gap: 6px 10px;
   padding: 10px 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .compact {
   padding: 6px 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .root > span:first-child {
@@ -20,11 +20,11 @@
   width: 105px;
 }
 .root button {
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 @media (min-width: 1920px) {
   .root,
   .root button {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
 }

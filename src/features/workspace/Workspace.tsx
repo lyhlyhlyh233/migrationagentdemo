@@ -13,7 +13,11 @@ import { Conversation } from "@/features/conversations/Conversation";
 import { AgentPanel } from "@/features/workspace/ExecutionInspector";
 import { useTranslation } from "@/shared/i18n";
 import { stageName } from "@/shared/i18n/stages";
-import { RiskSidePanel } from "@/features/risks/RiskSidePanel";
+import { RiskWorkspace } from "@/features/risks/RiskWorkspace";
+import {
+  WorkspaceSidePanel,
+  type WorkspaceSideTab,
+} from "./WorkspaceSidePanel";
 import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
@@ -37,8 +41,12 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const [riskPanel, setRiskPanel] = useState<string | null>(null);
-  const [riskPanelWidth, setRiskPanelWidth] = useState<number>();
+  const [sidePanelTab, setSidePanelTab] = useState<{
+    scope: string;
+    tab: WorkspaceSideTab;
+  }>();
+  const openSidePanelButton = useRef<HTMLButtonElement>(null);
+  const [sidePanelWidth, setSidePanelWidth] = useState<number>();
   const [navOpen, setNavOpen] = useState(false);
   const scrollViewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -71,9 +79,35 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const management = !!p.panel;
   const stage = chat?.stageId ?? p.activeStage;
   const showRail = !management && (!chat || !!chat.stageId);
-  const showRiskPanel = riskPanel === `${s.id}/${chat?.id}` && !management;
-  const showInspector =
-    !!s.info && !management && !!chat?.stageId && inspector && !showRiskPanel;
+  const panelScope = `${s.id}/${chat?.id}`;
+  const canShowSidePanel = !!s.info && !management && !!chat?.stageId;
+  const showSidePanel = canShowSidePanel && inspector;
+  const activeSideTab =
+    sidePanelTab?.scope === panelScope ? sidePanelTab.tab : "execution";
+  useEffect(() => {
+    if (
+      s.assessmentStatus !== "completed" ||
+      chat?.stageId !== "research" ||
+      management ||
+      p.assessmentRiskOpened
+    )
+      return;
+    dispatchUi({
+      type: "project",
+      id: s.id,
+      patch: { assessmentRiskOpened: true },
+    });
+    setSidePanelTab({ scope: panelScope, tab: "risks" });
+    setInspector(true);
+  }, [
+    s.id,
+    s.assessmentStatus,
+    chat?.stageId,
+    management,
+    panelScope,
+    p.assessmentRiskOpened,
+    dispatchUi,
+  ]);
   const setPanel = (panel: PanelId) => {
     dispatchUi({ type: "project", id: s.id, patch: { panel } });
     setNavOpen(false);
@@ -100,7 +134,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const model = view.modelId ?? data.catalog!.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {
-      setRiskPanel(`${s.id}/${chat?.id}`);
+      setSidePanelTab({ scope: panelScope, tab: "risks" });
+      setInspector(true);
       void a.send(t("查看迁移风险与处置建议"), agent, model);
     } else setPanel(panel);
   };
@@ -135,11 +170,11 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   return (
     <main
       style={
-        riskPanelWidth === undefined
+        sidePanelWidth === undefined
           ? undefined
-          : ({ "--risk-panel-size": `${riskPanelWidth}px` } as CSSProperties)
+          : ({ "--side-panel-size": `${sidePanelWidth}px` } as CSSProperties)
       }
-      className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "" : "inspector-collapsed"} ${management ? "management-view" : ""} ${showRiskPanel ? "risk-panel-open" : ""}`}
+      className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showSidePanel ? "" : "inspector-collapsed"} ${management ? "management-view" : ""} ${showSidePanel ? "side-panel-open" : ""}`}
     >
       <a className="skip-link" href="#workspace-content">
         {t("跳转到对话")}
@@ -203,10 +238,16 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               <Icon name={chat.stageId ? "agent" : "chat"} size={15} />
               <span>{t(chat.title)}</span>
             </div>
-            {chat.stageId && !showInspector && !showRiskPanel && (
-              <Button onClick={() => setInspector(true)}>
-                {t("查看执行详情")}
-              </Button>
+            {chat.stageId && !showSidePanel && (
+              <button
+                ref={openSidePanelButton}
+                className="icon-button"
+                title={t("展开右侧面板")}
+                aria-label={t("展开右侧面板")}
+                onClick={() => setInspector(true)}
+              >
+                <Icon name="panel" size={18} />
+              </button>
             )}
           </div>
         )}
@@ -321,67 +362,81 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           />
         )}
       </section>
-      {showInspector && (
-        <AgentPanel
-          running={running}
-          status={status}
-          steps={steps}
-          stats={[
-            {
-              label: "可纳入工具迁移",
-              value:
-                s.assessmentStatus === "completed"
-                  ? migrationScope(s).length
-                  : "待评估",
-              tone: "info",
-            },
-            {
-              label: stage === "research" ? "未选策略" : "待处理风险",
-              value: s.risks.filter(
-                (r) => !hasRiskDecision(r) && r.stage === stage,
-              ).length,
-              tone: "warning",
-            },
-            { label: "迁移批次", value: s.batchTasks.length, tone: "info" },
-            {
-              label: "人工验收",
-              value: `${s.validationTasks.filter((v) => v.confirmed).length} / ${s.validationTasks.length}`,
-              tone: "success",
-            },
-          ]}
-          artifacts={s.artifacts
-            .filter((v) => v.stageId === stage)
-            .map((v) => ({
-              label: v.label,
-              meta: v.filename,
-              onClick: () => a.download(v.id),
-            }))}
-          events={scopedMessages.map((m) => ({
-            text: m.text.split("\n")[0].replace(/\*\*/g, ""),
-            time: m.time,
-          }))}
-          onClose={() => setInspector(false)}
-        />
-      )}
-      {showRiskPanel && (
-        <RiskSidePanel
-          key={riskPanel}
-          onWidthChange={setRiskPanelWidth}
-          snapshot={s}
-          onCommand={a.execute}
-          onClose={() => setRiskPanel(null)}
-          location={p.riskLocation}
-          onLocationChange={(riskLocation) =>
-            dispatchUi({ type: "project", id: s.id, patch: { riskLocation } })
-          }
-          onManage={(riskLocation) => {
-            setRiskPanel(null);
-            dispatchUi({
-              type: "project",
-              id: s.id,
-              patch: { panel: "risk", riskLocation },
-            });
+      {canShowSidePanel && (
+        <WorkspaceSidePanel
+          key={panelScope}
+          open={inspector}
+          activeTab={activeSideTab}
+          onTabChange={(tab) => setSidePanelTab({ scope: panelScope, tab })}
+          onWidthChange={setSidePanelWidth}
+          onCollapse={() => {
+            setInspector(false);
+            requestAnimationFrame(() => openSidePanelButton.current?.focus());
           }}
+          execution={
+            <AgentPanel
+              running={running}
+              status={status}
+              steps={steps}
+              stats={[
+                {
+                  label: "可纳入工具迁移",
+                  value:
+                    s.assessmentStatus === "completed"
+                      ? migrationScope(s).length
+                      : "待评估",
+                  tone: "info",
+                },
+                {
+                  label: stage === "research" ? "未选策略" : "待处理风险",
+                  value: s.risks.filter(
+                    (r) => !hasRiskDecision(r) && r.stage === stage,
+                  ).length,
+                  tone: "warning",
+                },
+                { label: "迁移批次", value: s.batchTasks.length, tone: "info" },
+                {
+                  label: "人工验收",
+                  value: `${s.validationTasks.filter((v) => v.confirmed).length} / ${s.validationTasks.length}`,
+                  tone: "success",
+                },
+              ]}
+              artifacts={s.artifacts
+                .filter((v) => v.stageId === stage)
+                .map((v) => ({
+                  label: v.label,
+                  meta: v.filename,
+                  onClick: () => a.download(v.id),
+                }))}
+              events={scopedMessages.map((m) => ({
+                text: m.text.split("\n")[0].replace(/\*\*/g, ""),
+                time: m.time,
+              }))}
+            />
+          }
+          risks={
+            <RiskWorkspace
+              key={s.id}
+              snapshot={s}
+              onCommand={a.execute}
+              sidePanel
+              location={p.riskLocation}
+              onLocationChange={(riskLocation) =>
+                dispatchUi({
+                  type: "project",
+                  id: s.id,
+                  patch: { riskLocation },
+                })
+              }
+              onManage={(riskLocation) =>
+                dispatchUi({
+                  type: "project",
+                  id: s.id,
+                  patch: { panel: "risk", riskLocation },
+                })
+              }
+            />
+          }
         />
       )}
       {p.notice && (

@@ -10,7 +10,7 @@
   flex: 0 0 auto;
   margin: 0;
   padding: 10px 0 8px;
-  font-size: 14px;
+  font-size: var(--ui-size);
   font-weight: 600;
   overflow-wrap: anywhere;
   max-height: 72px;
@@ -49,7 +49,7 @@
   align-items: center;
   gap: 6px;
   margin-right: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .overwrite input {

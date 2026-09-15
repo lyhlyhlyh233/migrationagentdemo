@@ -14,6 +14,7 @@ import styles from "./RiskPanel.module.css";
 
 export function RiskBulkToolbar({
   search,
+  navigationAction,
   selected,
   available,
   saving,
@@ -22,6 +23,7 @@ export function RiskBulkToolbar({
   onAction,
 }: {
   search?: ReactNode;
+  navigationAction?: ReactNode;
   selected: RiskItem[];
   available: RiskItem[];
   saving: boolean;
@@ -97,6 +99,7 @@ export function RiskBulkToolbar({
             {t("清空选择")}
           </button>
         )}
+        {navigationAction}
       </div>
     </div>
   );

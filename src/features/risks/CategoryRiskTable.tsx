@@ -153,7 +153,7 @@ export function CategoryRiskTable({
                     </td>
                     <td data-label={t("虚拟机数")}>
                       <button
-                        className={styles.textAction}
+                        className={styles.vmCountButton}
                         aria-expanded={open}
                         aria-label={t("{0} 台", vmCount(items))}
                         disabled={actions.saving}
@@ -166,8 +166,9 @@ export function CategoryRiskTable({
                           })
                         }
                       >
-                        <Icon name={open ? "chevron" : "right"} size={12} />
-                        {vmCount(items)}
+                        <Icon name={open ? "chevron" : "right"} size={14} />
+                        <strong>{vmCount(items)}</strong>
+                        <span>{t("台")}</span>
                       </button>
                     </td>
                     <td data-label={t("当前策略")}>

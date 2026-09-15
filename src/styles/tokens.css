@@ -12,8 +12,14 @@
   --warning: #946213;
   --danger: #b13b42;
   --brand-edition: oklch(54% 0.21 23);
-  --body-size: 15px;
-  --meta-size: 12px;
+  --body-size: 1rem;
+  --ui-size: 0.875rem;
+  --ui-small: 0.8125rem;
+  --ui-caption: 0.75rem;
+  --ui-title: 1rem;
+  --meta-size: var(--ui-small);
+  --control-height: 2.25rem;
+  --control-compact: 2rem;
 }
 :root[data-theme="dark"] {
   --text: #e8e9ec;
@@ -70,12 +76,29 @@ summary:focus-visible {
 
 @media (min-width: 1920px) {
   :root {
-    --body-size: 18px;
-    --meta-size: 14px;
+    --body-size: 1.125rem;
   }
   .ui-select-trigger,
   .ui-select-option,
   .ui-select-group {
-    font-size: 15px;
+    font-size: var(--ui-size);
   }
+}
+
+body {
+  font-size: var(--ui-size);
+  font-kerning: normal;
+}
+.ui-select-trigger,
+.ui-select-option {
+  font-size: var(--ui-size);
+}
+.ui-select-trigger {
+  min-height: var(--control-height);
+  padding-block: 7px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }

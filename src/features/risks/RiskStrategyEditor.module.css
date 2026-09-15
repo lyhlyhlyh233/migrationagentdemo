@@ -1,19 +1,19 @@
 .root {
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root header {
   margin-bottom: 6px;
 }
 .root header > strong {
   display: block;
-  font-size: 15px;
+  font-size: var(--ui-size);
   font-weight: 600;
 }
 .root header > span {
   display: block;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   margin-top: 3px;
 }
 .root header p {
@@ -67,7 +67,7 @@
 .option small {
   display: block;
   margin-top: 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.5;
   color: var(--secondary);
 }
@@ -94,7 +94,7 @@
 .details > label {
   display: block;
   margin-top: 10px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .details textarea {
   display: block;
@@ -115,12 +115,12 @@
 }
 .methods legend {
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .methods label {
   display: inline-flex;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   align-items: flex-start;
   cursor: pointer;
 }
@@ -136,7 +136,7 @@
 }
 .note {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.5;
   margin: 6px 0;
 }
@@ -156,12 +156,12 @@
 .error {
   color: var(--danger);
   margin: 8px 0;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 
 .guidance {
   margin: 6px 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .guidance summary {

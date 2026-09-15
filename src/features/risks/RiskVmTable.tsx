@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import type { RiskItem } from "@/domain/models";
 import { hasRiskDecision, riskReadyForExecution } from "@/domain/assessment";
 import { useTranslation } from "@/shared/i18n";
-import { Icon } from "@/shared/ui/icons";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow, type PageState } from "@/shared/ui/pagination-state";
 import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
@@ -175,7 +174,6 @@ export function RiskVmTable({
                           disabled={actions.saving}
                           onClick={() => toggle(key, open)}
                         >
-                          <Icon name={open ? "chevron" : "right"} size={12} />
                           {t(readOnly ? "查看依据" : "查看详情")}
                         </button>
                         {readOnly && (

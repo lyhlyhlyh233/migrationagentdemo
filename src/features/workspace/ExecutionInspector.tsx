@@ -13,7 +13,6 @@ export function AgentPanel({
   stats,
   artifacts,
   events,
-  onClose,
 }: {
   running: boolean;
   status: string;
@@ -27,26 +26,15 @@ export function AgentPanel({
     onClick?: () => void;
   }[];
   events: { text: string; time: string }[];
-  onClose: () => void;
 }) {
   const t = useTranslation();
   const completed = steps.filter((step) => step.state === "done").length;
   return (
-    <aside
+    <section
       className="agent-inspector"
       data-running={running}
       aria-label={t("子智能体执行详情")}
     >
-      <header className="inspector-header">
-        <span>{t("执行详情")}</span>
-        <button
-          className="icon-button"
-          aria-label={t("收起执行详情")}
-          onClick={onClose}
-        >
-          <Icon name="panel" size={17} />
-        </button>
-      </header>
       <div className="inspector-scroll">
         <div
           className={`state-label inspector-status ${running ? "is-active" : ""}`}
@@ -155,6 +143,6 @@ export function AgentPanel({
           )}
         </section>
       </div>
-    </aside>
+    </section>
   );
 }

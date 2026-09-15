@@ -3,7 +3,7 @@
   gap: 10px;
   margin: 12px 0 8px;
   max-width: 100%;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .metrics {
   display: grid;
@@ -18,12 +18,12 @@
   gap: 8px;
 }
 .metrics dt {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .metrics dd {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--ui-title);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -48,12 +48,12 @@
   gap: 3px;
 }
 .row strong {
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
 .row small {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .checks {
@@ -75,7 +75,7 @@
   max-width: 640px;
 }
 .inputHistory {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .inputHistory summary {
@@ -96,7 +96,7 @@
   flex-wrap: wrap;
   gap: 6px 14px;
   padding-bottom: 6px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .summaryActions details {
@@ -120,7 +120,7 @@
 .files {
   border-block: 1px solid var(--line);
   padding: 8px 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .fileHeading {
   display: flex;
@@ -159,7 +159,7 @@
   .metrics dt,
   .summaryActions,
   .files {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .metrics dd {
     font-size: 18px;
@@ -202,7 +202,7 @@
 }
 @media (min-width: 1920px) {
   .quickActions {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
 }
 @media (max-width: 600px) {

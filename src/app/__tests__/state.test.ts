@@ -2,6 +2,29 @@ import { conversationReducer } from "@/features/conversations/state";
 import { describe, expect, it } from "vitest";
 import { initialUi, uiReducer } from "../state";
 describe("workspace UI isolation", () => {
+  it("remembers the assessment risk prompt across navigation without affecting another project", () => {
+    const opened = uiReducer(initialUi, {
+      type: "project",
+      id: "a",
+      patch: { assessmentRiskOpened: true },
+    });
+    const creating = uiReducer(opened, {
+      type: "global",
+      patch: { creating: true },
+    });
+    const returned = uiReducer(creating, {
+      type: "global",
+      patch: { creating: false },
+    });
+    const other = uiReducer(returned, {
+      type: "conversation",
+      id: "b",
+      conversationId: "research-b",
+      stageId: "research",
+    });
+    expect(other.projects.a.assessmentRiskOpened).toBe(true);
+    expect(other.projects.b.assessmentRiskOpened).toBe(false);
+  });
   it("keeps risk navigation targets scoped to their project", () => {
     const a = uiReducer(initialUi, {
       type: "project",

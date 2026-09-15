@@ -11,7 +11,7 @@
 }
 .root :global(.nav-count) {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--ui-caption);
   font-variant-numeric: tabular-nums;
 }
 .root :global(.user-profile > span) {
@@ -21,7 +21,7 @@
   place-items: center;
   border-radius: 50%;
   background: var(--hover);
-  font-size: 11px;
+  font-size: var(--ui-caption);
 }
 .root :global(.user-profile > div) {
   flex: 1;
@@ -30,10 +30,10 @@
   gap: 3px;
 }
 .root :global(.user-profile strong) {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.user-profile small) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 16px;
   color: var(--muted);
 }
@@ -60,7 +60,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--ui-caption);
   margin-bottom: 12px;
 }
 .root :global(.progress-rail ol) {
@@ -88,7 +88,7 @@
   background: transparent;
   text-align: left;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--ui-caption);
 }
 .root :global(.progress-rail li.done button) {
   color: var(--ink);
@@ -112,7 +112,7 @@
 }
 .root :global(.progress-rail small) {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--ui-caption);
   font-variant-numeric: tabular-nums;
 }
 .root :global(.done .stage-track i) {
@@ -166,14 +166,14 @@
   justify-content: space-between;
   margin: 0 21px;
   border-bottom: 1px solid var(--line);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   font-weight: 600;
 }
 .root :global(.state-label) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .root :global(.state-label i) {
@@ -204,12 +204,12 @@
   margin-bottom: 15px;
 }
 .root :global(.inspector-section h3) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   font-weight: 600;
 }
 .root :global(.inspector-section > header > span) {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--ui-caption);
 }
 .root :global(.work-steps) {
   list-style: none;
@@ -243,7 +243,7 @@
   border: 1px solid var(--line-strong);
   border-radius: 50%;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--ui-caption);
 }
 .root :global(.done .step-indicator) {
   color: var(--success);
@@ -266,12 +266,12 @@
 }
 .root :global(.work-steps strong) {
   display: block;
-  font-size: 11px;
+  font-size: var(--ui-caption);
   line-height: 1.5;
   font-weight: 500;
 }
 .root :global(.work-steps p) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
   color: var(--muted);
   line-height: 1.7;
   margin-top: 4px;
@@ -330,18 +330,18 @@
   gap: 5px;
 }
 .root :global(.artifact-list strong) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   font-weight: 500;
 }
 .root :global(.artifact-list small) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .root :global(.artifact-list > * > svg:last-child) {
   color: var(--muted);
 }
 .root :global(.inspector-empty) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   line-height: 1.8;
   color: var(--muted);
 }
@@ -358,11 +358,11 @@
 }
 .root :global(.activity-event p) {
   color: var(--secondary);
-  font-size: 10px;
+  font-size: var(--ui-caption);
   line-height: 1.7;
 }
 .root :global(.workflow-embeds small) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .root :global(.created-task-list) {
@@ -380,7 +380,7 @@
   color: var(--warning);
 }
 .root :global(.open) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
   white-space: nowrap;
   color: var(--warning);
 }
@@ -391,12 +391,12 @@
   color: var(--secondary);
 }
 .root :global(.closed) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
   white-space: nowrap;
   color: var(--success);
 }
 .root :global(.agentless-tag) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .root :global(.migration-task-context) {
@@ -416,7 +416,7 @@
   display: flex;
   gap: 12px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--ui-caption);
 }
 .root :global(.created-task-list-head) {
   padding: 13px 0;
@@ -427,13 +427,13 @@
   display: none;
 }
 .root :global(.created-task-list-head span) {
-  font-size: 10px;
+  font-size: var(--ui-caption);
 }
 .root :global(.uncreated-vm-detail > section > header) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: var(--ui-caption);
 }
 .root :global(.uncreated-vm-detail header small) {
   display: none;
@@ -463,7 +463,7 @@
     grid-template-columns: 176px minmax(0, 1fr);
   }
   .root :global(.brand strong) {
-    font-size: 16px;
+    font-size: var(--ui-title);
   }
   .root :global(.workspace-nav) {
     padding-inline: 8px;
@@ -479,7 +479,7 @@
   }
   .root :global(.progress-rail li button) {
     gap: 4px;
-    font-size: 10px;
+    font-size: var(--ui-caption);
   }
   .root :global(.conversation-toolbar) {
     padding-inline: 19px;
@@ -501,7 +501,7 @@
   .root :global(.agent-inspector) {
     display: none;
   }
-  .root:global(.workspace:not(.inspector-collapsed) .agent-inspector) {
+  .root:global(.workspace:not(.inspector-collapsed) > .agent-inspector) {
     display: flex;
     position: fixed;
     right: 0;
@@ -511,7 +511,7 @@
     z-index: var(--z-drawer);
     border-left: 1px solid var(--line-strong);
   }
-  .root:global(.workspace:has(.agent-inspector) .conversation-workspace) {
+  .root:global(.workspace:has(> .agent-inspector) .conversation-workspace) {
     padding-right: 0;
   }
 }
@@ -562,7 +562,7 @@
     gap: 9px;
   }
   .root :global(.progress-rail li button) {
-    font-size: 10px;
+    font-size: var(--ui-caption);
     flex-wrap: wrap;
     gap: 5px;
   }
@@ -582,7 +582,7 @@
     padding: 3px 18px 23px;
   }
   .root :global(.workflow-embeds h3) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.inspector-header) {
     height: 57px;
@@ -631,7 +631,7 @@
   padding: 15px 0 0 31px;
 }
 .root :global(.inline-risk-form > label) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
 }
 .root :global(.inline-risk-form textarea) {
   min-height: 88px;
@@ -644,11 +644,11 @@
 }
 .root :global(.inline-risk-form > div > span) {
   margin-right: auto;
-  font-size: 10px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .root :global(.inline-empty) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   padding: 18px 0;
   color: var(--muted);
 }
@@ -670,34 +670,34 @@
 }
 @media (min-width: 981px) {
   .root :global(.work-steps strong) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.inspector-stats dt) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.inspector-stats dd) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.artifact-list strong) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.work-steps p) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
   .root :global(.artifact-list small) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
   .root :global(.inspector-section h3) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.progress-rail li button) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.inspector-section > header > span) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
   .root :global(.progress-caption) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
 }
 .root:global(.workspace.inspector-collapsed) {
@@ -736,7 +736,7 @@
   border: 0;
   background: transparent;
   padding: 8px 4px 8px 0;
-  font-size: 14px;
+  font-size: var(--ui-size);
   font-weight: 600;
   width: 100%;
   text-overflow: ellipsis;
@@ -765,7 +765,7 @@
   height: 36px;
   padding-inline: 10px;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--ui-size);
   color: var(--ink);
 }
 .root :global(.project-resources button > svg) {
@@ -790,7 +790,7 @@
   color: var(--muted);
 }
 .root :global(.nav-section-heading h2) {
-  font-size: 14px;
+  font-size: var(--ui-size);
   line-height: 20px;
   font-weight: 550;
 }
@@ -814,7 +814,7 @@
   width: 100%;
   min-height: 36px;
   padding: 8px 10px;
-  font-size: 14px;
+  font-size: var(--ui-size);
 }
 .root :global(.temporary-conversations .selected) {
   background: var(--hover);
@@ -825,7 +825,7 @@
   white-space: nowrap;
 }
 .root :global(.nav-empty) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 20px;
   padding: 8px 10px;
   color: var(--muted);
@@ -846,7 +846,7 @@
   letter-spacing: -0.5px;
 }
 .root :global(.workspace-welcome p) {
-  font-size: 14px;
+  font-size: var(--ui-size);
   line-height: 1.9;
   color: var(--secondary);
 }
@@ -872,12 +872,12 @@
   .root:global(.workspace.inspector-collapsed) {
     grid-template-columns: 240px minmax(0, 1fr);
   }
-  .root:global(.workspace:has(.agent-inspector)) {
+  .root:global(.workspace:has(> .agent-inspector)) {
     grid-template-columns: 240px minmax(0, 1fr) 250px;
   }
 }
 @media (max-width: 980px) and (min-width: 761px) {
-  .root:global(.workspace:has(.agent-inspector)) {
+  .root:global(.workspace:has(> .agent-inspector)) {
     grid-template-columns: 240px minmax(0, 1fr);
   }
 }
@@ -889,7 +889,7 @@
     min-height: 55vh;
   }
   .root :global(.workspace-welcome p) {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .root :global(.project-resources button) {
     min-height: 38px;
@@ -916,12 +916,12 @@
 .root :global(.workflow-embeds h3) {
   line-height: 1.6;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--ui-size);
   margin-bottom: 4px;
 }
 .root :global(.workflow-embeds p) {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.65;
 }
 @media (max-width: 760px) {
@@ -930,7 +930,7 @@
   }
   .root :global(.conversation-context) {
     display: flex;
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
   .root :global(.management-view .conversation-content) {
     padding: 24px 18px;
@@ -970,7 +970,7 @@
     flex-shrink: 0;
   }
   .root :global(.mobile-workspace-bar > span) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
     color: var(--secondary);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -989,7 +989,7 @@
   line-height: 1.4;
   font-weight: 600;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--ui-small);
   letter-spacing: -0.15px;
 }
 .root :global(.workspace-welcome > svg) {
@@ -1017,7 +1017,7 @@
   background: var(--accent-soft);
 }
 .root :global(.nav-section-heading > span) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   font-variant-numeric: tabular-nums;
 }
 .root :global(.progress-caption strong) {
@@ -1076,7 +1076,7 @@
 .root :global(.inspector-status) {
   display: flex;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   padding-bottom: 4px;
   align-self: flex-start;
   width: fit-content;
@@ -1226,12 +1226,12 @@
   border-bottom: 0;
 }
 .root :global(.inspector-stats dt) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   color: var(--info);
 }
 .root :global(.inspector-stats dd) {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--ui-caption);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   color: var(--tone-ink, var(--info));
@@ -1313,7 +1313,7 @@
   background: transparent;
   color: inherit;
   text-align: left;
-  font-size: 14px;
+  font-size: var(--ui-size);
   line-height: 20px;
 }
 .root :global(.stage-chat-link > svg) {
@@ -1365,7 +1365,7 @@
   border-radius: 5px;
   background: var(--panel);
   color: var(--ink);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.chat-rename-form .icon-button) {
   width: 25px;
@@ -1380,7 +1380,7 @@
 .root :global(.shared-task-note) {
   margin-block: 12px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 @media (max-width: 760px) {
   .root :global(.stage-chat-link) {
@@ -1402,7 +1402,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: var(--ui-caption);
   color: var(--muted);
   white-space: nowrap;
   min-width: 0;
@@ -1433,7 +1433,7 @@
 .root :global(.delivery-chat-stage) {
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--ui-caption);
   line-height: 20px;
   font-weight: 400;
 }
@@ -1458,12 +1458,12 @@
   min-width: 0;
 }
 .root :global(.stage-handoff strong) {
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 550;
 }
 .root :global(.stage-handoff p) {
   margin: 5px 0 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.7;
   color: var(--muted);
 }
@@ -1477,7 +1477,7 @@
   border-radius: 6px;
   background: var(--panel);
   color: var(--ink);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.stage-handoff button:hover) {
   background: var(--hover);
@@ -1498,7 +1498,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.stage-handoff-review li) {
   display: flex;
@@ -1651,13 +1651,13 @@
 }
 .root :global(.preview-stage-copy strong) {
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--ui-small);
   line-height: 20px;
   font-weight: 500;
   white-space: nowrap;
 }
 .root :global(.preview-stage-copy > span) {
-  font-size: 11px;
+  font-size: var(--ui-caption);
   line-height: 16px;
   color: var(--muted);
   white-space: nowrap;
@@ -1699,7 +1699,7 @@
     display: none;
   }
   .root :global(.preview-stage-copy strong) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
 }
 @media (max-width: 760px) {
@@ -1723,10 +1723,10 @@
     top: 12px;
   }
   .root :global(.preview-stage-copy strong) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
   .root :global(.stage-flow-preview .progress-caption) {
-    font-size: 11px;
+    font-size: var(--ui-caption);
   }
 }
 .root :global(.project-resources button[aria-disabled="true"]) {
@@ -1796,18 +1796,18 @@
     min-height: 48px;
     padding: 12px 16px;
     gap: 10px;
-    font-size: 16px;
+    font-size: var(--ui-size);
   }
   .root :global(.stage-flow-preview .preview-stage-copy strong) {
-    font-size: 16px;
+    font-size: var(--ui-size);
   }
   .root :global(.progress-rail small) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.stage-sequence) {
     width: 22px;
     height: 22px;
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.stage-track) {
     margin-top: 8px;
@@ -1855,7 +1855,7 @@
   .root :global(.temporary-conversations button),
   .root :global(.nav-section-heading h2),
   .root :global(.project-switcher .ui-select-trigger) {
-    font-size: 16px;
+    font-size: var(--ui-size);
   }
   .root :global(.project-resources button),
   .root :global(.stage-chat-link),
@@ -1864,28 +1864,28 @@
   }
   .root :global(.nav-platform h1),
   .root :global(.nav-account strong) {
-    font-size: 15px;
+    font-size: var(--ui-size);
   }
   .root :global(.nav-empty),
   .root :global(.nav-account small),
   .root :global(.delivery-chat-stage),
   .root :global(.conversation-context) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.progress-rail button),
   .root :global(.stage-flow-preview strong) {
-    font-size: 15px;
+    font-size: var(--ui-size);
   }
   .root :global(.progress-caption),
   .root :global(.stage-flow-preview li span),
   .root :global(.progress-rail button > span:last-child) {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .root :global(.work-steps strong),
   .root :global(.inspector-section h3),
   .root :global(.inspector-header),
   .root :global(.artifact-list strong) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.work-steps p),
   .root :global(.inspector-stats),
@@ -1894,7 +1894,7 @@
   .root :global(.artifact-list small),
   .root :global(.inspector-empty),
   .root :global(.inspector-status) {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .root :global(.workspace-welcome h2) {
     font-size: 30px;
@@ -1920,58 +1920,61 @@
   min-height: 0;
 }
 
-/* Risk review shares the workspace with chat, replacing the execution inspector. */
-.root:global(.workspace.risk-panel-open) {
-  --risk-nav-width: 256px;
-  --risk-panel-width: clamp(
-    560px,
-    var(--risk-panel-size, min(50vw, 1320px)),
-    calc(100% - var(--risk-nav-width) - 360px)
+/* One resizable tabbed panel, narrower than chat by default. */
+.root:global(.workspace.side-panel-open) {
+  --side-nav-width: 256px;
+  --side-panel-width: clamp(
+    420px,
+    var(
+      --side-panel-size,
+      min(1040px, calc((100% - var(--side-nav-width)) * 0.42))
+    ),
+    calc(100% - var(--side-nav-width) - 360px)
   );
-  grid-template-columns: var(--risk-nav-width) minmax(0, 1fr) var(
-      --risk-panel-width
+  grid-template-columns: var(--side-nav-width) minmax(0, 1fr) var(
+      --side-panel-width
     );
   --conversation-width: 100%;
   --conversation-gutter: 20px;
 }
-.root:global(.workspace.risk-panel-open.nav-collapsed) {
-  --risk-nav-width: 56px;
+.root:global(.workspace.side-panel-open.nav-collapsed) {
+  --side-nav-width: 56px;
 }
-.root:global(.risk-panel-open) :global(.conversation-workspace) {
+.root:global(.side-panel-open) :global(.conversation-workspace) {
   container-type: inline-size;
   container-name: risk-chat;
 }
-.root:global(.risk-panel-open) :global(.progress-rail) {
+.root:global(.side-panel-open) :global(.progress-rail) {
   padding: 16px 20px;
 }
-.root:global(.risk-panel-open) :global(.progress-rail > ol) {
+.root:global(.side-panel-open) :global(.progress-rail > ol) {
   gap: 12px;
 }
-.root:global(.risk-panel-open) :global(.stage-connector) {
+.root:global(.side-panel-open) :global(.stage-connector) {
   display: none;
 }
 @media (min-width: 1920px) {
-  .root:global(.workspace.risk-panel-open) {
-    --risk-nav-width: 292px;
+  .root:global(.workspace.side-panel-open) {
+    --side-nav-width: 292px;
   }
-  .root:global(.workspace.risk-panel-open.nav-collapsed) {
-    --risk-nav-width: 64px;
+  .root:global(.workspace.side-panel-open.nav-collapsed) {
+    --side-nav-width: 64px;
   }
 }
 @media (max-width: 1180px) {
-  .root:global(.workspace.risk-panel-open) {
+  .root:global(.workspace.side-panel-open) {
     grid-template-columns: 240px minmax(0, 1fr);
   }
-  .root:global(.workspace.risk-panel-open.nav-collapsed) {
+  .root:global(.workspace.side-panel-open.nav-collapsed) {
     grid-template-columns: 56px minmax(0, 1fr);
   }
-  .root:global(.risk-panel-open) :global(.conversation-workspace) {
+  .root:global(.side-panel-open) :global(.conversation-workspace) {
     display: none;
   }
 }
 @media (max-width: 760px) {
-  .root:global(.workspace.risk-panel-open),
-  .root:global(.workspace.risk-panel-open.nav-collapsed) {
+  .root:global(.workspace.side-panel-open),
+  .root:global(.workspace.side-panel-open.nav-collapsed) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1981,11 +1984,11 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: 8px 6px;
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .root :global(.progress-rail small) {
     flex-basis: 100%;
-    font-size: 12px;
+    font-size: var(--ui-caption);
     padding-left: 22px;
   }
   .root :global(.progress-rail > ol) {
@@ -1997,7 +2000,7 @@
   .root :global(.stage-sequence) {
     width: 18px;
     height: 18px;
-    font-size: 10px;
+    font-size: var(--ui-caption);
   }
   .root :global(.composer-bottom) {
     flex-wrap: wrap;
@@ -2025,4 +2028,39 @@
 .root:has([data-resizing="true"]) * {
   cursor: col-resize !important;
   user-select: none;
+}
+
+.root :global(.workspace-side-panel .agent-inspector) {
+  display: flex;
+  flex-direction: column;
+  position: static;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+.root :global(.workspace-side-panel .inspector-scroll) {
+  padding: 20px;
+}
+
+.root :global(.workspace-side-panel .inspector-section h3),
+.root :global(.workspace-side-panel .work-steps strong),
+.root :global(.workspace-side-panel .artifact-list strong) {
+  font-size: var(--ui-size);
+}
+.root :global(.workspace-side-panel .work-steps p),
+.root :global(.workspace-side-panel .inspector-stats),
+.root :global(.workspace-side-panel .inspector-stats dt),
+.root :global(.workspace-side-panel .inspector-stats dd),
+.root :global(.workspace-side-panel .inspector-status),
+.root :global(.workspace-side-panel .activity-event p),
+.root :global(.workspace-side-panel .inspector-empty) {
+  font-size: var(--ui-small);
+}
+.root :global(.workspace-side-panel .inspector-section) {
+  margin-top: 22px;
+}
+.root :global(.workspace-side-panel .inspector-section > header) {
+  margin-bottom: 12px;
 }

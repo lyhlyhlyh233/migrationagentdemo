@@ -16,7 +16,7 @@
 }
 .workspace {
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--ui-size);
   line-height: 1.55;
   color: var(--ink);
   container-type: inline-size;
@@ -59,7 +59,7 @@
 }
 .scopeHint {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .overview {
   display: flex;
@@ -80,7 +80,7 @@
   color: var(--warning);
 }
 .hint {
-  font-size: 13px;
+  font-size: var(--ui-small);
   line-height: 1.55;
   color: var(--secondary);
   margin: 6px 0 14px;
@@ -109,7 +109,7 @@
   gap: 6px;
   margin-left: auto;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .filters > * {
   width: 108px;
@@ -189,7 +189,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .categories button {
   text-align: left;
@@ -213,7 +213,7 @@
 }
 .categories small {
   display: block;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
   margin-top: 4px;
 }
@@ -228,12 +228,12 @@
   margin: 0 0 12px;
 }
 .sectionHeading h3 {
-  font-size: 14px;
+  font-size: var(--ui-size);
   font-weight: 600;
   margin: 0;
 }
 .sectionHeading p {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
   margin: 3px 0 0;
 }
@@ -263,7 +263,7 @@
   background: var(--hover);
   color: var(--secondary);
   font-weight: 500;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   padding-block: 9px;
 }
 .checkboxColumn {
@@ -284,7 +284,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
   margin: 6px 0 9px;
 }
@@ -309,7 +309,7 @@
   width: 14%;
 }
 .vmCountColumn {
-  width: 8%;
+  width: 76px;
 }
 .strategyColumn {
   width: 12%;
@@ -334,6 +334,9 @@
 }
 .workspace:lang(en) .actionsColumn {
   width: 110px;
+}
+.workspace:lang(en) .vmCountColumn {
+  width: 94px;
 }
 .workspace:lang(en) .impactColumn {
   width: 18%;
@@ -364,7 +367,7 @@
   grid-template-columns: minmax(160px, 1fr) 2fr;
   gap: 12px 24px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .ruleDetails dt {
   color: var(--secondary);
@@ -386,7 +389,7 @@
   border-radius: 0;
 }
 .subtable .vmTable {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .subtable .vmTable th,
 .subtable .vmTable td {
@@ -403,7 +406,7 @@
   flex-wrap: wrap;
   gap: 6px 12px;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   min-height: 22px;
   margin-top: 4px;
 }
@@ -417,7 +420,7 @@
   margin-left: auto;
   max-width: 400px;
   min-height: 34px;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .bulkButtons {
   display: flex;
@@ -427,7 +430,7 @@
   flex: 0 1 auto;
 }
 .bulkButtons button {
-  font-size: 13px;
+  font-size: var(--ui-small);
   padding: 6px 10px;
 }
 
@@ -442,10 +445,10 @@
   filter: brightness(1.15);
 }
 .bulkConfirmation {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .bulkConfirmation h3 {
-  font-size: 15px;
+  font-size: var(--ui-size);
   font-weight: 600;
   margin: 0 0 8px;
 }
@@ -471,7 +474,7 @@
 .table small {
   display: block;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   font-weight: 400;
   margin-top: 4px;
 }
@@ -532,16 +535,16 @@
 .findingRow small {
   display: block;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .findingRow > span {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .evidence {
   margin: 6px 0 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .evidence:last-child {
   margin-bottom: 0;
@@ -562,7 +565,7 @@
 }
 .evidence dt {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   margin-bottom: 2px;
 }
 .evidence dd {
@@ -594,12 +597,12 @@
   color: var(--secondary);
 }
 .feedback {
-  font-size: 13px;
+  font-size: var(--ui-small);
   color: var(--success);
   margin: 12px 0;
 }
 .error {
-  font-size: 13px;
+  font-size: var(--ui-small);
   color: var(--danger);
   margin: 12px 0;
 }
@@ -630,7 +633,7 @@
     padding: 7px 9px;
   }
   .selectionSummary {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .modeSwitch {
     margin-block: 0;
@@ -709,7 +712,7 @@
     content: attr(data-label);
     display: block;
     color: var(--secondary);
-    font-size: 12px;
+    font-size: var(--ui-caption);
     margin-bottom: 3px;
   }
   .table tbody > tr:not(.expandedRow) > td[data-actions] {
@@ -764,7 +767,7 @@
   }
   .overview {
     gap: 6px 12px;
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .filters {
     margin-left: 0;
@@ -785,9 +788,60 @@
     gap: 5px;
   }
   .categories {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .categories small {
     margin-top: 2px;
   }
+}
+
+.manageLink {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.vmCountButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--control-compact);
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.vmCountButton strong {
+  font-size: var(--ui-title);
+  font-weight: 600;
+}
+.vmCountButton span {
+  font-size: var(--ui-caption);
+  color: var(--secondary);
+}
+.vmCountButton[aria-expanded="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.table .subtable {
+  padding: 4px 0;
+}
+.table .subtable .vmTable thead th {
+  background: var(--surface);
+  color: var(--secondary);
+  border-bottom: 1px solid var(--line-strong);
+}
+.table .subtable .vmTable tbody > tr:not(.expandedRow) {
+  background: var(--surface-subtle);
+}
+.subtable .tableScroll {
+  border: 0;
+  border-radius: 0;
+}
+.bulkControlRow > .search {
+  min-height: var(--control-height);
+}
+.bulkButtons button {
+  min-height: var(--control-height);
 }

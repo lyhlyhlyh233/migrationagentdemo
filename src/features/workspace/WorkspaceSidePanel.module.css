@@ -9,71 +9,73 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  font-size: var(--ui-size);
 }
-.root > header {
+.root[hidden],
+.content[hidden] {
+  display: none;
+}
+.header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px;
+  min-height: 52px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--line);
 }
-.root > header > div {
+.tabs {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex: 1;
+  align-self: stretch;
+  gap: 16px;
   min-width: 0;
 }
-.root h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.root h2:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-.root > header span {
+.tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0 2px;
+  background: transparent;
   color: var(--secondary);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--ui-size);
   white-space: nowrap;
 }
-.root > header button {
-  font-size: 13px;
-  flex-shrink: 0;
+.tabs button[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+  font-weight: 600;
 }
-.body {
+.tabs button:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+.header > button {
+  flex: 0 0 auto;
+}
+.content {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
-  padding: 12px 20px 0;
+}
+.risks {
+  padding: 12px 16px 0;
 }
 @media (max-width: 600px) {
-  .root {
-    border-left: 0;
-  }
-  .root > header {
-    padding: 12px;
+  .header {
+    padding-inline: 12px;
     gap: 8px;
   }
-  .root > header > div {
-    flex-direction: column;
-    gap: 2px;
+  .tabs {
+    gap: 12px;
   }
-  .root h2 {
-    font-size: 16px;
-  }
-  .root > header button {
-    font-size: 12px;
-  }
-  .body {
-    padding: 8px 12px 0;
+  .risks {
+    padding: 10px 12px 0;
   }
 }
-
 .resizeHandle {
   position: absolute;
   inset: 0 auto 0 0;

@@ -1,6 +1,6 @@
 .root {
   width: 100%;
-  font-size: 15px;
+  font-size: var(--body-size);
   line-height: 1.6;
   color: var(--text);
 }
@@ -40,7 +40,7 @@
 .system {
   margin: 12px 0 22px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--meta-size);
 }
 .system p {
   margin: 0;
@@ -54,7 +54,7 @@
   justify-content: space-between;
   align-items: center;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--meta-size);
   margin-bottom: 8px;
 }
 @media (min-width: 1800px) {
@@ -64,7 +64,7 @@
 }
 @media (max-width: 720px) {
   .root {
-    font-size: 14px;
+    font-size: var(--body-size);
   }
   .user p {
     max-width: 94%;

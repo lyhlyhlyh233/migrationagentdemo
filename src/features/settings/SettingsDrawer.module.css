@@ -45,7 +45,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--secondary);
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.settings-tabs button:hover) {
   color: var(--ink);
@@ -66,7 +66,7 @@
   margin-top: 32px;
 }
 .root :global(.settings-section h3) {
-  font-size: 14px;
+  font-size: var(--ui-size);
   line-height: 20px;
   font-weight: 600;
 }
@@ -77,7 +77,7 @@
   gap: 12px;
 }
 .root :global(.settings-section-heading > span) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--muted);
 }
 .root :global(.theme-picker) {
@@ -167,7 +167,7 @@
   justify-content: space-between;
   gap: 3px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .root :global(.theme-picker button[aria-pressed="true"] .theme-swatch) {
@@ -210,7 +210,7 @@
 .root :global(.background-option > span:last-child) {
   display: block;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--secondary);
 }
 .root :global(.background-option[aria-pressed="true"] .background-preview) {
@@ -245,7 +245,7 @@
   border-top: 1px solid var(--line);
 }
 .root :global(.language-setting p) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.65;
   color: var(--muted);
   margin-top: 7px;
@@ -253,7 +253,7 @@
 }
 .root :global(.language-setting .ui-select-trigger) {
   max-width: 150px;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.settings-header) {
   display: flex;
@@ -271,13 +271,13 @@
   padding: 18px 24px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   flex-shrink: 0;
 }
 .root :global(.settings-description) {
   margin-top: 8px;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.65;
 }
 .root :global(.settings-account-row) {
@@ -302,18 +302,18 @@
   min-width: 0;
 }
 .root :global(.settings-account-row strong) {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.settings-account-row > div > span) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.settings-account-row > button) {
   display: flex;
   align-items: center;
   gap: 7px;
   margin-left: auto;
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.sign-out-review) {
   margin-top: 16px;
@@ -323,7 +323,7 @@
 }
 .root :global(.sign-out-review p) {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.7;
 }
 .root :global(.sign-out-review > div) {
@@ -333,7 +333,7 @@
   margin-top: 12px;
 }
 .root :global(.sign-out-review button) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.settings-section.nexent-settings) {
   padding-top: 26px;
@@ -350,29 +350,29 @@
   margin-top: 18px;
 }
 .root :global(.settings-field > label) {
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 500;
 }
 .root :global(.authentication-method legend) {
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 500;
 }
 .root :global(.settings-field input) {
   width: 100%;
   min-height: 42px;
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.settings-field input[aria-invalid="true"]) {
   border-color: var(--warning);
 }
 .root :global(.settings-field-error) {
   color: var(--warning);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.6;
 }
 .root :global(.settings-field-hint) {
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.65;
 }
 .root :global(.authentication-tip) {
@@ -380,7 +380,7 @@
   align-items: flex-start;
   gap: 8px;
   margin-top: 12px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.7;
   color: var(--secondary);
 }
@@ -409,7 +409,7 @@
   border-radius: 7px;
   padding: 11px 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ui-small);
   color: var(--secondary);
 }
 .root :global(.authentication-options input) {
@@ -456,7 +456,7 @@
   margin-top: 24px;
 }
 .root :global(.settings-form-actions button) {
-  font-size: 13px;
+  font-size: var(--ui-small);
 }
 .root :global(.settings-form-actions button:first-child) {
   margin-right: auto;
@@ -464,7 +464,7 @@
 .root :global(.settings-save-status) {
   min-height: 20px;
   margin-top: 12px;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   line-height: 1.65;
   color: var(--secondary);
 }
@@ -493,7 +493,7 @@
   }
   .root :global(.settings-field input) {
     min-height: 46px;
-    font-size: 16px;
+    font-size: var(--ui-title);
   }
   .root :global(.settings-footer) {
     padding: 16px 20px max(16px, env(safe-area-inset-bottom));

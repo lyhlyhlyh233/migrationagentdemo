@@ -3,13 +3,13 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: var(--control-height);
   padding: 6px 11px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface);
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--ui-size);
   font-weight: 550;
   cursor: pointer;
 }
@@ -33,7 +33,7 @@
 .field {
   display: grid;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--ui-small);
   min-width: 0;
 }
 .file {
@@ -41,7 +41,7 @@
   border-bottom: 1px solid var(--line);
 }
 .file input {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   max-width: 100%;
   color: var(--muted);
 }
@@ -61,7 +61,7 @@
   cursor: pointer;
 }
 .file small {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   color: var(--muted);
   overflow-wrap: anywhere;
 }
@@ -80,7 +80,7 @@
 }
 .result > header {
   padding: 12px 15px;
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 650;
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--line);
@@ -101,18 +101,8 @@
   border: 1px solid var(--line);
   border-radius: 9px;
 }
-@media (min-width: 1920px) {
-  .button,
-  .file,
-  .field,
-  .result > header {
-    font-size: 14px;
-  }
+@media (pointer: coarse) {
   .button {
-    min-height: 36px;
-  }
-  .file input,
-  .file small {
-    font-size: 13px;
+    min-height: 44px;
   }
 }

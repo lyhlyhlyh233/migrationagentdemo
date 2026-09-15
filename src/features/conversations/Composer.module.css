@@ -31,7 +31,7 @@
   padding: 11px 10px;
 }
 .root :global(.shortcut-options strong) {
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.shortcut-options small) {
   font-size: 10px;
@@ -45,7 +45,7 @@
   border-radius: 0;
   padding: 0 1px;
   outline: none;
-  font-size: 13px;
+  font-size: var(--ui-small);
   line-height: 1.7;
   min-height: 41px;
   max-height: 140px;
@@ -95,7 +95,7 @@
   gap: 4px;
   min-width: 0;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.composer-agent-picker) {
   display: flex;
@@ -103,7 +103,7 @@
   gap: 4px;
   min-width: 0;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: var(--ui-caption);
 }
 .root :global(.composer-select-control) {
   display: flex;
@@ -120,7 +120,7 @@
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--ui-caption);
   text-overflow: ellipsis;
 }
 .root :global(.composer-agent-picker .ui-select-trigger) {
@@ -135,7 +135,7 @@
   }
   .root :global(.composer-select-control .ui-select-trigger) {
     min-height: 44px;
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.composer-agent-picker > svg) {
     display: none;
@@ -201,7 +201,7 @@
     border-radius: 13px;
   }
   .root :global(.chat-composer textarea) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
   .root :global(.composer-note) {
     font-size: 9px;
@@ -214,7 +214,7 @@
 }
 @media (min-width: 981px) {
   .root :global(.shortcut-menu summary) {
-    font-size: 12px;
+    font-size: var(--ui-caption);
   }
 }
 .root :global(.composer-shortcuts .shortcut-groups) {
@@ -334,7 +334,7 @@
 }
 @media (min-width: 1920px) {
   .root :global(.chat-composer textarea) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
 }
 .root:global(.composer-area) {
@@ -346,7 +346,7 @@
   background: var(--canvas);
 }
 .retry {
-  font-size: 12px;
+  font-size: var(--ui-caption);
   max-width: var(--reading-width);
   margin: 0 auto 8px;
   color: var(--danger);
@@ -388,7 +388,7 @@
   min-height: 36px;
   margin-left: auto;
   padding: 8px 13px;
-  font-size: 13px;
+  font-size: var(--ui-small);
   font-weight: 600;
   color: var(--bubble-text);
   border: 1px solid var(--bubble-bg);
@@ -416,21 +416,21 @@
     padding-inline: var(--conversation-gutter);
   }
   .root :global(.chat-composer textarea) {
-    font-size: 17px;
+    font-size: var(--body-size);
     min-height: 58px;
   }
   .root :global(.composer-select-control .ui-select-trigger) {
-    font-size: 15px;
+    font-size: var(--ui-size);
     min-height: 38px;
   }
   .root :global(.shortcut-menu summary) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.shortcut-options strong) {
-    font-size: 14px;
+    font-size: var(--ui-size);
   }
   .root :global(.shortcut-options small) {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
   .root :global(.shortcut-options) {
     width: 290px;
@@ -440,11 +440,31 @@
     height: 36px;
   }
   .nextStage {
-    font-size: 15px;
+    font-size: var(--ui-size);
     min-height: 40px;
   }
   .footerRow :global(.composer-note),
   .lastStage {
-    font-size: 13px;
+    font-size: var(--ui-small);
   }
+}
+
+.root :global(.chat-composer textarea) {
+  font-size: var(--body-size);
+  line-height: 1.6;
+}
+.root :global(.composer-select-control .ui-select-trigger),
+.root :global(.shortcut-menu summary),
+.nextStage {
+  font-size: var(--ui-size);
+}
+.root :global(.composer-select-control .ui-select-trigger) {
+  min-height: var(--control-height);
+}
+.root :global(.send-button) {
+  width: 36px;
+  height: 36px;
+}
+.root .footerRow :global(.composer-note) {
+  font-size: var(--ui-caption);
 }

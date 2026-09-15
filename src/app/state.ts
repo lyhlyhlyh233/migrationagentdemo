@@ -20,6 +20,7 @@ export interface ProjectUi {
   notice: string;
   handoff: StageId | null;
   riskLocation: RiskLocation;
+  assessmentRiskOpened: boolean;
 }
 export const projectUi = (): ProjectUi => ({
   activeStage: "research",
@@ -29,6 +30,7 @@ export const projectUi = (): ProjectUi => ({
   notice: "",
   handoff: null,
   riskLocation: { mode: "category" },
+  assessmentRiskOpened: false,
 });
 export interface UiState {
   selected: string;

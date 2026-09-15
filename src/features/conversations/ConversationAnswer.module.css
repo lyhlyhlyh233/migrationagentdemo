@@ -1,12 +1,12 @@
 .root :global(.message-body p) {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 14px;
+  font-size: var(--body-size);
   line-height: 1.65;
   max-width: 72ch;
 }
 .root :global(.message-author strong) {
-  font-size: 12px;
+  font-size: var(--meta-size);
   font-weight: 600;
 }
 .root :global(.thinking-status) {
@@ -15,7 +15,7 @@
   gap: 9px;
   padding: 18px 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--meta-size);
 }
 .root :global(.reply-thought) {
   margin-bottom: 0;
@@ -28,7 +28,7 @@
   width: fit-content;
   list-style: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--meta-size);
   line-height: 1.6;
   border-radius: 4px;
 }
@@ -48,16 +48,16 @@
   padding: 10px 12px;
   background: var(--surface);
   border-radius: 7px;
-  font-size: 13px;
+  font-size: var(--meta-size);
   line-height: 1.65;
 }
 .root :global(.reply-duration) {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--meta-size);
   font-variant-numeric: tabular-nums;
 }
 .root :global(.reply-result) {
-  font-size: 14px;
+  font-size: var(--body-size);
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
@@ -79,25 +79,25 @@
 }
 @media (max-width: 760px) {
   .root :global(.reply-result) {
-    font-size: 13px;
+    font-size: var(--meta-size);
   }
 }
 @media (min-width: 1600px) {
   .root :global(.message-body p) {
-    font-size: 15px;
+    font-size: var(--body-size);
   }
   .root :global(.reply-result) {
-    font-size: 15px;
+    font-size: var(--body-size);
   }
 }
 @media (max-width: 980px) {
   .root :global(.message-body p) {
-    font-size: 14px;
+    font-size: var(--body-size);
   }
 }
 @media (max-width: 760px) {
   .root :global(.message-body p) {
-    font-size: 13px;
+    font-size: var(--meta-size);
   }
 }
 .root :global(.message-author) {
@@ -106,7 +106,7 @@
   gap: 7px;
   margin-bottom: 7px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--meta-size);
   font-variant-numeric: tabular-nums;
 }
 .root :global(.message-author > svg) {
@@ -127,12 +127,12 @@
 .root :global(.reply-result),
 .root :global(.reply-result p),
 .root :global(.reply-result li) {
-  font-size: 15px;
+  font-size: var(--body-size);
   line-height: 1.6;
   color: var(--text);
 }
 .root :global(.reply-thought > summary) {
-  font-size: 12px;
+  font-size: var(--meta-size);
   color: var(--muted);
 }
 .root :global(.message-author) {
@@ -152,7 +152,7 @@
   background: transparent;
   padding: 4px 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--meta-size);
 }
 .actions button:hover {
   color: var(--text);
@@ -161,7 +161,7 @@
   .root :global(.reply-result),
   .root :global(.reply-result p),
   .root :global(.reply-result li) {
-    font-size: 14px;
+    font-size: var(--body-size);
   }
 }
 @media (min-width: 1920px) {
