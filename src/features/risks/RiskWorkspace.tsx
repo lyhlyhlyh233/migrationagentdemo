@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProjectSnapshot, RiskItem } from "@/domain/models";
 import {
   canChangeAssessmentDecision,
@@ -25,6 +25,7 @@ import { RiskVmTable } from "./RiskVmTable";
 import { RiskBulkToolbar, RiskBulkConfirmation } from "./RiskBulkActions";
 import {
   categoryGroups,
+  risksAtLocation,
   selectionState,
   toggleRiskSelection,
   undecidedRisks,
@@ -40,6 +41,7 @@ type Editing = {
   ids: number[];
   onlyUndecided: boolean;
   quick?: BulkRiskAction;
+  visibleIds?: number[];
 };
 export interface RiskWorkspaceProps {
   snapshot: ProjectSnapshot;
@@ -56,7 +58,9 @@ export function RiskWorkspace({
   onCommand,
   sidePanel = false,
   onManage,
+  onInteractionLockChange,
 }: RiskWorkspaceProps & {
+  onInteractionLockChange?: (locked: boolean) => void;
   sidePanel?: boolean;
   onManage?: (location: RiskLocation) => void;
 }) {
@@ -73,7 +77,9 @@ export function RiskWorkspace({
       Math.floor(
         Math.max(
           0,
-          vmGroups(s.risks).findIndex((row) => row.key === location.vmKey),
+          vmGroups(risksAtLocation(s.risks, location)).findIndex(
+            (row) => row.key === location.vmKey,
+          ),
         ) / 20,
       ) + 1,
     size: 20,
@@ -87,6 +93,12 @@ export function RiskWorkspace({
   const originKey = useRef<string | undefined>(undefined);
   const actionRegion = useRef<HTMLDivElement>(null);
   const scopeLocked = saving || !!editing;
+  const inlineEditing = !!editing && editing.key !== "bulk";
+  const navigationLocked = saving || inlineEditing;
+  useEffect(() => {
+    onInteractionLockChange?.(scopeLocked);
+    return () => onInteractionLockChange?.(false);
+  }, [onInteractionLockChange, scopeLocked]);
   const editingRisks = editing
     ? s.risks.filter((r) => editing.ids.includes(r.id))
     : [];
@@ -99,7 +111,10 @@ export function RiskWorkspace({
     originKey.current = origin.current?.dataset.riskTrigger;
     setFeedback("");
     setFailed(false);
-    setEditing(next);
+    setEditing({
+      ...next,
+      visibleIds: next.key === "bulk" ? undefined : visible.map((r) => r.id),
+    });
   }
   function finishEditing() {
     setEditing(null);
@@ -120,29 +135,35 @@ export function RiskWorkspace({
   }
   const editable = canChangeAssessmentDecision(s);
   const included = migrationScope(s).length;
-  const visible = s.risks.filter(
-    (risk) =>
-      (level === "all" || risk.level === level) &&
-      (status === "all" ||
-        (status === "undecided"
-          ? !hasRiskDecision(risk)
-          : status === "excluded"
-            ? !riskReadyForExecution(risk)
-            : hasRiskDecision(risk))) &&
-      (
-        risk.description +
-        " " +
-        t(risk.description) +
-        " " +
-        risk.vmName +
-        " " +
-        risk.vmId +
-        " " +
-        (risk.rule ?? "")
-      )
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()),
+  const located = risksAtLocation(
+    s.risks,
+    sidePanel ? { mode: "category" } : location,
   );
+  const visible = editing?.visibleIds
+    ? s.risks.filter((r) => editing.visibleIds!.includes(r.id))
+    : located.filter(
+        (risk) =>
+          (level === "all" || risk.level === level) &&
+          (status === "all" ||
+            (status === "undecided"
+              ? !hasRiskDecision(risk)
+              : status === "excluded"
+                ? !riskReadyForExecution(risk)
+                : hasRiskDecision(risk))) &&
+          (
+            risk.description +
+            " " +
+            t(risk.description) +
+            " " +
+            risk.vmName +
+            " " +
+            risk.vmId +
+            " " +
+            (risk.rule ?? "")
+          )
+            .toLowerCase()
+            .includes(query.trim().toLowerCase()),
+      );
   const categories = categoryGroups(visible);
   const category =
     categories.find((c) => c.key === location.category) ?? categories[0];
@@ -163,7 +184,7 @@ export function RiskWorkspace({
     onLocationChange({ ...location, vmKey: undefined });
   }
   function navigate(next: RiskLocation) {
-    if (saving || (editing && next.mode !== mode)) return;
+    if (navigationLocked || (editing && next.mode !== mode)) return;
     if (!editing) setFeedback("");
     if (next.mode !== mode) setSelected(new Set());
     onLocationChange(next);
@@ -201,11 +222,60 @@ export function RiskWorkspace({
     }
     return ok;
   }
+  const editor = editing && (
+    <RiskStrategyDock
+      key={editing.key}
+      inline={inlineEditing}
+      title={
+        editing.key === "bulk"
+          ? t(
+              editing.quick === "recommended"
+                ? "确认采用评估建议"
+                : editing.quick === "ignore-or-exclude"
+                  ? "确认忽略与不迁策略"
+                  : editing.quick === "exclude"
+                    ? "确认本次不迁"
+                    : "批量设置策略",
+            )
+          : editing.key.startsWith("vm:")
+            ? t("虚拟机：{0}", editing.name ?? "")
+            : t("风险事项：{0}", t(editing.name ?? ""))
+      }
+    >
+      {editing.quick ? (
+        <RiskBulkConfirmation
+          snapshot={s}
+          risks={editingRisks}
+          action={editing.quick}
+          saving={saving}
+          locked={!editable}
+          feedback={failed ? t(feedback) : undefined}
+          onSubmit={(cmd) => void submit(cmd)}
+          onCancel={finishEditing}
+        />
+      ) : (
+        <RiskStrategyEditor
+          risks={editingRisks}
+          onlyUndecided={editing.onlyUndecided}
+          saving={saving}
+          locked={!editable}
+          feedback={failed ? t(feedback) : undefined}
+          onSubmit={(cmd) => void submit(cmd)}
+          onCancel={finishEditing}
+        />
+      )}
+    </RiskStrategyDock>
+  );
+
   const interactions: RiskInteractions = {
     editable,
     saving,
     editing: !!editing,
     onManage,
+    navigationLocked,
+    inlineEditor: inlineEditing
+      ? { key: editing.key, content: editor }
+      : undefined,
     onCommand: submit,
     onEdit: (key, risks, onlyUndecided = false) => {
       beginEditing({
@@ -312,29 +382,12 @@ export function RiskWorkspace({
       <div
         ref={actionRegion}
         className={styles.dock}
-        data-editing={!!editing}
+        data-editing={editing?.key === "bulk"}
         tabIndex={-1}
         role="region"
         aria-label={t("策略操作区")}
       >
         <RiskBulkToolbar
-          navigationAction={
-            sidePanel &&
-            onManage && (
-              <button
-                className={`${styles.textAction} ${styles.manageLink}`}
-                title={t("打开迁移风险页面")}
-                aria-label={t("打开迁移风险页面")}
-                disabled={scopeLocked}
-                onClick={() =>
-                  onManage({ mode: "category", category: location.category })
-                }
-              >
-                {t("独立打开")}
-                <Icon name="open" size={14} />
-              </button>
-            )
-          }
           search={
             <label className={styles.search}>
               <Icon name="search" size={16} />
@@ -366,49 +419,7 @@ export function RiskWorkspace({
             });
           }}
         />
-        {editing && (
-          <RiskStrategyDock
-            key={editing.key}
-            title={
-              editing.key === "bulk"
-                ? t(
-                    editing.quick === "recommended"
-                      ? "确认采用评估建议"
-                      : editing.quick === "ignore-or-exclude"
-                        ? "确认忽略与不迁策略"
-                        : editing.quick === "exclude"
-                          ? "确认本次不迁"
-                          : "批量设置策略",
-                  )
-                : editing.key.startsWith("vm:")
-                  ? t("虚拟机：{0}", editing.name ?? "")
-                  : t("风险事项：{0}", t(editing.name ?? ""))
-            }
-          >
-            {editing.quick ? (
-              <RiskBulkConfirmation
-                snapshot={s}
-                risks={editingRisks}
-                action={editing.quick}
-                saving={saving}
-                locked={!editable}
-                feedback={failed ? t(feedback) : undefined}
-                onSubmit={(cmd) => void submit(cmd)}
-                onCancel={finishEditing}
-              />
-            ) : (
-              <RiskStrategyEditor
-                risks={editingRisks}
-                onlyUndecided={editing.onlyUndecided}
-                saving={saving}
-                locked={!editable}
-                feedback={failed ? t(feedback) : undefined}
-                onSubmit={(cmd) => void submit(cmd)}
-                onCancel={finishEditing}
-              />
-            )}
-          </RiskStrategyDock>
-        )}
+        {editing?.key === "bulk" && editor}
         {!editing && feedback && (
           <p
             role={failed ? "alert" : "status"}
@@ -418,6 +429,35 @@ export function RiskWorkspace({
           </p>
         )}
       </div>
+      {!sidePanel && location.sourceRiskIds && (
+        <div className={styles.locationScope} role="status">
+          <span>
+            {t(
+              "定位范围：{0} · {1} 台虚拟机",
+              t(
+                s.risks.find((r) => location.sourceRiskIds!.includes(r.id))
+                  ?.description ?? "来源风险已不存在",
+              ),
+              vmCount(located),
+            )}
+          </span>
+          <button
+            className={styles.textAction}
+            disabled={scopeLocked}
+            onClick={() => {
+              setQuery("");
+              setLevel("all");
+              setStatus("all");
+              clearSelection();
+              setCategoryViews({});
+              setVmPage({ ...vmPage, page: 1 });
+              onLocationChange({ mode: "vm" });
+            }}
+          >
+            {t("清除范围，查看全部")}
+          </button>
+        </div>
+      )}
       <div
         className={styles.listViewport}
         role="region"
@@ -462,12 +502,16 @@ export function RiskWorkspace({
                       onChange={(checked) => select(group.risks, checked)}
                     />
                     <button
-                      disabled={saving}
+                      disabled={navigationLocked}
                       aria-current={
                         category?.key === group.key ? "true" : undefined
                       }
                       onClick={() =>
-                        navigate({ mode: "category", category: group.key })
+                        navigate({
+                          ...location,
+                          mode: "category",
+                          category: group.key,
+                        })
                       }
                     >
                       <strong>{t(group.label)}</strong>

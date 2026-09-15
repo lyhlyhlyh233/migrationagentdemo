@@ -29,14 +29,21 @@ describe("workspace UI isolation", () => {
     const a = uiReducer(initialUi, {
       type: "project",
       id: "a",
-      patch: { panel: "risk", riskLocation: { mode: "vm", vmKey: "id:vm-1" } },
+      patch: {
+        panel: "risk",
+        riskLocation: { mode: "vm", vmKey: "id:vm-1", sourceRiskIds: [1, 2] },
+      },
     });
     const b = uiReducer(a, {
       type: "project",
       id: "b",
       patch: { panel: "risk" },
     });
-    expect(b.projects.a.riskLocation).toEqual({ mode: "vm", vmKey: "id:vm-1" });
+    expect(b.projects.a.riskLocation).toEqual({
+      mode: "vm",
+      vmKey: "id:vm-1",
+      sourceRiskIds: [1, 2],
+    });
     expect(b.projects.b.riskLocation).toEqual({ mode: "category" });
   });
   it("stale handoff completion cannot replace a subsequently selected conversation", () => {

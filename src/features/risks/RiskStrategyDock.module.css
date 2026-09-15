@@ -66,3 +66,15 @@
     margin-right: auto;
   }
 }
+
+.inline,
+.inline > form,
+.inline .body {
+  overflow: visible;
+}
+.inline {
+  padding: 0 4px;
+}
+.inline > h3 {
+  max-height: none;
+}

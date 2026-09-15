@@ -9,6 +9,7 @@ import { pageWindow, type PageState } from "@/shared/ui/pagination-state";
 import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
 import {
   highestRiskLevel,
+  locationForRisks,
   ruleGroups,
   selectionState,
   strategyLabel,
@@ -154,19 +155,26 @@ export function CategoryRiskTable({
                     <td data-label={t("虚拟机数")}>
                       <button
                         className={styles.vmCountButton}
-                        aria-expanded={open}
+                        aria-expanded={readOnlyVms ? undefined : open}
                         aria-label={t("{0} 台", vmCount(items))}
-                        disabled={actions.saving}
+                        disabled={
+                          actions.navigationLocked ||
+                          (readOnlyVms && actions.editing)
+                        }
                         onClick={() =>
-                          onView({
-                            ...view,
-                            expanded: open
-                              ? view.expanded.filter((k) => k !== key)
-                              : [...view.expanded, key],
-                          })
+                          readOnlyVms
+                            ? actions.onManage?.(locationForRisks(items))
+                            : onView({
+                                ...view,
+                                expanded: open
+                                  ? view.expanded.filter((k) => k !== key)
+                                  : [...view.expanded, key],
+                              })
                         }
                       >
-                        <Icon name={open ? "chevron" : "right"} size={14} />
+                        {!readOnlyVms && (
+                          <Icon name={open ? "chevron" : "right"} size={14} />
+                        )}
                         <strong>{vmCount(items)}</strong>
                         <span>{t("台")}</span>
                       </button>
@@ -209,6 +217,11 @@ export function CategoryRiskTable({
                       </div>
                     </td>
                   </tr>
+                  {actions.inlineEditor?.key === `rule:${key}` && (
+                    <tr className={styles.expandedRow}>
+                      <td colSpan={7}>{actions.inlineEditor.content}</td>
+                    </tr>
+                  )}
                   {detailsOpen && (
                     <tr className={styles.expandedRow}>
                       <td colSpan={7}>
@@ -235,7 +248,7 @@ export function CategoryRiskTable({
                       </td>
                     </tr>
                   )}
-                  {open && (
+                  {!readOnlyVms && open && (
                     <tr className={styles.expandedRow}>
                       <td colSpan={7}>
                         <RiskVmTable
@@ -272,7 +285,7 @@ export function CategoryRiskTable({
         total={groups.length}
         value={view.pagination}
         onChange={(pagination) => onView({ ...view, pagination })}
-        disabled={actions.saving}
+        disabled={actions.navigationLocked}
       />
     </div>
   );

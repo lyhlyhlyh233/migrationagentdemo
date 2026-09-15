@@ -171,7 +171,7 @@ export function RiskVmTable({
                         <button
                           className={styles.textAction}
                           aria-expanded={open}
-                          disabled={actions.saving}
+                          disabled={actions.navigationLocked}
                           onClick={() => toggle(key, open)}
                         >
                           {t(readOnly ? "查看依据" : "查看详情")}
@@ -211,6 +211,8 @@ export function RiskVmTable({
                             </Button>
                           </div>
                         )}
+                        {actions.inlineEditor?.key === `vm:${key}` &&
+                          actions.inlineEditor.content}
                         <RiskVmDetails
                           risks={items}
                           readOnly={readOnly}
@@ -231,7 +233,7 @@ export function RiskVmTable({
         total={groups.length}
         value={pagination}
         onChange={onPage}
-        disabled={actions.saving}
+        disabled={actions.navigationLocked}
       />
     </div>
   );

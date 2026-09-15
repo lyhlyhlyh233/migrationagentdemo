@@ -41,12 +41,17 @@ export async function plan(
       s.risks = s.risks
         .filter((r) => r.stage !== "planning")
         .concat(
-          structuredClone(planningRisks).map((r, index) => ({
-            ...r,
-            vmName:
+          structuredClone(planningRisks).map((r, index) => {
+            const vmName =
               s.batchTasks[Math.min(index + 1, s.batchTasks.length - 1)]
-                ?.vmNames[0] ?? r.vmName,
-          })),
+                ?.vmNames[0] ?? r.vmName;
+            const vmIndex = s.scopeRows.findIndex((row) => row[0] === vmName);
+            return {
+              ...r,
+              vmName,
+              vmId: vmIndex >= 0 ? `VMID-${1001 + vmIndex}` : r.vmId,
+            };
+          }),
         );
       s.vmTasks.forEach(
         (v) =>

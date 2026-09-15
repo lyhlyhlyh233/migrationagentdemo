@@ -50,6 +50,7 @@ ${report.text}
 ${s.risks
   .map(
     (r) => `### ${r.description}
+虚拟机：${r.vmName}（${r.vmId}）
 ${r.rule}
 ${r.evidence}
 建议：${r.recommendation}`,

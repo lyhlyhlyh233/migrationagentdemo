@@ -72,7 +72,7 @@ export class MockMigrationService implements MigrationService {
       assessmentStatus: "idle",
       assessmentPlan: null,
       planningStatus: "locked",
-      vmCount: 128,
+      vmCount: 200,
       files: { rvtools: "", presales: "" },
       scopeRevisionFile: "",
       planningWorkbook: "",
@@ -92,7 +92,7 @@ export class MockMigrationService implements MigrationService {
       validationTasks: [],
       artifacts: [],
       approvals: [],
-      scopeRows: Array.from({ length: 128 }, (_, i) => [
+      scopeRows: Array.from({ length: 200 }, (_, i) => [
         `VM-${i % 3 === 0 ? "DB" : i % 3 === 1 ? "APP" : "WEB"}-${String(i + 1).padStart(3, "0")}`,
         `10.0.0.${i + 1}`,
         4,
@@ -278,8 +278,8 @@ export class MockMigrationService implements MigrationService {
         "当前范围不可修改",
       );
       s.scopeRevisionFile = file.name;
-      s.vmCount = 124;
-      s.scopeRows = s.scopeRows.slice(0, 124);
+      s.scopeRows = s.scopeRows.slice(0, Math.max(0, s.scopeRows.length - 4));
+      s.vmCount = s.scopeRows.length;
       s.planningStatus = "details-pending";
       scopeArtifacts(this.runtime, s);
     } else return plan(this.runtime, c, file.name, options);

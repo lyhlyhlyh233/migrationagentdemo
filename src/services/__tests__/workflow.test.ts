@@ -1,5 +1,9 @@
 import type { StageId } from "@/domain/models";
-import { migrationScope, riskReadyForExecution } from "@/domain/assessment";
+import {
+  assessmentCounts,
+  migrationScope,
+  riskReadyForExecution,
+} from "@/domain/assessment";
 import { canExecute, stageEligibility } from "@/domain/policies";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MockMigrationService } from "../mock";
@@ -576,5 +580,77 @@ describe("project service boundaries", () => {
     expect(service.runtime.listeners.size).toBe(0);
     expect(service.runtime.account.configured).toBe(false);
     await expect(service.createProject(info, "zh-CN")).rejects.toThrow();
+  });
+});
+
+describe("200 VM assessment sample", () => {
+  it("keeps 20 affected VMs, 26 findings, report counts and complete batch coverage consistent", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const assessed = await service.getProject(c.projectId);
+    expect(assessed.scopeRows).toHaveLength(200);
+    expect(assessed.risks).toHaveLength(26);
+    expect(new Set(assessed.risks.map((r) => r.vmId)).size).toBe(20);
+    expect(new Set(assessed.risks.map((r) => r.category)).size).toBe(7);
+    expect(new Set(assessed.risks.map((r) => r.rule)).size).toBe(11);
+    expect(assessmentCounts(assessed)).toMatchObject({
+      total: 200,
+      direct: 186,
+      changed: 10,
+      blocked: 4,
+    });
+    const eligible = migrationScope(assessed).map((row) => String(row[0]));
+    expect(eligible).toHaveLength(186);
+    const file = await service.download(c.projectId, "assessment-report");
+    const report = await file.blob.text();
+    expect(report).toContain("180 台无风险，20 台风险虚拟机共涉及 26 条风险");
+    for (const risk of assessed.risks) expect(report).toContain(risk.vmId);
+    await service.execute(c, { type: "stage.confirm", target: "planning" });
+    const p = {
+      ...c,
+      stageId: "planning" as const,
+      conversationId: "stage-planning-main",
+    };
+    await service.execute(p, { type: "planning.confirmScope" });
+    await finish(service.execute(p, { type: "planning.useSample" }));
+    const planned = await service.getProject(c.projectId);
+    expect(planned.batchTasks).toHaveLength(8);
+    for (const risk of planned.risks.filter((r) => r.stage === "planning")) {
+      const vmIndex = planned.scopeRows.findIndex(
+        (row) => row[0] === risk.vmName,
+      );
+      expect(risk.vmId).toBe(`VMID-${1001 + vmIndex}`);
+    }
+    const assigned = planned.batchTasks.flatMap((batch) => batch.vmNames);
+    expect(assigned).toEqual(eligible);
+    expect(new Set(assigned).size).toBe(eligible.length);
+    expect(planned.vmTasks.map((task) => task.name)).toEqual(eligible);
+    const planFile = await service.download(c.projectId, "batch-plan");
+    const planText = await planFile.blob.text();
+    for (const name of eligible) expect(planText).toContain(name);
+  });
+  it("revises the actual scope by four VMs and allocates the whole revised eligible set", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    await service.execute(c, { type: "stage.confirm", target: "planning" });
+    const p = {
+      ...c,
+      stageId: "planning" as const,
+      conversationId: "stage-planning-main",
+    };
+    await service.upload(p, "scope", new File(["mock scope"], "scope.csv"));
+    const revised = await service.getProject(c.projectId);
+    expect(revised.vmCount).toBe(196);
+    expect(revised.scopeRows).toHaveLength(196);
+    const names = migrationScope(revised).map((row) => String(row[0]));
+    expect(names).toHaveLength(182);
+    await finish(service.execute(p, { type: "planning.useSample" }));
+    expect(
+      (await service.getProject(c.projectId)).batchTasks.flatMap(
+        (batch) => batch.vmNames,
+      ),
+    ).toEqual(names);
   });
 });

@@ -1176,7 +1176,6 @@
   "- **迁移调研表**：补充目标平台版本与 CPU 架构、应用清单、目标硬件和容量。": "- **Migration survey**: target platform version and CPU architecture, applications, hardware and capacity.",
   "收到资料后，我会解释报告中的关键发现，再与你一起确定迁移方案和处置策略。当前为前端模拟，可使用示例资料查看效果。": "After receiving the files, I will explain key findings and help choose migration and risk strategies. This frontend uses simulated results; sample files are available.",
   "**评估结论：建议采用混合迁移方案，先安排可迁对象试点，受阻对象另行处理。**": "**Assessment: use a hybrid approach, pilot eligible VMs first and handle blocked VMs separately.**",
-  "本次示例评估覆盖 {0} 台虚拟机：{1} 台按现状可迁，{2} 台需要调整或验证，{3} 台当前方案不支持。这是按虚拟机去重的分类，不能把 {4} 条风险直接当成受影响虚拟机数量。": "This sample assessment covers {0} VMs: {1} ready as configured, {2} requiring changes or validation, and {3} unsupported. These are distinct VM counts; {4} risk findings do not equal {4} affected VMs.",
   "- **可迁部分**：优先免代理迁移，同时把 DRS、快照等约束带入实施计划。": "- **Eligible VMs**: prefer agentless migration and retain DRS, snapshot and other constraints in the execution plan.",
   "- **需要变化的部分**：RDM、磁盘模式、应用与资源问题应分别选择有代理验证、配置整改或扩容。": "- **Changes required**: choose agent-based validation, configuration changes or expansion for RDM, disk mode, application and resource issues.",
   "- **当前不支持的部分**：跨架构和不支持的虚拟设备，建议从工具范围排除或另行重建。": "- **Unsupported VMs**: exclude cross-architecture workloads and unsupported appliances from tool migration, or rebuild separately.",
@@ -1185,7 +1184,6 @@
   "你也可以继续问我：“为什么这些磁盘要改用有代理？”或“应用重建会影响哪些安排？”": "You can also ask why some disks need agent-based migration or how rebuilding applications affects the plan.",
   "**不支持免代理，不等于所有方案都不能迁。**": "**An agentless limitation does not rule out every migration method.**",
   "物理模式 RDM、独立持久磁盘、共享 SCSI 或共享磁盘，会限制依赖快照的免代理方案。根据你提供的评估规则，可以考虑有代理迁移，或调整磁盘配置后重新评估。": "Physical-mode RDM, independent persistent disks, shared SCSI and shared disks limit snapshot-based agentless migration. The supplied rules suggest agent-based migration or configuration changes followed by reassessment.",
-  "建议先对相关虚拟机做有代理验证，确认应用一致性、停机窗口和回退条件。选择“整改后迁移”会保留待验证状态，不能直接作为已具备实施条件。你可以在风险抽屉中按“磁盘与快照”统一选择策略。": "Validate agent-based migration for affected VMs, including application consistency, downtime and rollback. A remediation plan remains unverified until evidence is recorded. Use the Disks and snapshots group to apply strategies together.",
   "**应用能否迁移，需要与虚拟机配置分开判断。**": "**Application portability must be assessed separately from VM configuration.**",
   "提供的规则把 Kubernetes、OpenShift 列为灰名单，需要补采组件、网络和存储信息并进行专项验证。F5 等虚拟设备在规则中不支持工具迁移，适合从本次工具范围排除，另行制定目标端重建方案。": "The supplied rules require further component, network and storage information and dedicated validation for Kubernetes and OpenShift. Appliances such as F5 are unsupported by the tool and should be excluded or rebuilt separately.",
   "建议由应用负责人确认验证标准与回退方式。选择“不迁”只影响本次工具范围；选择“自定义策略”可以记录另行重建的实施安排。": "Have application owners confirm acceptance criteria and rollback. Excluding a VM affects this tool migration only; a custom strategy can document a separate rebuild.",
@@ -1401,5 +1399,10 @@
   "规则依据": "Assessment rule",
   "关闭风险面板": "Close risk panel",
   "受阻对象自动排除": "Blocked VMs excluded automatically",
-  "全部筛选结果 · {0} 条风险 · {1} 台虚拟机": "All filtered results · {0} risks · {1} VMs"
+  "全部筛选结果 · {0} 条风险 · {1} 台虚拟机": "All filtered results · {0} risks · {1} VMs",
+  "本次示例评估覆盖 {0} 台虚拟机：{1} 台按现状可迁，{2} 台需要调整或验证，{3} 台当前方案不支持。其中 {4} 台无风险，{5} 台风险虚拟机共涉及 {6} 条风险，同一台可能涉及多条风险。": "This sample assessment covers {0} VMs: {1} ready as configured, {2} requiring changes or validation, and {3} unsupported. There are {4} VMs without risks and {5} affected VMs with {6} findings; one VM may have multiple findings.",
+  "建议先对相关虚拟机做有代理验证，确认应用一致性、停机窗口和回退条件。选择“整改后迁移”会保留待验证状态，不能直接作为已具备实施条件。你可以在风险面板中按“磁盘与快照”统一选择策略。": "Validate agent-based migration for affected VMs, including application consistency, downtime and rollback. A remediation plan remains unverified until evidence is recorded. Use the Disks and snapshots group to apply strategies together.",
+  "定位范围：{0} · {1} 台虚拟机": "Scope: {0} · {1} VMs",
+  "来源风险已不存在": "Source finding no longer exists",
+  "清除范围，查看全部": "Clear scope and view all"
 }

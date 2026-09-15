@@ -1925,10 +1925,7 @@
   --side-nav-width: 256px;
   --side-panel-width: clamp(
     420px,
-    var(
-      --side-panel-size,
-      min(1040px, calc((100% - var(--side-nav-width)) * 0.42))
-    ),
+    var(--side-panel-size, calc((100% - var(--side-nav-width)) * 0.38)),
     calc(100% - var(--side-nav-width) - 360px)
   );
   grid-template-columns: var(--side-nav-width) minmax(0, 1fr) var(
@@ -1979,6 +1976,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Keep long stage labels separate from progress when the panel is widened. */
+@container risk-chat (max-width: 1000px) {
+  .root :global(.progress-rail li button) {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  .root :global(.progress-rail li button > span:not(.stage-sequence)) {
+    overflow-wrap: anywhere;
+  }
+  .root :global(.progress-rail small) {
+    grid-column: 2;
+    margin-left: 0;
+    padding-left: 0;
+    overflow-wrap: anywhere;
+  }
+}
 @container risk-chat (max-width: 720px) {
   .root :global(.progress-rail li button) {
     flex-wrap: wrap;
@@ -1989,7 +2002,7 @@
   .root :global(.progress-rail small) {
     flex-basis: 100%;
     font-size: var(--ui-caption);
-    padding-left: 22px;
+    padding-left: 0;
   }
   .root :global(.progress-rail > ol) {
     gap: 8px;

@@ -5,8 +5,10 @@ import styles from "./RiskStrategyDock.module.css";
 export function RiskStrategyDock({
   title,
   children,
+  inline = false,
 }: {
   title: string;
+  inline?: boolean;
   children: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -15,7 +17,10 @@ export function RiskStrategyDock({
     heading.current?.focus({ preventScroll: true });
   }, []);
   return (
-    <section className={styles.root} aria-labelledby={titleId}>
+    <section
+      className={`${styles.root} ${inline ? styles.inline : ""}`}
+      aria-labelledby={titleId}
+    >
       <h3 id={titleId} ref={heading} tabIndex={-1}>
         {title}
       </h3>

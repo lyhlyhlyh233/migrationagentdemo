@@ -97,8 +97,8 @@ export function buildBatchTasks(vmNames: string[]): BatchTask[] {
       id: `B-${String(index + 1).padStart(3, "0")}`,
       batchPhase: phase[index],
       vmNames: vmNames.slice(
-        index * 16,
-        Math.min((index + 1) * 16, vmNames.length),
+        Math.floor((index * vmNames.length) / 8),
+        Math.floor(((index + 1) * vmNames.length) / 8),
       ),
       stageType: type[index],
       startDate: `2026-09-${String(start).padStart(2, "0")}`,
@@ -151,7 +151,7 @@ export function buildVmTasks(batch: BatchTask): VmTask[] {
       startTime:
         status === "pending-sync"
           ? "—"
-          : `${batch.startDate} 00:${String(index * 3).padStart(2, "0")}`,
+          : `${batch.startDate} ${String(Math.floor((index * 3) / 60)).padStart(2, "0")}:${String((index * 3) % 60).padStart(2, "0")}`,
       endTime:
         status === "succeeded"
           ? `${batch.startDate} 02:${String(10 + index).padStart(2, "0")}`

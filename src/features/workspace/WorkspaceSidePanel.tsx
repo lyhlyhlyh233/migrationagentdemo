@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import styles from "./WorkspaceSidePanel.module.css";
 
@@ -8,6 +9,8 @@ export function WorkspaceSidePanel({
   onWidthChange,
   onCollapse,
   onClose,
+  onManage,
+  manageDisabled,
   risks,
 }: {
   open: boolean;
@@ -15,6 +18,8 @@ export function WorkspaceSidePanel({
   onCollapse: () => void;
   onClose: () => void;
   risks: ReactNode;
+  onManage: () => void;
+  manageDisabled: boolean;
 }) {
   const t = useTranslation();
   const panel = useRef<HTMLElement>(null);
@@ -135,15 +140,20 @@ export function WorkspaceSidePanel({
             </button>
           </div>
         </div>
-        <button
-          type="button"
-          className="icon-button"
-          aria-label={t("折叠右侧面板")}
-          title={t("折叠右侧面板")}
-          onClick={onCollapse}
-        >
-          <Icon name="panel" size={18} />
-        </button>
+        <div className={styles.headerActions}>
+          <Button disabled={manageDisabled} onClick={onManage}>
+            {t("打开迁移风险页面")} <Icon name="open" size={14} />
+          </Button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={t("折叠右侧面板")}
+            title={t("折叠右侧面板")}
+            onClick={onCollapse}
+          >
+            <Icon name="panel" size={18} />
+          </button>
+        </div>
       </header>
       <section
         role="tabpanel"

@@ -62,12 +62,12 @@ describe("risk table selection and pagination", () => {
       expanded: [key],
       vmPages: { [key]: { page: 3, size: 10 } },
     };
-    const render = (expanded: string[]) =>
+    const render = (expanded: string[], readOnlyVms = false) =>
       renderToStaticMarkup(
         <CategoryRiskTable
           risks={risks}
           allRisks={risks}
-          readOnlyVms
+          readOnlyVms={readOnlyVms}
           selected={new Set()}
           onSelect={() => {}}
           view={{ ...view, expanded }}
@@ -77,6 +77,9 @@ describe("risk table selection and pagination", () => {
       );
     const open = render([key]);
     expect(open.match(/<table/g)).toHaveLength(2);
+    const panel = render([key], true);
+    expect(panel.match(/<table/g)).toHaveLength(1);
+    expect(panel).not.toContain("TEST-VM-021");
     expect(open).toContain("TEST-VM-021");
     expect(open).toContain("TEST-VM-030");
     expect(open).not.toContain("TEST-VM-020");
@@ -140,12 +143,17 @@ describe("risk table selection and pagination", () => {
     const html = renderToStaticMarkup(
       <RiskWorkspace
         snapshot={snapshot}
-        location={{ mode: "vm", vmKey: "id:fixture-vm-53" }}
+        location={{
+          mode: "vm",
+          vmKey: "id:fixture-vm-53",
+          sourceRiskIds: snapshot.risks.slice(10).map((r) => r.id),
+        }}
         onLocationChange={() => {}}
         onCommand={async () => true}
       />,
     );
     expect(html).toContain("TEST-VM-053");
+    expect(html).toContain("清除范围，查看全部");
     expect(html).toContain("Shared disk constraint");
     expect(html).not.toContain("TEST-VM-021");
     service.dispose();

@@ -795,10 +795,6 @@
   }
 }
 
-.manageLink {
-  margin-left: auto;
-  white-space: nowrap;
-}
 .vmCountButton {
   display: inline-flex;
   align-items: center;
@@ -844,4 +840,20 @@
 }
 .bulkButtons button {
   min-height: var(--control-height);
+}
+
+.locationScope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--ui-caption);
+}
+.locationScope span {
+  flex: 1;
+  min-width: 160px;
+  overflow-wrap: anywhere;
 }

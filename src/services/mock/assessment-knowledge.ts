@@ -155,19 +155,37 @@ export function buildAssessmentRisks(s: ProjectSnapshot): RiskItem[] {
       recommendedMethod: "agentless",
     },
   ];
-  return definitions.map((risk, index) => ({
-    ...risk,
-    id: 101 + index,
-    stage: "research",
-    batchId: "—",
-    vmName: String(
-      s.scopeRows[index === 9 ? 4 : index]?.[0] ?? `VM-${index + 1}`,
-    ),
-    vmId: `VMID-${1001 + (index === 9 ? 4 : index)}`,
-    closed: false,
-    closedAt: "—",
-    closureDescription: "",
-  }));
+  // 20 affected VMs: 6 constraint-only, 10 requiring change, 4 blocked.
+  // 26 findings across 11 rules; DRS overlaps snapshot and RDM findings.
+  const affectedVms = [
+    [1, 2],
+    [3, 4],
+    [5, 6],
+    [7],
+    [13, 14, 15, 16],
+    [19, 20],
+    [8],
+    [9, 10],
+    [11],
+    [13, 14, 15, 16, 17, 18, 5, 6],
+    [12],
+  ];
+  let nextId = 101;
+  return definitions.flatMap((risk, index) =>
+    affectedVms[index]
+      .filter((number) => s.scopeRows[number - 1])
+      .map((number): RiskItem => ({
+        ...risk,
+        id: nextId++,
+        stage: "research",
+        batchId: "—",
+        vmName: String(s.scopeRows[number - 1][0]),
+        vmId: `VMID-${1000 + number}`,
+        closed: false,
+        closedAt: "—",
+        closureDescription: "",
+      })),
+  );
 }
 export const assessmentWelcome =
   "我会先判断哪些虚拟机适合免代理迁移、哪些需要调整方案，以及哪些暂时不能迁。评估依据包括源端配置、目标平台兼容性、应用要求和资源容量。\n\n请提供两份资料：\n\n- **RVTools 采集表**：建议使用 4.7.1 或以上版本，包含虚拟机、磁盘、网络、快照和主机信息。\n- **迁移调研表**：补充目标平台版本与 CPU 架构、应用清单、目标硬件和容量。\n\n收到资料后，我会解释报告中的关键发现，再与你一起确定迁移方案和处置策略。当前为前端模拟，可使用示例资料查看效果。";
@@ -177,6 +195,7 @@ export function assessmentReportReply(
 ): { text: string; results: BusinessResult[] } {
   const n = assessmentCounts(s);
   const risks = assessmentRisks(s);
+  const affected = new Set(risks.map((r) => r.vmId)).size;
   const summary: BusinessResult = {
     kind: "summary",
     title: "评估结论快照",
@@ -193,7 +212,7 @@ export function assessmentReportReply(
   const results: BusinessResult[] = [];
   if (/RDM|磁盘|代理|agent|disk/i.test(question))
     return {
-      text: "**不支持免代理，不等于所有方案都不能迁。**\n\n物理模式 RDM、独立持久磁盘、共享 SCSI 或共享磁盘，会限制依赖快照的免代理方案。根据你提供的评估规则，可以考虑有代理迁移，或调整磁盘配置后重新评估。\n\n建议先对相关虚拟机做有代理验证，确认应用一致性、停机窗口和回退条件。选择“整改后迁移”会保留待验证状态，不能直接作为已具备实施条件。你可以在风险抽屉中按“磁盘与快照”统一选择策略。",
+      text: "**不支持免代理，不等于所有方案都不能迁。**\n\n物理模式 RDM、独立持久磁盘、共享 SCSI 或共享磁盘，会限制依赖快照的免代理方案。根据你提供的评估规则，可以考虑有代理迁移，或调整磁盘配置后重新评估。\n\n建议先对相关虚拟机做有代理验证，确认应用一致性、停机窗口和回退条件。选择“整改后迁移”会保留待验证状态，不能直接作为已具备实施条件。你可以在风险面板中按“磁盘与快照”统一选择策略。",
       results,
     };
   if (/应用|F5|Kubernetes|application/i.test(question))
@@ -208,7 +227,7 @@ export function assessmentReportReply(
     };
   const undecided = n.undecided;
   return {
-    text: `**评估结论：建议采用混合迁移方案，先安排可迁对象试点，受阻对象另行处理。**\n\n本次示例评估覆盖 ${n.total} 台虚拟机：${n.direct} 台按现状可迁，${n.changed} 台需要调整或验证，${n.blocked} 台当前方案不支持。这是按虚拟机去重的分类，不能把 ${risks.length} 条风险直接当成受影响虚拟机数量。\n\n- **可迁部分**：优先免代理迁移，同时把 DRS、快照等约束带入实施计划。\n- **需要变化的部分**：RDM、磁盘模式、应用与资源问题应分别选择有代理验证、配置整改或扩容。\n- **当前不支持的部分**：跨架构和不支持的虚拟设备，建议从工具范围排除或另行重建。\n\n${undecided ? `目前还有 ${undecided} 条风险未选择策略。可以按类别处理，也可以直接继续规划；受阻且未完成验证的对象会自动排除。` : `风险处置方案已记录，当前工具迁移范围为 ${migrationScope(s).length} 台。未完成整改验证的对象仍不进入工具范围，确认交接即可继续。`}\n\n你也可以继续问我：“为什么这些磁盘要改用有代理？”或“应用重建会影响哪些安排？”`,
+    text: `**评估结论：建议采用混合迁移方案，先安排可迁对象试点，受阻对象另行处理。**\n\n本次示例评估覆盖 ${n.total} 台虚拟机：${n.direct} 台按现状可迁，${n.changed} 台需要调整或验证，${n.blocked} 台当前方案不支持。其中 ${n.total - affected} 台无风险，${affected} 台风险虚拟机共涉及 ${risks.length} 条风险，同一台可能涉及多条风险。\n\n- **可迁部分**：优先免代理迁移，同时把 DRS、快照等约束带入实施计划。\n- **需要变化的部分**：RDM、磁盘模式、应用与资源问题应分别选择有代理验证、配置整改或扩容。\n- **当前不支持的部分**：跨架构和不支持的虚拟设备，建议从工具范围排除或另行重建。\n\n${undecided ? `目前还有 ${undecided} 条风险未选择策略。可以按类别处理，也可以直接继续规划；受阻且未完成验证的对象会自动排除。` : `风险处置方案已记录，当前工具迁移范围为 ${migrationScope(s).length} 台。未完成整改验证的对象仍不进入工具范围，确认交接即可继续。`}\n\n你也可以继续问我：“为什么这些磁盘要改用有代理？”或“应用重建会影响哪些安排？”`,
     results: [
       summary,
       ...(!question || /方案|strategy|plan/i.test(question)

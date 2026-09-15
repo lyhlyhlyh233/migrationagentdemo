@@ -43,6 +43,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     open: boolean;
   }>();
   const openSidePanelButton = useRef<HTMLButtonElement>(null);
+  const [riskInteractionLocked, setRiskInteractionLocked] = useState(false);
   const [sidePanelWidth, setSidePanelWidth] = useState<number>();
   const [navOpen, setNavOpen] = useState(false);
   const scrollViewport = useRef<HTMLDivElement>(null);
@@ -423,6 +424,20 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           key={panelScope}
           open={showSidePanel}
           onWidthChange={setSidePanelWidth}
+          manageDisabled={riskInteractionLocked}
+          onManage={() =>
+            dispatchUi({
+              type: "project",
+              id: s.id,
+              patch: {
+                panel: "risk",
+                riskLocation: {
+                  mode: "category",
+                  category: p.riskLocation.category,
+                },
+              },
+            })
+          }
           onCollapse={closeRiskPanel}
           onClose={closeRiskPanel}
           risks={
@@ -431,6 +446,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               snapshot={s}
               onCommand={a.execute}
               sidePanel
+              onInteractionLockChange={setRiskInteractionLocked}
               location={p.riskLocation}
               onLocationChange={(riskLocation) =>
                 dispatchUi({
