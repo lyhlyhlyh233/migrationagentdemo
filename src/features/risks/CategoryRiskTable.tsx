@@ -32,7 +32,7 @@ export const initialCategoryView = (): CategoryTableView => ({
 export function CategoryRiskTable({
   risks,
   allRisks,
-  drawer,
+  readOnlyVms,
   selected,
   onSelect,
   view,
@@ -41,7 +41,7 @@ export function CategoryRiskTable({
 }: {
   risks: RiskItem[];
   allRisks: RiskItem[];
-  drawer: boolean;
+  readOnlyVms: boolean;
   selected: ReadonlySet<number>;
   onSelect: (risks: RiskItem[], checked: boolean) => void;
   view: CategoryTableView;
@@ -139,10 +139,10 @@ export function CategoryRiskTable({
                     <th scope="row">
                       <strong>{t(risk.description)}</strong>
                     </th>
-                    <td>
+                    <td data-label={t("级别")}>
                       <Status value={highestRiskLevel(items)} />
                     </td>
-                    <td>
+                    <td data-label={t("迁移影响")}>
                       <span className={styles.impact} data-impact={risk.impact}>
                         {t(
                           risk.impact
@@ -151,10 +151,11 @@ export function CategoryRiskTable({
                         )}
                       </span>
                     </td>
-                    <td>
+                    <td data-label={t("虚拟机数")}>
                       <button
                         className={styles.textAction}
                         aria-expanded={open}
+                        aria-label={t("{0} 台", vmCount(items))}
                         disabled={actions.saving}
                         onClick={() =>
                           onView({
@@ -166,15 +167,15 @@ export function CategoryRiskTable({
                         }
                       >
                         <Icon name={open ? "chevron" : "right"} size={12} />
-                        {t("{0} 台", vmCount(items))}
+                        {vmCount(items)}
                       </button>
                     </td>
-                    <td>
+                    <td data-label={t("当前策略")}>
                       <span>
                         {t(labels.length === 1 ? labels[0] : "含单台例外")}
                       </span>
                     </td>
-                    <td>
+                    <td data-actions>
                       <div className={styles.rowActions}>
                         <button
                           className={styles.textAction}
@@ -239,7 +240,7 @@ export function CategoryRiskTable({
                         <RiskVmTable
                           risks={items}
                           allRisks={allRisks}
-                          readOnly={drawer}
+                          readOnly={readOnlyVms}
                           subtable
                           label={t("{0}的虚拟机", t(risk.description))}
                           selected={selected}

@@ -54,10 +54,10 @@ export function RiskWorkspace({
   location,
   onLocationChange,
   onCommand,
-  drawer = false,
+  sidePanel = false,
   onManage,
 }: RiskWorkspaceProps & {
-  drawer?: boolean;
+  sidePanel?: boolean;
   onManage?: (location: RiskLocation) => void;
 }) {
   const t = useTranslation();
@@ -85,7 +85,7 @@ export function RiskWorkspace({
   const submitting = useRef(false);
   const origin = useRef<HTMLElement | null>(null);
   const originKey = useRef<string | undefined>(undefined);
-  const footer = useRef<HTMLDivElement>(null);
+  const actionRegion = useRef<HTMLDivElement>(null);
   const scopeLocked = saving || !!editing;
   const editingRisks = editing
     ? s.risks.filter((r) => editing.ids.includes(r.id))
@@ -107,13 +107,13 @@ export function RiskWorkspace({
       const target = origin.current?.isConnected
         ? origin.current
         : originKey.current
-          ? footer.current?.querySelector<HTMLElement>(
+          ? actionRegion.current?.querySelector<HTMLElement>(
               `[data-risk-trigger="${originKey.current}"]`,
             )
           : null;
       if (target?.isConnected && !target.matches(":disabled"))
         target.focus({ preventScroll: true });
-      else footer.current?.focus({ preventScroll: true });
+      else actionRegion.current?.focus({ preventScroll: true });
       origin.current = null;
       originKey.current = undefined;
     });
@@ -146,7 +146,7 @@ export function RiskWorkspace({
   const categories = categoryGroups(visible);
   const category =
     categories.find((c) => c.key === location.category) ?? categories[0];
-  const mode = drawer ? "category" : location.mode;
+  const mode = sidePanel ? "category" : location.mode;
   const filtersActive = !!query || level !== "all" || status !== "all";
   const available = visible.filter((r) => r.stage === "research");
   const selectedRisks = available.filter((r) => selected.has(r.id));
@@ -218,46 +218,55 @@ export function RiskWorkspace({
   };
 
   return (
-    <div className={styles.workspace} data-drawer={drawer}>
+    <div className={styles.workspace} data-side-panel={sidePanel}>
       <div className={styles.workspaceHeader}>
-        <div className={styles.overview}>
-          <span>
-            {t("可纳入")} <strong>{included}</strong>
-          </span>
-          <span>
-            {t("暂时排除")}{" "}
-            <strong data-tone="warning">{s.scopeRows.length - included}</strong>
-          </span>
-          <span>
-            {t("未选策略")}{" "}
-            <strong>{s.risks.filter((r) => !hasRiskDecision(r)).length}</strong>
-          </span>
-        </div>
-        <p className={styles.hint}>
-          {t("风险可稍后处理，受阻对象不会进入实施。")}
-        </p>
-        {!drawer && (
-          <div
-            className={styles.modeSwitch}
-            role="group"
-            aria-label={t("风险查看方式")}
-          >
-            <button
-              aria-pressed={mode === "category"}
-              disabled={scopeLocked}
-              onClick={() => navigate({ ...location, mode: "category" })}
-            >
-              {t("按类别")}
-            </button>
-            <button
-              aria-pressed={mode === "vm"}
-              disabled={scopeLocked}
-              onClick={() => navigate({ ...location, mode: "vm" })}
-            >
-              {t("按虚拟机")}
-            </button>
+        <div className={styles.summaryRow}>
+          <div className={styles.overview}>
+            <span>
+              {t("可纳入")} <strong>{included}</strong>
+            </span>
+            <span>
+              {t("暂时排除")}{" "}
+              <strong data-tone="warning">
+                {s.scopeRows.length - included}
+              </strong>
+            </span>
+            <span>
+              {t("未选策略")}{" "}
+              <strong>
+                {s.risks.filter((r) => !hasRiskDecision(r)).length}
+              </strong>
+            </span>
           </div>
-        )}
+          <span
+            className={styles.scopeHint}
+            title={t("风险可稍后处理，受阻对象不会进入实施。")}
+          >
+            {t("受阻对象自动排除")}
+          </span>
+          {!sidePanel && (
+            <div
+              className={styles.modeSwitch}
+              role="group"
+              aria-label={t("风险查看方式")}
+            >
+              <button
+                aria-pressed={mode === "category"}
+                disabled={scopeLocked}
+                onClick={() => navigate({ ...location, mode: "category" })}
+              >
+                {t("按类别")}
+              </button>
+              <button
+                aria-pressed={mode === "vm"}
+                disabled={scopeLocked}
+                onClick={() => navigate({ ...location, mode: "vm" })}
+              >
+                {t("按虚拟机")}
+              </button>
+            </div>
+          )}
+        </div>
         <div className={styles.filters}>
           <label className={styles.search}>
             <Icon name="search" size={16} />
@@ -311,6 +320,78 @@ export function RiskWorkspace({
                 : "评估完成后可选择策略。",
             )}
           </p>
+        )}
+      </div>
+      <div
+        ref={actionRegion}
+        className={styles.dock}
+        data-editing={!!editing}
+        tabIndex={-1}
+        role="region"
+        aria-label={t("策略操作区")}
+      >
+        {editing ? (
+          <RiskStrategyDock
+            key={editing.key}
+            title={
+              editing.key === "bulk"
+                ? t("批量设置策略")
+                : editing.key.startsWith("vm:")
+                  ? t("虚拟机：{0}", editing.name ?? "")
+                  : t("风险事项：{0}", t(editing.name ?? ""))
+            }
+          >
+            {editing.quick ? (
+              <RiskBulkConfirmation
+                snapshot={s}
+                risks={editingRisks}
+                action={editing.quick}
+                saving={saving}
+                locked={!editable}
+                feedback={failed ? t(feedback) : undefined}
+                onSubmit={(cmd) => void submit(cmd)}
+                onCancel={finishEditing}
+              />
+            ) : (
+              <RiskStrategyEditor
+                risks={editingRisks}
+                onlyUndecided={editing.onlyUndecided}
+                saving={saving}
+                locked={!editable}
+                feedback={failed ? t(feedback) : undefined}
+                onSubmit={(cmd) => void submit(cmd)}
+                onCancel={finishEditing}
+              />
+            )}
+          </RiskStrategyDock>
+        ) : (
+          <>
+            <RiskBulkToolbar
+              selected={selectedRisks}
+              available={available}
+              saving={saving}
+              editable={editable}
+              onClear={clearSelection}
+              onAction={(action) => {
+                beginEditing({
+                  key: "bulk",
+                  ids: (selectedRisks.length ? selectedRisks : available).map(
+                    (r) => r.id,
+                  ),
+                  onlyUndecided: true,
+                  quick: action === "custom" ? undefined : action,
+                });
+              }}
+            />
+            {feedback && (
+              <p
+                role={failed ? "alert" : "status"}
+                className={failed ? styles.error : styles.feedback}
+              >
+                {t(feedback)}
+              </p>
+            )}
+          </>
         )}
       </div>
       <div
@@ -400,7 +481,7 @@ export function RiskWorkspace({
                   key={category.key}
                   risks={category.risks}
                   allRisks={s.risks}
-                  drawer={drawer}
+                  readOnlyVms={sidePanel}
                   selected={selected}
                   onSelect={select}
                   view={categoryViews[category.key] ?? initialCategoryView()}
@@ -446,78 +527,6 @@ export function RiskWorkspace({
               {...interactions}
             />
           </div>
-        )}
-      </div>
-      <div
-        ref={footer}
-        className={styles.dock}
-        data-editing={!!editing}
-        tabIndex={-1}
-        role="region"
-        aria-label={t("策略操作区")}
-      >
-        {editing ? (
-          <RiskStrategyDock
-            key={editing.key}
-            title={
-              editing.key === "bulk"
-                ? t("批量设置策略")
-                : editing.key.startsWith("vm:")
-                  ? t("虚拟机：{0}", editing.name ?? "")
-                  : t("风险事项：{0}", t(editing.name ?? ""))
-            }
-          >
-            {editing.quick ? (
-              <RiskBulkConfirmation
-                snapshot={s}
-                risks={editingRisks}
-                action={editing.quick}
-                saving={saving}
-                locked={!editable}
-                feedback={failed ? t(feedback) : undefined}
-                onSubmit={(cmd) => void submit(cmd)}
-                onCancel={finishEditing}
-              />
-            ) : (
-              <RiskStrategyEditor
-                risks={editingRisks}
-                onlyUndecided={editing.onlyUndecided}
-                saving={saving}
-                locked={!editable}
-                feedback={failed ? t(feedback) : undefined}
-                onSubmit={(cmd) => void submit(cmd)}
-                onCancel={finishEditing}
-              />
-            )}
-          </RiskStrategyDock>
-        ) : (
-          <>
-            <RiskBulkToolbar
-              selected={selectedRisks}
-              available={available}
-              saving={saving}
-              editable={editable}
-              onClear={clearSelection}
-              onAction={(action) => {
-                beginEditing({
-                  key: "bulk",
-                  ids: (selectedRisks.length ? selectedRisks : available).map(
-                    (r) => r.id,
-                  ),
-                  onlyUndecided: true,
-                  quick: action === "custom" ? undefined : action,
-                });
-              }}
-            />
-            {feedback && (
-              <p
-                role={failed ? "alert" : "status"}
-                className={failed ? styles.error : styles.feedback}
-              >
-                {t(feedback)}
-              </p>
-            )}
-          </>
         )}
       </div>
     </div>

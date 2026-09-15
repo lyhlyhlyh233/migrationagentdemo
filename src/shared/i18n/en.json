@@ -1385,5 +1385,8 @@
   "风险数与处理进度按当前筛选结果统计；迁移资格按全部项目风险计算。": "Risk counts and decision progress reflect the current filters. Eligibility includes all project risks.",
   "应用策略": "Apply strategy",
   "选择整改不代表已完成验证。": "Remediation still requires verification.",
-  "规则依据": "Assessment rule"
+  "规则依据": "Assessment rule",
+  "关闭风险面板": "Close risk panel",
+  "受阻对象自动排除": "Blocked VMs excluded automatically",
+  "全部筛选结果 · {0} 条风险 · {1} 台虚拟机": "All filtered results · {0} risks · {1} VMs"
 }

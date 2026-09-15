@@ -13,7 +13,7 @@ import { Conversation } from "@/features/conversations/Conversation";
 import { AgentPanel } from "@/features/workspace/ExecutionInspector";
 import { useTranslation } from "@/shared/i18n";
 import { stageName } from "@/shared/i18n/stages";
-import { RiskDrawer } from "@/features/risks/RiskDrawer";
+import { RiskSidePanel } from "@/features/risks/RiskSidePanel";
 import { hasRiskDecision, migrationScope } from "@/domain/assessment";
 import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
@@ -37,7 +37,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const [riskDrawer, setRiskDrawer] = useState<string | null>(null);
+  const [riskPanel, setRiskPanel] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const scrollViewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -70,7 +70,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const management = !!p.panel;
   const stage = chat?.stageId ?? p.activeStage;
   const showRail = !management && (!chat || !!chat.stageId);
-  const showInspector = !!s.info && !management && !!chat?.stageId && inspector;
+  const showRiskPanel = riskPanel === `${s.id}/${chat?.id}` && !management;
+  const showInspector =
+    !!s.info && !management && !!chat?.stageId && inspector && !showRiskPanel;
   const setPanel = (panel: PanelId) => {
     dispatchUi({ type: "project", id: s.id, patch: { panel } });
     setNavOpen(false);
@@ -97,7 +99,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const model = view.modelId ?? data.catalog!.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {
-      setRiskDrawer(`${s.id}/${chat?.id}`);
+      setRiskPanel(`${s.id}/${chat?.id}`);
       void a.send(t("查看迁移风险与处置建议"), agent, model);
     } else setPanel(panel);
   };
@@ -131,7 +133,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   );
   return (
     <main
-      className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "" : "inspector-collapsed"} ${management ? "management-view" : ""}`}
+      className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "" : "inspector-collapsed"} ${management ? "management-view" : ""} ${showRiskPanel ? "risk-panel-open" : ""}`}
     >
       <a className="skip-link" href="#workspace-content">
         {t("跳转到对话")}
@@ -195,7 +197,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               <Icon name={chat.stageId ? "agent" : "chat"} size={15} />
               <span>{t(chat.title)}</span>
             </div>
-            {chat.stageId && !showInspector && (
+            {chat.stageId && !showInspector && !showRiskPanel && (
               <Button onClick={() => setInspector(true)}>
                 {t("查看执行详情")}
               </Button>
@@ -355,18 +357,18 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           onClose={() => setInspector(false)}
         />
       )}
-      {riskDrawer === `${s.id}/${chat?.id}` && !management && (
-        <RiskDrawer
-          key={riskDrawer}
+      {showRiskPanel && (
+        <RiskSidePanel
+          key={riskPanel}
           snapshot={s}
           onCommand={a.execute}
-          onClose={() => setRiskDrawer(null)}
+          onClose={() => setRiskPanel(null)}
           location={p.riskLocation}
           onLocationChange={(riskLocation) =>
             dispatchUi({ type: "project", id: s.id, patch: { riskLocation } })
           }
           onManage={(riskLocation) => {
-            setRiskDrawer(null);
+            setRiskPanel(null);
             dispatchUi({
               type: "project",
               id: s.id,

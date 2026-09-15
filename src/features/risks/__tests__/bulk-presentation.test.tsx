@@ -67,7 +67,7 @@ describe("risk table selection and pagination", () => {
         <CategoryRiskTable
           risks={risks}
           allRisks={risks}
-          drawer
+          readOnlyVms
           selected={new Set()}
           onSelect={() => {}}
           view={{ ...view, expanded }}
@@ -89,7 +89,7 @@ describe("risk table selection and pagination", () => {
       <CategoryRiskTable
         risks={risks}
         allRisks={risks}
-        drawer
+        readOnlyVms
         selected={new Set(risks.map((r) => r.id))}
         onSelect={() => {}}
         view={{ ...view, expanded: [], pagination: { page: 3, size: 20 } }}

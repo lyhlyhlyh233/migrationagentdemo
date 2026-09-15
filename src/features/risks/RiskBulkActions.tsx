@@ -47,8 +47,9 @@ export function RiskBulkToolbar({
                 vmCount(selected),
               )
             : t(
-                "未选择范围：快捷操作将处理当前筛选结果全部 {0} 条评估风险（含所有页）。",
+                "全部筛选结果 · {0} 条风险 · {1} 台虚拟机",
                 available.length,
+                vmCount(available),
               )}
         </span>
         {!!selected.length && (

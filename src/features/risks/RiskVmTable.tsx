@@ -70,6 +70,7 @@ export function RiskVmTable({
         <table
           className={`${styles.table} ${styles.vmTable}`}
           data-subtable={subtable}
+          data-selectable={selectable}
         >
           <colgroup>
             {selectable && <col className={styles.checkboxColumn} />}
@@ -142,9 +143,11 @@ export function RiskVmTable({
                     <th scope="row">
                       <strong>{items[0].vmName}</strong>
                     </th>
-                    <td>{items[0].vmId || "—"}</td>
-                    {!subtable && <td>{items.length}</td>}
-                    <td>
+                    <td data-label={t("标识")}>{items[0].vmId || "—"}</td>
+                    {!subtable && (
+                      <td data-label={t("风险数")}>{items.length}</td>
+                    )}
+                    <td data-label={t("迁移资格")}>
                       <span
                         className={styles.impact}
                         data-impact={eligible ? "constraint" : "blocked"}
@@ -152,9 +155,11 @@ export function RiskVmTable({
                         {t(eligible ? "可纳入" : "暂时排除")}
                       </span>
                     </td>
-                    <td>{t(labels.length === 1 ? labels[0] : "含多项策略")}</td>
+                    <td data-label={t(subtable ? "本项策略" : "当前策略")}>
+                      {t(labels.length === 1 ? labels[0] : "含多项策略")}
+                    </td>
                     {!subtable && (
-                      <td>
+                      <td data-label={t("处理进度")}>
                         {t(
                           "已选 {0} / {1}",
                           items.filter(hasRiskDecision).length,
@@ -162,7 +167,7 @@ export function RiskVmTable({
                         )}
                       </td>
                     )}
-                    <td>
+                    <td data-actions>
                       <div className={styles.rowActions}>
                         <button
                           className={styles.textAction}

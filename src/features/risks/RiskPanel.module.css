@@ -12,7 +12,7 @@
 .heading h2 {
   font-size: 22px;
   font-weight: 650;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
 }
 .workspace {
   min-width: 0;
@@ -44,17 +44,28 @@
   flex: 0 0 auto;
   min-height: 0;
   max-height: 45%;
-  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
   background: var(--panel);
-  padding-bottom: env(safe-area-inset-bottom);
+  margin-bottom: 12px;
 }
 .dock:not([data-editing="true"]) {
   overflow-y: auto;
 }
+.summaryRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.scopeHint {
+  color: var(--secondary);
+  font-size: 12px;
+  margin-left: auto;
+}
 .overview {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 24px;
+  gap: 8px 16px;
   align-items: baseline;
 }
 .overview span {
@@ -78,13 +89,12 @@
 .modeSwitch {
   display: flex;
   gap: 4px;
-  border-bottom: 1px solid var(--line);
-  margin: 18px 0 14px;
+  margin: 0 0 0 auto;
 }
 .modeSwitch button {
   border: 0;
-  border-radius: 6px 6px 0 0;
-  padding: 8px 16px;
+  border-radius: 6px;
+  padding: 5px 10px;
   background: transparent;
   font: inherit;
   color: var(--secondary);
@@ -97,9 +107,9 @@
 }
 .filters {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 132px 144px;
+  grid-template-columns: minmax(160px, 1fr) 120px 128px;
   gap: 8px;
-  margin: 16px 0 20px;
+  margin: 8px 0 4px;
 }
 .search {
   display: flex;
@@ -126,13 +136,13 @@
   background: transparent;
   box-shadow: none;
   outline: none;
-  padding: 8px 10px 8px 0;
+  padding: 6px 8px 6px 0;
   font: inherit;
 }
 .categoryLayout {
   display: grid;
-  grid-template-columns: 176px minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 152px minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 .categories {
@@ -228,7 +238,6 @@
   flex-shrink: 0;
 }
 .tableScroll {
-  overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
 }
@@ -241,7 +250,7 @@
 .table th,
 .table td {
   text-align: left;
-  padding: 12px;
+  padding: 10px 8px;
   vertical-align: top;
   border-bottom: 1px solid var(--line);
   overflow-wrap: anywhere;
@@ -278,41 +287,37 @@
 .rowActions {
   display: flex;
   align-items: flex-start;
-  flex-wrap: nowrap;
-  gap: 3px 12px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
 }
 .rowActions > button {
-  white-space: nowrap;
+  white-space: normal;
+  text-align: left;
 }
-.riskTable {
-  min-width: 880px;
-}
+.riskTable,
 .vmTable {
-  min-width: 980px;
-}
-.vmTable[data-subtable="true"] {
-  min-width: 760px;
+  min-width: 0;
 }
 .levelColumn {
-  width: 66px;
+  width: 7%;
 }
 .impactColumn {
-  width: 136px;
+  width: 16%;
 }
 .vmCountColumn {
-  width: 88px;
+  width: 9%;
 }
 .strategyColumn {
-  width: 116px;
+  width: 14%;
 }
 .actionsColumn {
-  width: 152px;
+  width: 16%;
 }
 .identifierColumn {
-  width: 132px;
+  width: 17%;
 }
 .progressColumn {
-  width: 106px;
+  width: 13%;
 }
 .table > tbody > tr:not(.expandedRow) > :is(td, th) {
   vertical-align: middle;
@@ -320,11 +325,8 @@
 .table thead th {
   white-space: normal;
 }
-.workspace:lang(en) .actionsColumn {
-  width: 220px;
-}
 .workspace:lang(en) .levelColumn {
-  width: 88px;
+  width: 10%;
 }
 .ruleDetails {
   display: grid;
@@ -360,7 +362,7 @@
 }
 .bulkBar {
   background: var(--panel);
-  padding: 10px 0;
+  padding: 8px 0;
   flex: 0 0 auto;
 }
 .selectionSummary {
@@ -556,7 +558,7 @@
   color: var(--danger);
   margin: 12px 0;
 }
-@container (max-width: 740px) {
+@container (max-width: 920px) {
   .categoryLayout {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
@@ -573,24 +575,13 @@
     flex: 0 0 auto;
     min-width: 175px;
   }
-  .categories button {
-    flex: 0 0 auto;
+  .categoryItems .categoryItem > button {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 @container (max-width: 480px) {
-  .expandedRow > td > .findings,
-  .expandedRow > td > .sectionHeading {
-    position: sticky;
-    left: 12px;
-    width: calc(100cqw - 34px);
-    max-width: 100%;
-  }
-  .expandedRow > td > .subtable {
-    position: sticky;
-    left: 12px;
-    width: calc(100cqw - 34px);
-    max-width: 100%;
-  }
   .findingRow {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -640,8 +631,8 @@
     font-size: 14px;
   }
   .categoryLayout {
-    grid-template-columns: 184px minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: 164px minmax(0, 1fr);
+    gap: 16px;
   }
   .bulkConfirmation,
   .subtable .vmTable {
@@ -665,10 +656,10 @@
     font-size: 12px;
   }
   .filters {
-    margin-block: 10px;
+    margin-block: 8px 4px;
   }
   .modeSwitch {
-    margin-block: 8px;
+    margin-block: 0;
   }
   .hint {
     margin-bottom: 8px;
@@ -707,5 +698,135 @@
   }
   .vmTable .actionsColumn {
     width: 16%;
+  }
+}
+
+.filters :global(.ui-select-trigger) {
+  min-height: 34px;
+  padding-block: 5px;
+  font-size: inherit;
+}
+.categoryItem > button {
+  padding: 8px;
+}
+.sectionHeading > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sectionHeading {
+  margin-bottom: 8px;
+}
+.sectionHeading p {
+  margin: 0;
+}
+.workspace .subtable .vmTable {
+  font-size: inherit;
+}
+@container (min-width: 1000px) {
+  .bulkBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .selectionSummary {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .bulkButtons {
+    flex-shrink: 0;
+  }
+}
+@container (max-width: 920px) {
+  .categoryLayout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .categories {
+    gap: 4px;
+  }
+  .categoryItem {
+    min-width: 152px;
+    max-width: 200px;
+  }
+  .selectAllCategories {
+    padding: 4px 8px;
+  }
+  .categories small {
+    margin-top: 2px;
+  }
+  .tableSelection {
+    margin-block: 4px 8px;
+  }
+}
+@container (max-width: 560px) {
+  .scopeHint {
+    display: none;
+  }
+  .table {
+    display: block;
+  }
+  .table colgroup {
+    display: none;
+  }
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .table tbody {
+    display: block;
+  }
+  .table tbody > tr:not(.expandedRow) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .table tbody > tr:not(.expandedRow) > :is(td, th) {
+    display: block;
+    border: 0;
+    padding: 6px;
+    min-width: 0;
+  }
+  .table tbody > tr:not(.expandedRow) > th {
+    flex: 1 0 calc(100% - 32px);
+  }
+  .table tbody > tr:not(.expandedRow) > td:has(> input) {
+    flex: 0 0 32px;
+    padding: 8px 4px;
+  }
+  .table tbody > tr:not(.expandedRow) > td[data-label] {
+    flex: 0 0 50%;
+  }
+  .table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--secondary);
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  .table tbody > tr:not(.expandedRow) > td[data-actions] {
+    flex: 1 0 100%;
+  }
+  .table tbody > .expandedRow,
+  .table tbody > .expandedRow > td {
+    display: block;
+    width: 100%;
+  }
+  .table tbody > .expandedRow > td {
+    padding: 8px;
+  }
+  .rowActions {
+    gap: 16px;
+  }
+  .rowActions button {
+    min-height: 32px;
   }
 }

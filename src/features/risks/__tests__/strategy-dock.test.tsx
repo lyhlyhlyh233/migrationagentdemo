@@ -96,7 +96,7 @@ describe("risk strategy dock", () => {
     }
   });
 
-  it("keeps browsing before the bottom toolbar and reports VM filter scope", async () => {
+  it("keeps strategy tools before the risk list and reports VM filter scope", async () => {
     const service = new MockMigrationService();
     try {
       const snapshot = await service.getProject("lobby");
@@ -109,7 +109,7 @@ describe("risk strategy dock", () => {
           onCommand={async () => false}
         />,
       );
-      expect(html.indexOf('aria-label="风险浏览区"')).toBeLessThan(
+      expect(html.indexOf('aria-label="风险浏览区"')).toBeGreaterThan(
         html.indexOf('aria-label="策略操作区"'),
       );
       expect(html).toContain("风险数与处理进度按当前筛选结果统计");

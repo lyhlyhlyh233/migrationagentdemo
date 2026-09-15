@@ -1,0 +1,74 @@
+.root {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--panel);
+  color: var(--ink);
+  border-left: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.root > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.root > header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.root h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.root h2:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.root > header span {
+  color: var(--secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.root > header button {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 20px 0;
+}
+@media (max-width: 600px) {
+  .root {
+    border-left: 0;
+  }
+  .root > header {
+    padding: 12px;
+    gap: 8px;
+  }
+  .root > header > div {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .root h2 {
+    font-size: 16px;
+  }
+  .root > header button {
+    font-size: 12px;
+  }
+  .body {
+    padding: 8px 12px 0;
+  }
+}
