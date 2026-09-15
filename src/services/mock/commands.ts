@@ -12,7 +12,12 @@ import { decideRisks } from "./risk-decisions";
 import { canChangeAssessmentDecision } from "@/domain/assessment";
 import { scopeArtifacts } from "./files";
 import { offerHandoff, reviewHandoff } from "./handoff";
-import { plan, planningCommand, planningIntro } from "./planning";
+import {
+  plan,
+  planningCommand,
+  planningIntro,
+  previewPlanning,
+} from "./planning";
 import { planningFiles } from "./planning-files";
 import type { MockRuntime } from "./runtime";
 export async function command(
@@ -51,6 +56,21 @@ export async function command(
   ) {
     planningCommand(rt, c, cmd);
     offerHandoff(rt, c);
+    rt.publish(s);
+    return;
+  }
+  if (cmd.type === "planning.sampleInputs") {
+    requireCondition(s.planning, "请先进入规划阶段");
+    const preview = previewPlanning(
+      rt,
+      c,
+      { kind: "import", filename: "规划资料-样例.xlsx" },
+      s.planning.revision,
+    );
+    rt.message(c, "user", "使用样例数据补充规划资料。", { operation: true });
+    rt.result(c, "样例资料已接收，请确认后应用；已有填写默认保留。", [
+      { kind: "planning-preview", previewId: preview.id },
+    ]);
     rt.publish(s);
     return;
   }

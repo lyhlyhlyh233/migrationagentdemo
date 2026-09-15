@@ -1,3 +1,4 @@
+import { PlanningReadOnlyInputs } from "./PlanningReadOnlyInputs";
 import { PlanningSummary } from "./PlanningSummary";
 import { useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
@@ -6,7 +7,6 @@ import {
   planningIsStale,
   planningSummary,
   planningWarnings,
-  type PlanningAdjustment,
   type PlanningInputPatch,
 } from "@/domain/planning";
 import type { ProjectCommand, FilePurpose } from "@/services/contracts";
@@ -14,7 +14,6 @@ import { useTranslation } from "@/shared/i18n";
 import { Button, FileField } from "@/shared/ui/primitives";
 import { PlanningInputs } from "./PlanningInputs";
 import { PlanningBatches } from "./PlanningBatches";
-import { PlanningPreview } from "./PlanningPreview";
 import { PlanningResources, PlanningTimeline } from "./PlanningResources";
 import type { PlanningView } from "./state";
 import styles from "./Planning.module.css";
@@ -36,7 +35,6 @@ export function PlanningWorkspace({
   onCommand,
   onDownload,
   onUpload,
-  conversationId,
   compact = false,
   onManage,
 }: PlanningWorkspaceProps) {
@@ -79,8 +77,7 @@ export function PlanningWorkspace({
     const ok = await onCommand(command);
     setBusy(false);
     setError(!ok);
-    if (ok && command.type === "planning.apply")
-      onView({ selected: [], batchSelected: [] });
+    if (ok && command.type === "planning.apply") onView({ selected: [] });
     return ok;
   }
   async function save(patch: PlanningInputPatch) {
@@ -100,28 +97,21 @@ export function PlanningWorkspace({
         draftRevision: p!.revision + 1,
       });
   }
-  async function preview(change: PlanningAdjustment) {
-    await execute({
-      type: "planning.preview",
-      expectedRevision: p!.revision,
-      change,
-    });
-  }
   if (compact)
     return (
       <PlanningSummary
         snapshot={s}
-        view={view}
-        onView={onView}
-        onSave={save}
-        onCommand={execute}
-        onUpload={onUpload}
         onDownload={onDownload}
         onManage={onManage}
-        locked={locked}
-        unsaved={unsaved}
-        error={error}
-        conversationId={conversationId}
+        onBatch={(id) => {
+          onView({
+            tab: "batches",
+            expandedBatch: id,
+            batchQuery: "",
+            batchPage: { ...view.batchPage, page: 1 },
+          });
+          onManage?.();
+        }}
       />
     );
   return (
@@ -148,12 +138,14 @@ export function PlanningWorkspace({
           </span>
         </div>
         <div className={styles.actions}>
-          <Button
-            disabled={locked || unsaved}
-            onClick={() => setUploadOpen(!uploadOpen)}
-          >
-            {t("导入资料 / 调整")}
-          </Button>
+          {!generated && (
+            <Button
+              disabled={locked || unsaved}
+              onClick={() => setUploadOpen(!uploadOpen)}
+            >
+              {t("导入规划资料")}
+            </Button>
+          )}
           <Button
             onClick={() =>
               onDownload(generated ? "batch-plan" : "planning-template")
@@ -212,7 +204,7 @@ export function PlanningWorkspace({
         ))}
       </nav>
       <div className={styles.scroll}>
-        {uploadOpen && (
+        {uploadOpen && !generated && (
           <div className={styles.editor}>
             <FileField
               label={t("上传规划资料或调整表格")}
@@ -228,23 +220,18 @@ export function PlanningWorkspace({
                 });
               }}
             />
+            <Button
+              disabled={locked || unsaved}
+              onClick={() => void execute({ type: "planning.sampleInputs" })}
+            >
+              {t("使用样例数据")}
+            </Button>
             <p className={styles.note}>
               {t("展示示例解析结果，尚未读取实际表格内容。已有填写会保留。")}
             </p>
           </div>
         )}
-        {p.preview && (
-          <PlanningPreview
-            key={p.preview.id}
-            preview={p.preview}
-            canApply={
-              p.preview.conversationId === conversationId &&
-              s.batchConfirmation !== "confirmed"
-            }
-            onCommand={execute}
-          />
-        )}
-        {unsaved && (
+        {unsaved && !generated && (
           <div className={styles.unsaved}>
             <span>{t("有未保存的规划资料")}</span>
             <Button
@@ -276,15 +263,20 @@ export function PlanningWorkspace({
           </div>
         )}
         {view.tab === "inputs" ? (
-          <PlanningInputs
-            planning={p}
-            view={view}
-            onView={onView}
-            onSave={save}
-            locked={locked}
-          />
+          generated ? (
+            <PlanningReadOnlyInputs planning={p} view={view} onView={onView} />
+          ) : (
+            <PlanningInputs
+              planning={p}
+              view={view}
+              onView={onView}
+              onSave={save}
+              locked={locked}
+            />
+          )
         ) : view.tab === "resources" ? (
           <PlanningResources
+            readOnly={generated}
             planning={p}
             view={view}
             onView={onView}
@@ -301,8 +293,7 @@ export function PlanningWorkspace({
             planning={p}
             view={view}
             onView={onView}
-            locked={locked || unsaved}
-            onPreview={preview}
+            locked={false}
             confirmed={s.batchConfirmation === "confirmed"}
           />
         ) : (
@@ -338,7 +329,7 @@ export function PlanningWorkspace({
           </details>
         )}
       </div>
-      {s.batchConfirmation !== "confirmed" && (
+      {!generated && s.batchConfirmation !== "confirmed" && (
         <footer className={styles.footer}>
           <span>{t("业务资料可稍后补充")}</span>
           <Button
@@ -346,8 +337,7 @@ export function PlanningWorkspace({
             disabled={locked || unsaved || (generated && !stale)}
             onClick={() => {
               void execute({ type: "planning.useSample" }).then((ok) => {
-                if (ok)
-                  onView({ tab: "batches", selected: [], batchSelected: [] });
+                if (ok) onView({ tab: "batches", selected: [] });
               });
             }}
           >

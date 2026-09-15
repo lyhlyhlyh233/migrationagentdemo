@@ -24,7 +24,7 @@ export function RiskOverview({
   const excludedShare = data.total ? data.excluded / data.total : 0;
   const scopeLabel = t("项目总体 · 不随列表筛选变化");
   const breakdownLabel = t(
-    "仅统计当前导致排除的风险，同一虚拟机可涉及多条。占比按风险条数计算并四舍五入。",
+    "统计排除虚拟机关联的全部风险，包含可接受约束；按风险记录数计算占比。",
   );
   return (
     <section className={styles.root} aria-label={t("风险概览")}>
@@ -131,17 +131,21 @@ export function RiskOverview({
           </div>
           <p className={styles.note}>{t("按虚拟机去重，受阻对象自动排除")}</p>
         </figure>
-        <figure className={styles.distribution} aria-label={t("排除风险分布")}>
+        <figure
+          className={styles.distribution}
+          aria-label={t("排除虚拟机的风险分布")}
+        >
           <figcaption title={breakdownLabel}>
-            {t("排除风险分布")}
+            {t("排除虚拟机的风险分布")}
             <Icon name="info" size={13} />
           </figcaption>
           {data.excluded ? (
             <>
               <p className={styles.note}>
                 {t(
-                  "涉及 {0} 台虚拟机、{1} 条排除风险",
+                  "{0} 台排除虚拟机 · {1} 条相关风险 · {2} 条导致排除",
                   data.excluded,
+                  data.relatedRisks,
                   data.exclusionRisks,
                 )}
               </p>

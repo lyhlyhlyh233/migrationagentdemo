@@ -1,3 +1,6 @@
+import { RiskPromptPreview } from "./RiskPromptPreview";
+import { PlanningPreview } from "@/features/planning/PlanningPreview";
+import { planningIsStale } from "@/domain/planning";
 import { PlanningForm } from "@/features/planning/PlanningForm";
 import type { PanelId } from "@/app/state";
 import type { BusinessResult, ProjectSnapshot, StageId } from "@/domain/models";
@@ -11,6 +14,7 @@ import { Status } from "@/shared/ui/Status";
 import { useState, type ReactNode } from "react";
 import styles from "./BusinessResults.module.css";
 export interface ResultActions {
+  conversationId?: string;
   onExecutionWork?: (
     work: Extract<BusinessResult, { kind: "execution-work" }>,
   ) => void;
@@ -19,7 +23,7 @@ export interface ResultActions {
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onStage: (stage: StageId) => void;
   onNavigateStage: (stage: StageId) => void;
-  onUpload?: (purpose: FilePurpose, file: File) => void;
+  onUpload?: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onAsk?: (text: string) => void;
   activeInput?: boolean;
   planningDraftDirty?: boolean;
@@ -61,6 +65,7 @@ export function BusinessResults({
           >
             <Icon name="shield" size={15} />
             {t("查看&处理风险")}
+            <Icon name="right" size={15} />
           </button>
           <button
             type="button"
@@ -91,6 +96,7 @@ function BusinessResultBlock({
   planningInput,
   onPlanningTimeline,
   onExecutionWork,
+  conversationId,
 }: { result: BusinessResult; snapshot: ProjectSnapshot } & ResultActions) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -100,6 +106,8 @@ function BusinessResultBlock({
         (a) => a.id === r.approvalId && a.action.kind === "stage",
       ),
   );
+  if (r.kind === "risk-preview")
+    return <RiskPromptPreview result={r} snapshot={s} onCommand={onCommand} />;
   if (r.kind === "execution-work")
     return (
       <div className={styles.quickActions}>
@@ -119,9 +127,22 @@ function BusinessResultBlock({
               validation: "查看与确认验证",
             }[r.view],
           )}
+          <Icon name="right" size={15} />
         </Button>
       </div>
     );
+  if (r.kind === "planning-input" && s.planning?.batches.length)
+    return planningIsStale(s) && s.batchConfirmation !== "confirmed" ? (
+      <div className={styles.quickActions}>
+        <Button
+          primary
+          onClick={() => void onCommand({ type: "planning.useSample" })}
+        >
+          {t("重新生成模拟初稿")}
+          <Icon name="right" size={15} />
+        </Button>
+      </div>
+    ) : null;
   if (r.kind === "planning-input")
     return (
       planningInput ?? (
@@ -134,18 +155,23 @@ function BusinessResultBlock({
         />
       )
     );
+  if (
+    r.kind === "planning-preview" &&
+    !s.planning?.batches.length &&
+    planningInput
+  )
+    return planningInput;
   if (r.kind === "planning-preview")
-    return (
-      planningInput ?? (
-        <Button onClick={() => onPanel("planning")}>
-          {t(
-            s.planning?.preview?.id === r.previewId
-              ? "查看调整预览"
-              : "查看当前规划",
-          )}
-        </Button>
-      )
-    );
+    return s.planning?.preview?.id === r.previewId ? (
+      <PlanningPreview
+        preview={s.planning.preview}
+        canApply={
+          s.planning.preview.conversationId === conversationId &&
+          s.batchConfirmation !== "confirmed"
+        }
+        onCommand={onCommand}
+      />
+    ) : null;
   if (r.kind === "assessment-input")
     return activeInput && s.assessmentStatus !== "completed" && onUpload ? (
       <div className={styles.input}>
@@ -187,16 +213,19 @@ function BusinessResultBlock({
           {r.stageId !== "research" && (
             <button type="button" onClick={() => onPanel("risk")}>
               {t("查看风险")}
+              <Icon name="right" size={14} />
             </button>
           )}
           {r.stageId === "planning" && (
             <button type="button" onClick={() => onPanel("planning")}>
               {t("打开计划")}
+              <Icon name="right" size={14} />
             </button>
           )}
           {r.stageId === "planning" && onPlanningTimeline && (
             <button type="button" onClick={onPlanningTimeline}>
               {t("查看时间线")}
+              <Icon name="right" size={14} />
             </button>
           )}
         </div>
@@ -215,6 +244,7 @@ function BusinessResultBlock({
           </span>
           <button type="button" onClick={() => onPanel("deliverables")}>
             {t("打开交付件列表")}
+            <Icon name="right" size={14} />
           </button>
         </div>
         {(expanded ? files : files.slice(0, 3)).map((a) => (
@@ -273,11 +303,15 @@ function BusinessResultBlock({
                 }}
               >
                 {t(a.action.kind === "stage" ? "确认范围并继续" : "确认并继续")}
+                <Icon name="right" size={15} />
               </Button>
               <Button onClick={() => setReview(false)}>{t("暂不执行")}</Button>
             </>
           ) : (
-            <Button onClick={() => setReview(true)}>{t("查看确认事项")}</Button>
+            <Button onClick={() => setReview(true)}>
+              {t("查看确认事项")}
+              <Icon name="right" size={15} />
+            </Button>
           )
         }
       >
@@ -334,7 +368,10 @@ function BusinessResultBlock({
               {t(expanded ? "收起" : "展开其余 {0} 项", rows.length - 3)}
             </Button>
           )}
-          <Button onClick={() => onPanel(r.taskKind)}>{t("查看任务")}</Button>
+          <Button onClick={() => onPanel(r.taskKind)}>
+            {t("查看任务")}
+            <Icon name="right" size={15} />
+          </Button>
         </>
       }
     >

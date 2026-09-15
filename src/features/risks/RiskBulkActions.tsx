@@ -7,6 +7,7 @@ import {
 } from "@/domain/risk-decisions";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
+import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { categoryGroups, ruleGroups, vmCount } from "./presentation";
 import dockStyles from "./RiskStrategyDock.module.css";
@@ -211,6 +212,7 @@ export function RiskBulkConfirmation({
           disabled={saving || locked || !preview.total}
         >
           {t(saving ? "保存中…" : "应用策略")}
+          <Icon name="right" size={15} />
         </Button>
       </footer>
     </form>

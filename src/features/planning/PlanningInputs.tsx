@@ -87,70 +87,38 @@ export function PlanningInputs({
             void onSave({ conditions });
           }}
         >
-          <div className={styles.sectionTitle}>
-            <strong>{t("迁移约束")}</strong>
-            <span>
-              {t(
-                p.conditionsSource === "sample"
-                  ? "已预填示例值"
-                  : "已保存项目条件",
-              )}
-            </span>
+          <div className={styles.compactConditions}>
+            {planningConditionFields.map(([key, label]) => (
+              <Field
+                key={key}
+                label={t(label)}
+                type={
+                  key === "startDate"
+                    ? "date"
+                    : typeof conditions[key] === "number"
+                      ? "number"
+                      : "text"
+                }
+                required={key !== "freeze"}
+                min={
+                  key === "concurrency"
+                    ? 1
+                    : typeof conditions[key] === "number"
+                      ? 0.1
+                      : undefined
+                }
+                step={key === "concurrency" ? 1 : "any"}
+                disabled={locked}
+                value={conditions[key]}
+                placeholder={
+                  key === "freeze"
+                    ? t("例如：2026-10-01 至 2026-10-07")
+                    : undefined
+                }
+                onChange={(e) => editConditions(key, e.target.value)}
+              />
+            ))}
           </div>
-          {[
-            { title: "带宽", keys: ["fullBandwidth", "incrementalBandwidth"] },
-            {
-              title: "窗口",
-              keys: ["downtime", "cutoverWindow", "validationHours"],
-            },
-            {
-              title: "日期与并发",
-              keys: ["freeze", "startDate", "concurrency"],
-            },
-          ].map((group) => (
-            <fieldset className={styles.conditionGroup} key={group.title}>
-              <legend>{t(group.title)}</legend>
-              <div className={styles.fields}>
-                {planningConditionFields
-                  .filter(([key]) => group.keys.includes(key))
-                  .map(([key, label]) => (
-                    <Field
-                      key={key}
-                      label={t(label)}
-                      type={
-                        key === "startDate"
-                          ? "date"
-                          : typeof conditions[key] === "number"
-                            ? "number"
-                            : "text"
-                      }
-                      required={key !== "freeze"}
-                      min={
-                        key === "concurrency"
-                          ? 1
-                          : typeof conditions[key] === "number"
-                            ? 0.1
-                            : undefined
-                      }
-                      step={key === "concurrency" ? 1 : "any"}
-                      disabled={locked}
-                      value={conditions[key]}
-                      placeholder={
-                        key === "freeze"
-                          ? t("例如：2026-10-01 至 2026-10-07")
-                          : undefined
-                      }
-                      onChange={(e) => editConditions(key, e.target.value)}
-                    />
-                  ))}
-              </div>
-            </fieldset>
-          ))}
-          <p className={styles.note}>
-            {t(
-              "日期与时长用于演示，窗口和封网期仍需人工核对。业务资料可稍后补充。",
-            )}
-          </p>
           <div className={styles.actions}>
             <Button
               primary

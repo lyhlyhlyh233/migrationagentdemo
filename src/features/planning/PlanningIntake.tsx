@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { PlanningInputPatch } from "@/domain/planning";
 import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
-import { Button, FileField } from "@/shared/ui/primitives";
+import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { PlanningInputs } from "./PlanningInputs";
 import { PlanningPreview } from "./PlanningPreview";
@@ -20,6 +20,7 @@ export function PlanningIntake({
   conversationId,
 }: Omit<PlanningWorkspaceProps, "compact" | "onManage">) {
   const t = useTranslation();
+  const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const p = s.planning;
@@ -66,32 +67,45 @@ export function PlanningIntake({
       className={`${styles.root} ${styles.intake}`}
       aria-label={t("规划资料补充")}
     >
-      <FileField
-        label={t("导入规划资料")}
-        filename={s.planningWorkbook}
-        disabled={locked || unsaved}
-        labelAction={
-          <Button onClick={() => onDownload("planning-template")}>
-            <Icon name="download" size={14} />
-            {t("下载规划模板")}
-          </Button>
-        }
-        onFile={(file) => {
-          setBusy(true);
-          setError(false);
-          void onUpload("planning", file).then((ok) => {
-            setBusy(false);
-            setError(!ok);
-          });
-        }}
-      />
+      <div className={styles.intakeActions}>
+        <input
+          ref={fileInput}
+          type="file"
+          hidden
+          accept=".xlsx,.xls,.csv"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setBusy(true);
+            setError(false);
+            void onUpload("planning", file).then((ok) => {
+              setBusy(false);
+              setError(!ok);
+            });
+          }}
+        />
+        <Button
+          disabled={locked || unsaved}
+          onClick={() => fileInput.current?.click()}
+        >
+          <Icon name="attach" size={15} />
+          {t("导入规划资料")}
+        </Button>
+        <Button
+          disabled={locked || unsaved}
+          onClick={() => void execute({ type: "planning.sampleInputs" })}
+        >
+          {t("使用样例数据")}
+        </Button>
+        <Button onClick={() => onDownload("planning-template")}>
+          <Icon name="download" size={15} />
+          {t("下载模板")}
+        </Button>
+      </div>
       <p className={styles.note}>
-        {t(
-          "主要补充业务系统、业务等级、集群类型与角色，也可一并填写业务依赖、带宽和迁移约束。业务资料可选。",
-        )}
-      </p>
-      <p className={styles.note}>
-        {t("上传后展示示例解析预览，尚未读取实际表格内容；确认后才应用。")}
+        {s.planningWorkbook || t("尚未导入资料")} ·{" "}
+        {t("补充业务属性与依赖，也可填写基础约束；上传仅展示样例解析。")}
       </p>
       {p.preview ? (
         <PlanningPreview
@@ -113,13 +127,10 @@ export function PlanningIntake({
           }}
         >
           <summary>
-            <span>{t("带宽与基础约束")}</span>
+            <span>{t("基础约束")}</span>
             <small>
-              {t(
-                p.conditionsSource === "sample"
-                  ? "已预填示例值"
-                  : "已保存项目条件",
-              )}
+              {p.conditions.fullBandwidth} / {p.conditions.incrementalBandwidth}{" "}
+              Gbps · {t("并发 {0}", p.conditions.concurrency)}
             </small>
           </summary>
           <PlanningInputs
@@ -173,6 +184,7 @@ export function PlanningIntake({
           onClick={() => void execute({ type: "planning.useSample" })}
         >
           {t(s.planningStatus === "generating" ? "正在生成" : "生成规划初稿")}
+          <Icon name="right" size={15} />
         </Button>
       </div>
     </section>

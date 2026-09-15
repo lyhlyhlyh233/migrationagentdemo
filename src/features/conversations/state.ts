@@ -1,6 +1,7 @@
 /** Conversation-local interaction state. Business replies and task state belong to the service. */
 export interface ConversationView {
   draft: string;
+  attachment?: File;
   agentId?: string;
   modelId?: string;
   workOpen?: boolean;

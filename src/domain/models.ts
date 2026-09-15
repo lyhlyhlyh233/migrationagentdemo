@@ -93,6 +93,12 @@ export interface ChatMessage {
   agentId?: ConversationAgentId;
   reply?: ReplyPresentation;
   results?: BusinessResult[];
+  attachment?: {
+    id: string;
+    filename: string;
+    mediaType: string;
+    size: number;
+  };
   requestId?: string;
 }
 
@@ -236,6 +242,11 @@ export type BusinessResult =
       view: "connection" | "tasks" | "issues" | "validation";
       issueId?: string;
       taskIds?: string[];
+    }
+  | {
+      kind: "risk-preview";
+      riskIds: number[];
+      action: "exclude" | "ignore-or-exclude";
     }
   | { kind: "planning-input" }
   | { kind: "planning-preview"; previewId: string }

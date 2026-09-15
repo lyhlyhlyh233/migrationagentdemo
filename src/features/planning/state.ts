@@ -7,7 +7,6 @@ import type {
 import type { PageState } from "@/shared/ui/pagination-state";
 export interface PlanningView {
   intakeConditionsOpen?: boolean;
-  compactAction?: "conditions" | "import";
   tab: "inputs" | "batches" | "resources" | "timeline";
   section: "attributes" | "dependencies" | "conditions";
   batchQuery?: string;
@@ -17,7 +16,6 @@ export interface PlanningView {
   query: string;
   grade: string;
   selected: string[];
-  batchSelected: string[];
   assetPage: PageState;
   batchPage: PageState;
   expandedBatch?: string;
@@ -26,9 +24,6 @@ export interface PlanningView {
   dependenciesDraft?: PlanningDependency[];
   attributesDraft?: Partial<BusinessAttributes>;
   draftRevision?: number;
-  cutover?: string;
-  bufferDays?: number;
-  targetBatch?: string;
 }
 export const initialPlanningView = (): PlanningView => ({
   tab: "inputs",
@@ -36,7 +31,6 @@ export const initialPlanningView = (): PlanningView => ({
   query: "",
   grade: "",
   selected: [],
-  batchSelected: [],
   assetPage: { page: 1, size: 20 },
   batchPage: { page: 1, size: 20 },
 });

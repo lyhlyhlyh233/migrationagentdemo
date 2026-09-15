@@ -447,6 +447,7 @@
 }
 .bulkControlRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
 }
@@ -915,4 +916,27 @@
   .ruleActions .rowButton {
     min-height: 36px;
   }
+}
+
+/* Keep filtering beside search, separated from the charts and findings. */
+.searchFilters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+  flex: 1 1 360px;
+  min-width: 0;
+}
+.searchFilters .search {
+  flex: 1 1 150px;
+  min-width: 120px;
+}
+.searchFilters .filters {
+  margin: 0;
+  flex: 0 1 auto;
+}
+.workspaceHeader + .dock {
+  margin-top: 12px;
+  margin-bottom: 16px;
 }

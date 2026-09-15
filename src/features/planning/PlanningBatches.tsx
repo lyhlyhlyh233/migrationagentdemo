@@ -1,11 +1,9 @@
 import { planningPhaseLabels } from "@/shared/i18n/planning";
 import { Fragment, useMemo } from "react";
-import type { PlanningState, PlanningAdjustment } from "@/domain/planning";
+import type { PlanningState } from "@/domain/planning";
 import { resourceTotals } from "@/domain/planning";
 import { useTranslation } from "@/shared/i18n";
-import { Button, Field } from "@/shared/ui/primitives";
-import { Select } from "@/shared/ui/Select";
-import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
+import { Button } from "@/shared/ui/primitives";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow } from "@/shared/ui/pagination-state";
 import { PlanningAssets } from "./PlanningAssets";
@@ -16,14 +14,12 @@ export function PlanningBatches({
   view,
   onView,
   locked,
-  onPreview,
   confirmed,
 }: {
   planning: PlanningState;
   view: PlanningView;
   onView: (patch: Partial<PlanningView>) => void;
   locked: boolean;
-  onPreview: (change: PlanningAdjustment) => Promise<void>;
   confirmed: boolean;
 }) {
   const t = useTranslation();
@@ -40,13 +36,6 @@ export function PlanningBatches({
   );
   const page = pageWindow(batches.length, view.batchPage);
   const rows = batches.slice(page.start, page.end);
-  const selected = new Set(view.batchSelected);
-  const pageCount = rows.filter((b) => selected.has(b.id)).length;
-  const toggle = (ids: string[], checked: boolean) => {
-    const next = new Set(view.batchSelected);
-    ids.forEach((id) => (checked ? next.add(id) : next.delete(id)));
-    onView({ batchSelected: [...next] });
-  };
   return (
     <>
       <div className={styles.filters}>
@@ -59,51 +48,17 @@ export function PlanningBatches({
             onView({
               batchQuery: e.target.value,
               batchPage: { ...view.batchPage, page: 1 },
-              batchSelected: [],
             })
           }
         />
-        <span>{t("已选 {0} 个批次", view.batchSelected.length)}</span>
-        <Button
-          disabled={locked}
-          onClick={() =>
-            toggle(
-              batches.map((b) => b.id),
-              true,
-            )
-          }
-        >
-          {t("选择全部筛选结果")}
-        </Button>
-        <Button
-          disabled={locked || !selected.size}
-          onClick={() => onView({ batchSelected: [] })}
-        >
-          {t("清空选择")}
-        </Button>
       </div>
       <table className={`${styles.table} ${styles.batches}`}>
         <thead>
           <tr>
-            <th className={styles.check}>
-              <SelectionCheckbox
-                label={t("选择本页批次")}
-                checked={rows.length > 0 && pageCount === rows.length}
-                mixed={pageCount > 0 && pageCount < rows.length}
-                disabled={locked}
-                onChange={(checked) =>
-                  toggle(
-                    rows.map((b) => b.id),
-                    checked,
-                  )
-                }
-              />
-            </th>
             <th>{t("批次 / 阶段")}</th>
             <th>{t("虚拟机")}</th>
             <th>{t("资源需求")}</th>
             <th>{t("割接时间 / 停机")}</th>
-            <th>{t("操作")}</th>
           </tr>
         </thead>
         <tbody>
@@ -113,15 +68,7 @@ export function PlanningBatches({
             const expanded = view.expandedBatch === b.id;
             return (
               <Fragment key={b.id}>
-                <tr data-selected={selected.has(b.id)}>
-                  <td>
-                    <SelectionCheckbox
-                      label={t("选择 {0}", b.id)}
-                      checked={selected.has(b.id)}
-                      disabled={locked}
-                      onChange={(checked) => toggle([b.id], checked)}
-                    />
-                  </td>
+                <tr>
                   <td>
                     <strong>{b.id}</strong>
                     <small>{t(planningPhaseLabels[b.phase])}</small>
@@ -156,24 +103,10 @@ export function PlanningBatches({
                       {b.downtime} h · {t(confirmed ? "已确认" : "待确认")}
                     </small>
                   </td>
-                  <td>
-                    <Button
-                      disabled={locked}
-                      onClick={() =>
-                        onView({
-                          batchSelected: [b.id],
-                          cutover: b.cutover,
-                          bufferDays: b.bufferDays,
-                        })
-                      }
-                    >
-                      {t("调整")}
-                    </Button>
-                  </td>
                 </tr>
                 {expanded && (
                   <tr>
-                    <td colSpan={6} className={styles.subtable}>
+                    <td colSpan={4} className={styles.subtable}>
                       <div className={styles.batchMeta}>
                         <span>
                           {t("全量同步开始")} {b.start.replace("T", " ")}
@@ -190,6 +123,7 @@ export function PlanningBatches({
                         </span>
                       </div>
                       <PlanningAssets
+                        readOnly
                         assets={members}
                         view={view}
                         onView={onView}
@@ -211,82 +145,6 @@ export function PlanningBatches({
         label={t("迁移批次")}
         compact
       />
-      {!!view.batchSelected.length && (
-        <form
-          className={styles.editor}
-          onSubmit={(e) => {
-            e.preventDefault();
-            void onPreview({
-              kind: "window",
-              batchIds: view.batchSelected,
-              cutover:
-                view.cutover ??
-                p.batches.find((b) => selected.has(b.id))!.cutover,
-              bufferDays: view.bufferDays ?? 1,
-            });
-          }}
-        >
-          <strong>{t("调整所选批次窗口")}</strong>
-          <div className={styles.fields}>
-            <Field
-              label={t("割接切换时间")}
-              type="datetime-local"
-              required
-              value={
-                view.cutover ??
-                p.batches.find((b) => selected.has(b.id))?.cutover ??
-                ""
-              }
-              disabled={locked}
-              onChange={(e) => onView({ cutover: e.target.value })}
-            />
-            <Field
-              label={t("批次缓冲天数")}
-              type="number"
-              min={0}
-              max={365}
-              value={view.bufferDays ?? 1}
-              disabled={locked}
-              onChange={(e) => onView({ bufferDays: Number(e.target.value) })}
-            />
-          </div>
-          <Button primary type="submit" disabled={locked}>
-            {t("预览调整")}
-          </Button>
-        </form>
-      )}
-      {!!view.selected.length && (
-        <div className={styles.editor}>
-          <strong>{t("移动所选 {0} 台虚拟机", view.selected.length)}</strong>
-          <div className={styles.actions}>
-            <Select
-              aria-label={t("目标批次")}
-              disabled={locked}
-              value={view.targetBatch ?? p.batches[0]?.id}
-              onValueChange={(targetBatch) => onView({ targetBatch })}
-            >
-              {p.batches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.id}
-                </option>
-              ))}
-            </Select>
-            <Button
-              primary
-              disabled={locked}
-              onClick={() =>
-                void onPreview({
-                  kind: "move",
-                  assetIds: view.selected,
-                  targetBatchId: view.targetBatch ?? p.batches[0].id,
-                })
-              }
-            >
-              {t("预览批次调整")}
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

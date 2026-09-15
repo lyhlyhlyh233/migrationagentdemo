@@ -1,3 +1,4 @@
+import { planningPhaseLabels } from "@/shared/i18n/planning";
 import { planningTime } from "@/domain/planning";
 import type { PlanningState, PlanningInputPatch } from "@/domain/planning";
 import { planningSummary, resourceTotals } from "@/domain/planning";
@@ -11,16 +12,17 @@ export function PlanningResources({
   onView,
   onSave,
   locked,
+  readOnly = false,
 }: {
   planning: PlanningState;
   view: PlanningView;
   onView: (patch: Partial<PlanningView>) => void;
   onSave: (patch: PlanningInputPatch) => Promise<void>;
   locked: boolean;
+  readOnly?: boolean;
 }) {
   const t = useTranslation();
   const capacity = view.capacityDraft ?? p.capacity;
-  const summary = planningSummary(p);
   const assets = new Map(p.assets.map((a) => [a.id, a]));
   const cumulative = { cpu: 0, memory: 0, storage: 0 };
   return (
@@ -29,74 +31,53 @@ export function PlanningResources({
         <strong>{t("目标资源与预留")}</strong>
         <span>{t("资源单位：GB")}</span>
       </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void onSave({ capacity });
-        }}
-      >
-        <div className={styles.fields}>
-          {(
-            [
-              ["cpu", "目标平台 vCPU"],
-              ["memory", "目标平台内存(GB)"],
-              ["storage", "目标平台存储(GB)"],
-              ["reserve", "预留比例(%)"],
-            ] as const
-          ).map(([key, label]) => (
-            <Field
-              key={key}
-              label={t(label)}
-              type="number"
-              required
-              min={key === "reserve" ? 0 : 1}
-              max={key === "reserve" ? 99 : undefined}
-              value={capacity[key]}
-              disabled={locked}
-              onChange={(e) =>
-                onView({
-                  capacityDraft: { ...capacity, [key]: Number(e.target.value) },
-                  draftRevision: view.draftRevision ?? p.revision,
-                })
-              }
-            />
-          ))}
-        </div>
-        <Button primary type="submit" disabled={locked || !view.capacityDraft}>
-          {t("保存资源条件")}
-        </Button>
-      </form>
-      <div className={styles.resourceSummary}>
-        {(
-          [
-            ["cpu", "vCPU"],
-            ["memory", "内存"],
-            ["storage", "存储"],
-          ] as const
-        ).map(([key, label]) => {
-          const available = Math.round(
-            p.capacity[key] * (1 - p.capacity.reserve / 100),
-          );
-          const used = summary.resources[key];
-          return (
-            <div key={key}>
-              <strong>{t(label)}</strong>
-              <span>
-                {t("可用")} {available.toLocaleString()} · {t("需求")}{" "}
-                {used.toLocaleString()}
-              </span>
-              <progress
-                max={Math.max(available, used, 1)}
-                value={used}
-                aria-label={t("{0}占用", t(label))}
+      {!readOnly && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void onSave({ capacity });
+          }}
+        >
+          <div className={styles.fields}>
+            {(
+              [
+                ["cpu", "目标平台 vCPU"],
+                ["memory", "目标平台内存(GB)"],
+                ["storage", "目标平台存储(GB)"],
+                ["reserve", "预留比例(%)"],
+              ] as const
+            ).map(([key, label]) => (
+              <Field
+                key={key}
+                label={t(label)}
+                type="number"
+                required
+                min={key === "reserve" ? 0 : 1}
+                max={key === "reserve" ? 99 : undefined}
+                value={capacity[key]}
+                disabled={locked}
+                onChange={(e) =>
+                  onView({
+                    capacityDraft: {
+                      ...capacity,
+                      [key]: Number(e.target.value),
+                    },
+                    draftRevision: view.draftRevision ?? p.revision,
+                  })
+                }
               />
-              <span data-tone={used > available ? "danger" : "success"}>
-                {t("迁移后剩余")} {(available - used).toLocaleString()}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+          <Button
+            primary
+            type="submit"
+            disabled={locked || !view.capacityDraft}
+          >
+            {t("保存资源条件")}
+          </Button>
+        </form>
+      )}
+      <ResourceForecast planning={p} />
       <table className={styles.table}>
         <thead>
           <tr>
@@ -144,6 +125,46 @@ export function PlanningResources({
     </>
   );
 }
+export function ResourceForecast({ planning: p }: { planning: PlanningState }) {
+  const t = useTranslation(),
+    summary = planningSummary(p);
+  return (
+    <div className={styles.resourceSummary}>
+      {(
+        [
+          ["cpu", "vCPU"],
+          ["memory", "内存"],
+          ["storage", "存储"],
+        ] as const
+      ).map(([key, label]) => {
+        const available = Math.round(
+          p.capacity[key] * (1 - p.capacity.reserve / 100),
+        );
+        const used = summary.resources[key];
+        return (
+          <div key={key}>
+            <strong>{t(label)}</strong>
+            <span>
+              {t("可用")} {available.toLocaleString()} · {t("需求")}{" "}
+              {used.toLocaleString()} {key === "cpu" ? "vCPU" : "GB"}
+            </span>
+            <progress
+              data-over={used > available || undefined}
+              max={Math.max(available, 1)}
+              value={Math.min(used, available)}
+              aria-label={t("{0}占用", t(label))}
+            />
+            <span data-tone={used > available ? "danger" : "success"}>
+              {t(used > available ? "超出容量" : "迁移后剩余")}{" "}
+              {Math.abs(available - used).toLocaleString()}{" "}
+              {key === "cpu" ? "vCPU" : "GB"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 export function PlanningTimeline({
   planning: p,
   onBatch,
@@ -170,10 +191,11 @@ export function PlanningTimeline({
       {p.batches.map((b) => (
         <div className={styles.timelineRow} key={b.id}>
           <button type="button" onClick={() => onBatch(b.id)}>
-            {b.id}
+            <strong>{b.id}</strong>
             <small>
-              {b.assetIds.length} {t("台")}
+              {t(planningPhaseLabels[b.phase])} · {b.assetIds.length} {t("台")}
             </small>
+            <small>{b.window}</small>
           </button>
           <button
             type="button"
@@ -190,10 +212,17 @@ export function PlanningTimeline({
               }}
             />
             <span
+              className={styles.bufferBar}
+              style={{
+                left: `${((planningTime(b.cutover) + Math.min(p.conditions.validationHours * 3600000, planningTime(b.end) - planningTime(b.cutover)) - start) / span) * 100}%`,
+                width: `${(Math.max(0, planningTime(b.end) - planningTime(b.cutover) - p.conditions.validationHours * 3600000) / span) * 100}%`,
+              }}
+            />
+            <span
               className={styles.validationBar}
               style={{
                 left: `${((planningTime(b.cutover) - start) / span) * 100}%`,
-                width: `${((planningTime(b.end) - planningTime(b.cutover)) / span) * 100}%`,
+                width: `${(Math.min(p.conditions.validationHours * 3600000, Math.max(0, planningTime(b.end) - planningTime(b.cutover))) / span) * 100}%`,
               }}
             />
             <span
@@ -208,7 +237,8 @@ export function PlanningTimeline({
       <div className={styles.legend}>
         <span data-tone="info">● {t("全量同步")}</span>
         <span data-tone="warning">● {t("割接")}</span>
-        <span data-tone="success">● {t("业务验证与缓冲")}</span>
+        <span data-tone="success">● {t("业务验证")}</span>
+        <span>○ {t("缓冲")}</span>
       </div>
     </div>
   );

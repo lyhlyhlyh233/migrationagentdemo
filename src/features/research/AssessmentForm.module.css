@@ -37,3 +37,28 @@
     border-top: 1px solid var(--line);
   }
 }
+
+.preview {
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: var(--ui-size);
+}
+.preview strong {
+  overflow-wrap: anywhere;
+}
+.preview p {
+  margin: 8px 0;
+  color: var(--muted);
+}
+.preview p[role="alert"] {
+  color: var(--danger);
+}
+.preview > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

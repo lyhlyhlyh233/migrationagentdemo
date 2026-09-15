@@ -37,7 +37,7 @@ const decision = (strategy: "ignore" | "remediate" | "exclude") => ({
 });
 
 describe("project risk overview", () => {
-  it("deduplicates risk IDs and VMs, counts multiple blocking findings separately and ignores out-of-scope records", () => {
+  it("deduplicates risk IDs and VMs, counts every related finding separately and ignores out-of-scope records", () => {
     const a = risk(1, "A");
     const result = riskOverview(
       snapshot(
@@ -60,8 +60,9 @@ describe("project risk overview", () => {
       undecided: 4,
     });
     expect(result.categories).toEqual([
-      { category: "disk", count: 2, share: 2 / 3 },
-      { category: "capacity", count: 1, share: 1 / 3 },
+      { category: "disk", count: 2, share: 2 / 4 },
+      { category: "capacity", count: 1, share: 1 / 4 },
+      { category: "feature", count: 1, share: 1 / 4 },
     ]);
   });
 
@@ -125,7 +126,8 @@ describe("project risk overview", () => {
       exclusionRisks: 1,
     });
     expect(result.categories).toEqual([
-      { category: "hardware", count: 1, share: 1 },
+      { category: "disk", count: 1, share: 1 / 2 },
+      { category: "hardware", count: 1, share: 1 / 2 },
     ]);
   });
 
@@ -149,6 +151,7 @@ describe("project risk overview", () => {
       included: 0,
       excluded: 0,
       exclusionRisks: 0,
+      relatedRisks: 0,
       undecided: 0,
       categories: [],
     });

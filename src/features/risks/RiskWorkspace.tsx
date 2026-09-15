@@ -342,38 +342,6 @@ export function RiskWorkspace({
               </button>
             </div>
           )}
-          <div className={styles.filters}>
-            <Select
-              value={level}
-              disabled={scopeLocked}
-              onValueChange={(value) => {
-                setLevel(value);
-                resetFilters();
-              }}
-              aria-label={t("风险级别")}
-            >
-              <option value="all">{t("全部级别")}</option>
-              {(["high", "medium", "low"] as const).map((value) => (
-                <option key={value} value={value}>
-                  {t(value)}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={status}
-              disabled={scopeLocked}
-              onValueChange={(value) => {
-                setStatus(value);
-                resetFilters();
-              }}
-              aria-label={t("处置状态")}
-            >
-              <option value="all">{t("全部状态")}</option>
-              <option value="undecided">{t("未选策略")}</option>
-              <option value="excluded">{t("暂时排除")}</option>
-              <option value="decided">{t("已选策略")}</option>
-            </Select>
-          </div>
         </div>
         {!editable && !!s.risks.length && (
           <p className={styles.hint}>
@@ -395,19 +363,53 @@ export function RiskWorkspace({
       >
         <RiskBulkToolbar
           search={
-            <label className={styles.search}>
-              <Icon name="search" size={16} />
-              <input
-                value={query}
-                disabled={scopeLocked}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  resetFilters();
-                }}
-                placeholder={t("搜索风险、规则或虚拟机")}
-                aria-label={t("搜索风险、规则或虚拟机")}
-              />
-            </label>
+            <div className={styles.searchFilters}>
+              <label className={styles.search}>
+                <Icon name="search" size={16} />
+                <input
+                  value={query}
+                  disabled={scopeLocked}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    resetFilters();
+                  }}
+                  placeholder={t("搜索风险、规则或虚拟机")}
+                  aria-label={t("搜索风险、规则或虚拟机")}
+                />
+              </label>
+              <div className={styles.filters}>
+                <Select
+                  value={level}
+                  disabled={scopeLocked}
+                  onValueChange={(value) => {
+                    setLevel(value);
+                    resetFilters();
+                  }}
+                  aria-label={t("风险级别")}
+                >
+                  <option value="all">{t("全部级别")}</option>
+                  {(["high", "medium", "low"] as const).map((value) => (
+                    <option key={value} value={value}>
+                      {t(value)}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  value={status}
+                  disabled={scopeLocked}
+                  onValueChange={(value) => {
+                    setStatus(value);
+                    resetFilters();
+                  }}
+                  aria-label={t("处置状态")}
+                >
+                  <option value="all">{t("全部状态")}</option>
+                  <option value="undecided">{t("未选策略")}</option>
+                  <option value="excluded">{t("暂时排除")}</option>
+                  <option value="decided">{t("已选策略")}</option>
+                </Select>
+              </div>
+            </div>
           }
           selected={selectedRisks}
           available={available}

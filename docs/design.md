@@ -79,7 +79,8 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 | assessment-decision | 兼容旧结果的标记；快捷操作统一放在回答底部                   |
 | planning-input      | 最新规划引导的资料、模板和生成入口；小对话只保留文字与结果   |
 | execution-work      | 当前实施/验证视图与可选问题、任务 ID；仅负责定位，不直接执行 |
-| planning-preview    | 待应用预览 ID，历史入口打开当前规划                          |
+| risk-preview        | 发起对话中的固定风险 ID 和操作意图；确认时读取共享策略，默认保留已有选择 |
+| planning-preview    | 待应用预览 ID，在发起会话内显示；失效预览不重复执行                          |
 | summary             | 当次结论和统计快照                                           |
 | tasks               | 任务 ID，进度从当前项目快照读取                              |
 | artifacts           | 文件资源 ID，内容由下载服务提供                              |
@@ -102,7 +103,7 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 `RiskWorkspace` 将统计/筛选、上方操作区、独立滚动列表分开；搜索作为工具栏插槽与批量按钮同行靠右，覆盖选项位于编辑区固定操作行。管理页外壳与右侧面板均提供有界高度。表格采用容器内列宽，窄屏以字段标签重排，不横向滚动。编辑保存本次目标风险 ID，预览读取最新共享快照，提交仍走原风险命令。编辑期间冻结筛选、模式和多选范围；批量编辑仍可浏览类别和分页；单项编辑固定类别与页码，同时冻结匹配记录 ID，防止其他会话更新状态后筛选移除当前编辑行。取消/失败保留原选择和草稿，成功关闭编辑并清空选择，焦点返回发起入口。无需额外 Provider 或服务契约。
 
-`RiskOverview` 仅挂载在风险侧面板，从完整项目快照调用 `domain/assessment.ts` 的纯函数 `riskOverview`，复用 `riskReadyForExecution` 判定。按当前范围过滤、风险 ID 去重、虚拟机名称去重，分别生成 VM 数量与按类别聚合的排除风险记录数。展开偏好为当前组件局部状态，编辑锁只临时收起图形，不修改用户偏好；不新增项目字段、服务接口或图表依赖。筛选和多选不参与图表计算，共享快照更新时重新统计。口径详见 [业务说明](../业务逻辑说明.md)。
+`RiskOverview` 仅挂载在风险侧面板，从完整项目快照调用 `domain/assessment.ts` 的纯函数 `riskOverview`，复用 `riskReadyForExecution` 判定。按当前范围过滤、风险 ID 去重、虚拟机名称去重，先计算排除 VM 集，再聚合这些 VM 的全部相关风险；分别保留 relatedRisks 和实际阻塞的 exclusionRisks。展开偏好为当前组件局部状态，编辑锁只临时收起图形，不修改用户偏好；不新增项目字段、服务接口或图表依赖。筛选和多选不参与图表计算，共享快照更新时重新统计。口径详见 [业务说明](../业务逻辑说明.md)。
 
 `domain/assessment.ts` 统一计算工具可迁范围，`policies.ts` 计算阶段条件。规划与实施调用同一范围规则；风险是否已选择策略不能代替迁移资格。人工交接仍通过 `stage.review` / `stage.confirm`，不能只改前端导航解锁阶段。
 
@@ -115,8 +116,9 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 - `mock/execution-issues.ts`：故障归并、日志、诊断、人工/自动方案与复查；仅用户批准后处理。
 - `mock/validation.ts`：批量技术接受/业务确认、反馈、实际附件及阶段性报告。`execution-discussion.ts` 处理限定的问答和预览请求。
 - `ExecutionWorkspace` 用于实施侧面板与独立任务页，`ExecutionIssues`、`ExecutionPreview` 分离诊断和确认区域；`ValidationWorkspace` 使用相同的表格、分页及主题尺寸。
+- `ExecutionDashboard` 与纯展示聚合 `execution-dashboard.ts` 读取现有任务时间、阶段及趋势，不写业务快照、不增加计时器。
 - `ExecutionView`、`ValidationView` 按项目存入 `uiReducer`，保留草稿、分页和选择。连接密码仅在此内存草稿及检测请求中暂存，成功后清空；不进入服务快照。
-- `PlanningSummary` 是精简侧面板，只展示摘要和当前约束/导入/预览；完整四视图仍由独立 `PlanningWorkspace` 提供，共用项目规划资料和草稿。
+- `PlanningSummary` 是精简侧面板，只读展示结论、PlanningTimeline 和共用 ResourceForecast；完整四视图仍由独立 `PlanningWorkspace` 提供，共用项目规划资料和草稿。
 
 新能力继续走 `execute/upload/download` 与原有快照事件，不增加状态 Provider 或新的网络端点。远程执行独立于聊天 pending；停止回复仅停止生成。操作确认从当前项目资源状态校验，不按当前会话所属阶段绕过保护。具体命令和并发语义见接口说明。
 
@@ -133,7 +135,11 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 - `WorkspaceSidePanel` 使用风险、规划、实施、验证四个明确页签，状态按项目保留，宽度保持 62∶38 默认值及原拖动规则。执行详情仍独立于页签。
 - `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险、任务和验证管理页也复用该容器；对话为约 34% / 400–720px，窄屏切换查看模式。
 
-规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，未扩展服务契约。
+规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，样例资料使用 `planning.sampleInputs` 进入相同预览流程。
+
+生成后独立页使用 `PlanningReadOnlyInputs` 及只读资产/资源组件，批次不再包含编辑表单。调整预览由 BusinessResults 内的 PlanningPreview 呈现，只允许发起会话确认。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
+
+Composer 的待发送 File 位于 conversationReducer 中，按项目/会话隔离；消息仅保留文件引用与元信息。快捷对话不顺带发送草稿附件。
 
 规划 revision 独立于普通聊天的项目 revision，跨会话保存必须匹配。预览固定版本、资产/批次 ID 和发起会话，失败保留输入。风险资格变化使计划待更新；待更新或待确认预览不能交接。真实适配仍须在后端实施并发校验。详细语义见 [接口说明](integration.md)。
 

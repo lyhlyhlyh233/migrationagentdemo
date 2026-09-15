@@ -337,8 +337,10 @@ export function planningCommand(
     rt.message(c, "user", "应用规划调整。", { operation: true });
     rt.result(
       c,
-      "调整已应用，规划和交付文件已同步。请继续核对业务依赖及示例时间安排。",
-      [],
+      p.stale
+        ? "调整已应用。现有计划待更新，请确认重新生成模拟初稿。"
+        : "调整已应用，规划和交付文件已同步。请继续核对业务依赖及示例时间安排。",
+      p.stale ? [{ kind: "planning-input" }] : [],
     );
   }
   planningFiles(rt, s);
@@ -349,7 +351,7 @@ export function planningIntro(rt: MockRuntime, c: OperationContext) {
   rt.message(c, "user", "开始迁移项目的规划设计", { operation: true });
   rt.result(
     c,
-    `已接续评估结果：${p.assets.length} 台虚拟机，当前可纳入 ${migrationScope(s).length} 台。\n\n**先明确范围，再补充业务信息。** 我已保留评估策略；受阻和未完成整改验证的对象继续排除。业务属性与依赖可以稍后填写，我会标出尚未核对的部分。\n\n下方可下载模板并导入规划资料，重点补充业务属性与依赖，也可在表中一并填写带宽等迁移约束。基础约束表单默认收起，可以直接在对话中修改；资料准备好后，再生成规划初稿。`,
+    `已继承 ${p.assets.length} 台虚拟机的评估结果，当前可纳入 ${migrationScope(s).length} 台。可导表补充业务属性和依赖，或直接使用基础约束生成初稿；未核对的依赖会继续提示。`,
     [{ kind: "planning-input" }],
     {
       reply: {
@@ -420,7 +422,7 @@ export async function plan(
       const warnings = planningWarnings(p);
       rt.result(
         c,
-        `**规划初稿已生成：${p.batches.length} 个批次，纳入 ${summary.included} 台，排除 ${summary.excluded} 台。**\n\n示例按试点、核心业务、规模迁移呈现分批安排。预计周期 ${summary.days} 天，批次停机估算合计 ${summary.downtime} 小时。\n\n${warnings.map((w) => `- ${w}`).join("\n")}\n\n这些时间为模拟估算，尚未按实际带宽与依赖精确求解。你可以打开工作台调整批次，或继续告诉我需要修改哪些条件。`,
+        `**规划初稿已生成：${p.batches.length} 个批次，纳入 ${summary.included} 台，排除 ${summary.excluded} 台。**\n\n示例按试点、核心业务、规模迁移呈现分批安排。预计周期 ${summary.days} 天，批次停机估算合计 ${summary.downtime} 小时。\n\n${warnings.map((w) => `- ${w}`).join("\n")}\n\n这些时间为模拟估算，尚未按实际带宽与依赖精确求解。你可以直接说“将 B02 割接改到周六”或“降低单批次并发”，也可通过输入框附加调整资料。我会先给出预览，确认后再更新。`,
         [
           {
             kind: "summary",
@@ -436,7 +438,7 @@ export async function plan(
         ],
       );
       delete s.pending[c.conversationId];
-      rt.notice(c, "规划初稿已生成，可在规划面板查看和调整");
+      rt.notice(c, "规划初稿已生成，可查看看板或继续对话调整");
     },
     options,
   );
@@ -449,6 +451,22 @@ export function planningDiscussion(
   const s = rt.context(c);
   const p = initializePlanning(s);
   const results: BusinessResult[] = [];
+  if (
+    /使用样例数据调整规划|Use sample data to adjust the plan/i.test(input) &&
+    s.batchConfirmation !== "confirmed" &&
+    !p.preview
+  ) {
+    const preview = previewPlanning(
+      rt,
+      c,
+      { kind: "import", filename: "规划调整-样例.xlsx" },
+      p.revision,
+    );
+    return {
+      text: "已准备样例调整资料。以下为模拟预览，确认后才应用。",
+      results: [{ kind: "planning-preview", previewId: preview.id }],
+    };
+  }
   if (
     s.batchConfirmation !== "confirmed" &&
     !p.preview &&
@@ -502,10 +520,15 @@ export function planningDiscussion(
       text: "示例先安排试点，再扩展到核心业务与规模批次。\n\n- 受阻对象优先排除。\n- 强依赖应核对共同割接，弱依赖核对先后关系。\n- 集群类型和角色只用于提醒，不能替代真实拓扑。\n\n当前仍是模拟分批，日期未经过真实排程求解。",
       results,
     };
+  if (s.batchConfirmation === "confirmed")
+    return {
+      text: "规划已交接，当前只读。可以继续查看批次安排、资源预测和规划依据；实施操作请进入迁移实施。",
+      results,
+    };
   return {
     text: p.preview
       ? "已有一份待确认调整。请先在调整预览中应用或取消，再继续修改。"
-      : "可以继续细化这份规划。请明确要调整的批次、虚拟机或约束值；也可以使用规划资料表单。\n\n本轮支持演示“将 B02 割接改到周六”“降低单批次并发”，其他复杂要求需要先澄清，不会自动执行。",
-    results: [{ kind: "planning-input" }],
+      : "可以继续细化这份规划。请明确要调整的批次、虚拟机或约束值；也可以通过输入框附加调整资料。\n\n本轮支持演示“将 B02 割接改到周六”“降低单批次并发”，其他复杂要求需要先澄清，不会自动执行。",
+    results: p.batches.length ? [] : [{ kind: "planning-input" }],
   };
 }

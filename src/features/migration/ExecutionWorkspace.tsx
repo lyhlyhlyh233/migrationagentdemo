@@ -1,3 +1,4 @@
+import { ExecutionDashboard } from "./ExecutionDashboard";
 import { Fragment, useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
 import {
@@ -28,6 +29,7 @@ export interface ExecutionWorkspaceProps {
   onUpload: (p: FilePurpose, f: File) => Promise<boolean>;
   conversationId: string | null;
   compact?: boolean;
+  onManage?: () => void;
   onContext?: (label: string) => void;
 }
 export function ExecutionWorkspace({
@@ -40,6 +42,7 @@ export function ExecutionWorkspace({
   conversationId,
   compact = false,
   onContext,
+  onManage,
 }: ExecutionWorkspaceProps) {
   const t = useTranslation();
   const [busy, setBusy] = useState(false),
@@ -51,7 +54,8 @@ export function ExecutionWorkspace({
     try {
       const ok = await onCommand(cmd);
       setError(!ok);
-      if (ok && cmd.type === "execution.apply") onView({ selected: [] });
+      if (ok && cmd.type === "execution.apply")
+        onView({ selected: [], ...(compact ? { tab: "dashboard" } : {}) });
       return ok;
     } finally {
       setBusy(false);
@@ -129,22 +133,27 @@ export function ExecutionWorkspace({
         </div>
       </header>
       <nav className={styles.tabs} aria-label={t("实施视图")}>
-        {(["connection", "tasks", "issues"] as const).map((tab) => (
-          <button
-            key={tab}
-            aria-pressed={v.tab === tab}
-            onClick={() => onView({ tab })}
-          >
-            {t(
-              { connection: "连接配置", tasks: "批次执行", issues: "问题处理" }[
-                tab
-              ],
-            )}
-            {tab === "issues" &&
-              e.issues.some((i) => i.state !== "resolved") &&
-              ` · ${e.issues.filter((i) => i.state !== "resolved").length}`}
-          </button>
-        ))}
+        {(["dashboard", "connection", "tasks", "issues"] as const).map(
+          (tab) => (
+            <button
+              key={tab}
+              aria-pressed={v.tab === tab}
+              onClick={() => onView({ tab })}
+            >
+              {t(
+                {
+                  dashboard: "任务看板",
+                  connection: "连接配置",
+                  tasks: "批次执行",
+                  issues: "问题处理",
+                }[tab],
+              )}
+              {tab === "issues" &&
+                e.issues.some((i) => i.state !== "resolved") &&
+                ` · ${e.issues.filter((i) => i.state !== "resolved").length}`}
+            </button>
+          ),
+        )}
       </nav>
       <div className={styles.body}>
         {error && (
@@ -152,7 +161,17 @@ export function ExecutionWorkspace({
             {t("操作未完成，输入与选择已保留。请根据提示调整后重试。")}
           </p>
         )}
-        {v.tab === "connection" ? (
+        {v.tab === "dashboard" ? (
+          <ExecutionDashboard
+            execution={e}
+            onManage={onManage ?? (() => onView({ tab: "tasks" }))}
+            onIssues={() => onView({ tab: "issues" })}
+            onBatch={(id) => {
+              onView({ tab: "tasks", batchId: id, page: 1, selected: [] });
+              onContext?.(`${t("批次")} ${id}`);
+            }}
+          />
+        ) : v.tab === "connection" ? (
           <form
             className={styles.stack}
             onSubmit={(event) => {
@@ -164,7 +183,7 @@ export function ExecutionWorkspace({
               }).then((ok) => {
                 if (ok)
                   onView({
-                    tab: "tasks",
+                    tab: "dashboard",
                     connectionDraft: { ...conn, password: "" },
                   });
               });

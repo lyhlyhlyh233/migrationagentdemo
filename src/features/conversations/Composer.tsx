@@ -1,3 +1,8 @@
+import { useRef, useState } from "react";
+import {
+  messageAttachmentAccept,
+  messageAttachmentError,
+} from "@/shared/attachments";
 import type { PanelId } from "@/app/state";
 import type { Catalog, StageId } from "@/domain/models";
 import {
@@ -27,7 +32,17 @@ export function Composer({
   nextLabel,
   compact = false,
   onNext,
+  assessmentComplete = false,
+  planningGenerated = false,
+  attachment,
+  onAttachment,
+  onPrompt = onSend,
 }: {
+  assessmentComplete?: boolean;
+  planningGenerated?: boolean;
+  attachment?: File;
+  onAttachment?: (file?: File) => void;
+  onPrompt?: (text: string) => void;
   nextLabel?: string;
   compact?: boolean;
   onNext?: () => void;
@@ -47,6 +62,14 @@ export function Composer({
   onPanel: (panel: PanelId) => void;
 }) {
   const t = useTranslation();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileError, setFileError] = useState<string>();
+  const prompts =
+    stage === "research" && assessmentComplete
+      ? ["跳过所有高风险", "接受所有中风险", "解读剩余风险"]
+      : stage === "planning" && planningGenerated
+        ? ["将 B02 割接改到周六", "降低单批次并发", "使用样例数据调整规划"]
+        : [];
   const workNames = {
     research: "查看评估资料",
     planning: "查看规划工作台",
@@ -74,7 +97,7 @@ export function Composer({
             {
               label: "告诉我下一步该做什么",
               description: "梳理当前阶段的待办",
-              onClick: () => onSend(t("告诉我下一步该做什么")),
+              onClick: () => onPrompt(t("告诉我下一步该做什么")),
             },
           ],
         },
@@ -92,17 +115,17 @@ export function Composer({
                   {
                     label: "将 B02 割接改到周六",
                     description: "预览单批次窗口调整",
-                    onClick: () => onSend(t("将 B02 割接改到周六")),
+                    onClick: () => onPrompt(t("将 B02 割接改到周六")),
                   },
                   {
                     label: "降低单批次并发",
                     description: "预览规划约束调整",
-                    onClick: () => onSend(t("降低单批次并发")),
+                    onClick: () => onPrompt(t("降低单批次并发")),
                   },
                   {
                     label: "说明这个批次的安排依据",
                     description: "解释示例分批规则",
-                    onClick: () => onSend(t("说明这个批次的安排依据")),
+                    onClick: () => onPrompt(t("说明这个批次的安排依据")),
                   },
                 ]
               : []),
@@ -111,17 +134,17 @@ export function Composer({
                   {
                     label: "解读评估报告并给出建议",
                     description: "解释可行性与推荐方案",
-                    onClick: () => onSend(t("解读评估报告并给出建议")),
+                    onClick: () => onPrompt(t("解读评估报告并给出建议")),
                   },
                   {
                     label: "应用迁移有哪些限制？",
                     description: "了解应用兼容性与验证要求",
-                    onClick: () => onSend(t("应用迁移有哪些限制？")),
+                    onClick: () => onPrompt(t("应用迁移有哪些限制？")),
                   },
                   {
                     label: "为什么 RDM 要考虑有代理迁移？",
                     description: "比较迁移方式与限制",
-                    onClick: () => onSend(t("为什么 RDM 要考虑有代理迁移？")),
+                    onClick: () => onPrompt(t("为什么 RDM 要考虑有代理迁移？")),
                   },
                 ]
               : [
@@ -134,7 +157,7 @@ export function Composer({
             {
               label: "有哪些报告可以下载？",
               description: "查看当前阶段产物",
-              onClick: () => onSend(t("有哪些报告可以下载？")),
+              onClick: () => onPrompt(t("有哪些报告可以下载？")),
             },
           ],
         },
@@ -165,6 +188,26 @@ export function Composer({
           )}
         </div>
       )}
+      {!!prompts.length && (
+        <div className={styles.suggestions} aria-label={t("快捷对话")}>
+          {prompts.map((prompt) => (
+            <button
+              type="button"
+              key={prompt}
+              disabled={busy}
+              onClick={() => onPrompt(t(prompt))}
+            >
+              {t(prompt)}
+              <Icon name="right" size={14} />
+            </button>
+          ))}
+        </div>
+      )}
+      {fileError && (
+        <p role="alert" className={styles.retry}>
+          {t(fileError)}
+        </p>
+      )}
       <form
         className="chat-composer"
         onSubmit={(e) => {
@@ -190,8 +233,53 @@ export function Composer({
           placeholder={t("描述你的任务，或选择上方快捷操作…")}
           aria-label={t("向迁移智能体提问")}
         />
+        {attachment && (
+          <div className={styles.attachment}>
+            <Icon name="file" size={15} />
+            <span title={attachment.name}>{attachment.name}</span>
+            <small>{t(busy ? "正在发送" : "待发送")}</small>
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={t("移除附件")}
+              onClick={() => onAttachment?.(undefined)}
+            >
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        )}
         <div className="composer-bottom">
           <div className="composer-left">
+            {onAttachment && (
+              <>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  disabled={busy}
+                  hidden
+                  accept={messageAttachmentAccept}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    const error = messageAttachmentError(file);
+                    setFileError(error);
+                    if (!error) onAttachment(file);
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.attachButton}
+                  disabled={busy}
+                  aria-label={t("添加附件")}
+                  title={t("添加附件 · 每条消息一个，最多 20 MB")}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  <Icon name="attach" size={18} />
+                </button>
+              </>
+            )}
+
             <AgentPicker
               options={catalog.agents}
               value={agentId}
@@ -207,7 +295,7 @@ export function Composer({
             <button
               className="send-button"
               type={busy ? "button" : "submit"}
-              disabled={!busy && !draft.trim()}
+              disabled={!busy && !draft.trim() && !attachment}
               aria-label={t(busy ? "停止回复" : "发送消息")}
               title={t(busy ? "停止回复" : "发送消息")}
               onClick={busy ? onStop : undefined}

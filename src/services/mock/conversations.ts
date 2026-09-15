@@ -1,3 +1,4 @@
+import { riskOverview } from "@/domain/assessment";
 import { executionDiscussion } from "./execution-discussion";
 import type { BusinessResult, OperationContext } from "@/domain/models";
 import { translateText } from "@/shared/i18n/text";
@@ -8,7 +9,8 @@ import {
   assessmentWelcome,
 } from "./assessment-knowledge";
 import { previewDiscussionReply, previewThoughtSummary } from "./replies";
-import { planningDiscussion } from "./planning";
+import { messageAttachmentError } from "@/shared/attachments";
+import { planningDiscussion, previewPlanning } from "./planning";
 import type { MockRuntime } from "./runtime";
 export async function reply(
   rt: MockRuntime,
@@ -19,11 +21,16 @@ export async function reply(
     modelId: string;
     requestId: string;
     context?: string;
+    attachment?: File;
   },
   options: RequestOptions,
 ) {
   const s = rt.context(c);
-  requireCondition(input.text.trim(), "请输入消息");
+  requireCondition(input.text.trim() || input.attachment, "请输入消息");
+  if (input.attachment) {
+    const error = messageAttachmentError(input.attachment);
+    requireCondition(!error, error ?? "附件无效");
+  }
   requireCondition(!s.pending[c.conversationId], "当前会话正在回复");
   const openingRisks =
     /^(查看迁移风险与处置建议|Review migration risks and recommended strategies)$/.test(
@@ -42,12 +49,28 @@ export async function reply(
         !s.messages.some(
           (m) => m.requestId === input.requestId && m.role === "user",
         )
-      )
+      ) {
+        const file = input.attachment;
+        const attachment = file
+          ? {
+              id: `chat-file:${crypto.randomUUID()}`,
+              filename: file.name,
+              mediaType: file.type || "application/octet-stream",
+              size: file.size,
+            }
+          : undefined;
+        if (file && attachment)
+          rt.attachments.set(`${s.id}/${attachment.id}`, {
+            ...attachment,
+            blob: file,
+          });
         rt.message(c, "user", input.text, {
+          attachment,
           requestId: input.requestId,
           agentId: input.agentId,
           modelId: input.modelId,
         });
+      }
       const conversation = s.conversations.find(
         (v) => v.id === c.conversationId,
       )!;
@@ -58,16 +81,69 @@ export async function reply(
           (m) => m.role === "user" && m.conversationId === conversation.id,
         ).length === 1
       )
-        conversation.title = input.text.trim().slice(0, 22);
+        conversation.title = (
+          input.text.trim() ||
+          input.attachment?.name ||
+          "新会话"
+        ).slice(0, 22);
       rt.publish(s);
       if (!openingRisks) await rt.sleep(1400, runOptions);
       let text: string = previewDiscussionReply(input.text, input.agentId);
       const results: BusinessResult[] = [];
       if (s.info && c.stageId) {
-        if (c.stageId === "research") {
+        if (input.attachment) {
+          if (
+            c.stageId === "planning" &&
+            s.planning &&
+            s.batchConfirmation !== "confirmed" &&
+            !s.planning.preview
+          ) {
+            const preview = previewPlanning(
+              rt,
+              c,
+              { kind: "import", filename: input.attachment.name },
+              s.planning.revision,
+            );
+            text =
+              "附件已接收。以下为样例调整预览，尚未读取实际文件内容；确认后才应用。";
+            results.push({ kind: "planning-preview", previewId: preview.id });
+          } else
+            text =
+              c.stageId === "planning" && s.batchConfirmation === "confirmed"
+                ? "附件已保留在当前会话。规划已交接，当前只读，未修改规划或解析附件内容。"
+                : "附件已接收并保留在当前会话。尚未解析实际内容；请说明希望调整的对象和要求。";
+        } else if (c.stageId === "research") {
           if (openingRisks) {
             text =
               "已打开风险与策略。你可以按类别批量采用建议，也可以保留现状直接继续，受阻对象会自动排除。";
+          } else if (
+            s.assessmentStatus === "completed" &&
+            /^(跳过所有高风险|接受所有中风险|Skip all high risks|Accept all medium risks)$/.test(
+              input.text,
+            )
+          ) {
+            const high = /高风险|high risks/.test(input.text);
+            const riskIds = s.risks
+              .filter(
+                (r) =>
+                  r.stage === "research" &&
+                  r.level === (high ? "high" : "medium"),
+              )
+              .map((r) => r.id);
+            text = high
+              ? "将高风险对应对象设为本次不迁，已有策略默认保留。请确认下方范围。"
+              : "可接受约束的中风险将接受约束；需整改或不支持的项按现有忽略规则设为本次不迁。请确认影响范围。";
+            results.push({
+              kind: "risk-preview",
+              riskIds,
+              action: high ? "exclude" : "ignore-or-exclude",
+            });
+          } else if (
+            s.assessmentStatus === "completed" &&
+            /^(解读剩余风险|Explain remaining risks)$/.test(input.text)
+          ) {
+            const overview = riskOverview(s);
+            text = `当前还有 ${overview.undecided} 条风险未选策略，${overview.excluded} 台虚拟机暂时排除。优先核对需要整改和当前不支持的对象；接受约束不会解除其他阻塞项。可以暂不处理，继续规划当前可纳入范围。`;
           } else if (s.assessmentStatus === "completed") {
             const report = assessmentReportReply(s, input.text);
             text = report.text;

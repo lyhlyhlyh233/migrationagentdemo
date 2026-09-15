@@ -229,6 +229,7 @@ export class MockMigrationService implements MigrationService {
       modelId: string;
       requestId: string;
       context?: string;
+      attachment?: File;
     },
     options: RequestOptions = {},
   ) {

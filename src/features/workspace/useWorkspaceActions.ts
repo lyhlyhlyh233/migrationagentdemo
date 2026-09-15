@@ -130,26 +130,40 @@ export function useWorkspaceActions(projectId: string) {
             expected: id ?? undefined,
           });
       }),
-    send: async (text: string, agentId: string, modelId: string) => {
-      if (!id || !text.trim() || s.pending[id]) return;
+    send: async (
+      text: string,
+      agentId: string,
+      modelId: string,
+      withAttachment = false,
+    ) => {
+      const attachment =
+        id && withAttachment
+          ? conversationState[projectId]?.[id]?.attachment
+          : undefined;
+      if (!id || (!text.trim() && !attachment) || s.pending[id]) return;
       const requestId =
-        conversationState[projectId]?.[id]?.requestId ?? crypto.randomUUID();
-      view({ draft: "", requestId });
+        (withAttachment
+          ? conversationState[projectId]?.[id]?.requestId
+          : undefined) ?? crypto.randomUUID();
+      if (withAttachment) view({ draft: "", requestId });
       try {
         await service.sendMessage(context, {
           text,
           agentId,
           modelId,
           requestId,
+          attachment,
           context: p.panel ? p.contextLabel : undefined,
         });
-        view({ requestId: undefined });
+        if (withAttachment)
+          view({ requestId: undefined, attachment: undefined });
       } catch (error) {
-        if (error instanceof ServiceError && error.code === "STOPPED")
-          view({ requestId: undefined });
-        else {
+        if (error instanceof ServiceError && error.code === "STOPPED") {
+          if (withAttachment)
+            view({ requestId: undefined, attachment: undefined });
+        } else {
           notify(errorMessage(error));
-          view({ draft: text, requestId });
+          if (withAttachment) view({ draft: text, requestId });
         }
       }
     },

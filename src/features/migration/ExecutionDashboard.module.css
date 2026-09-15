@@ -1,0 +1,145 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: var(--ui-size);
+}
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.heading h3 {
+  margin: 0;
+  font-size: var(--ui-title);
+  font-weight: 600;
+}
+.heading > span,
+.note {
+  color: var(--muted);
+  font-size: var(--ui-caption);
+  margin: 0;
+  line-height: 1.6;
+}
+.distribution {
+  display: flex;
+  height: 10px;
+  gap: 2px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface-hover);
+}
+.distribution span,
+.states i,
+.bar {
+  background: currentColor;
+}
+.root [data-tone="muted"] {
+  color: var(--muted);
+}
+.states {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+.states > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.states dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.states dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.states i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 180px;
+  font-size: var(--ui-caption);
+  color: var(--muted);
+}
+.row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  min-height: 70px;
+  border-top: 1px solid var(--line);
+  gap: 12px;
+}
+.batch {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.batch strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--ui-size);
+}
+.batch span {
+  font-size: var(--ui-caption);
+  color: var(--muted);
+}
+.track {
+  position: relative;
+  background: var(--surface-subtle);
+  margin-block: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar {
+  position: absolute;
+  height: 10px;
+  top: 12px;
+  min-width: 3px;
+  border-radius: 3px;
+}
+.status {
+  position: absolute;
+  left: 8px;
+  top: 30px;
+  font-size: var(--ui-caption);
+}
+.pending {
+  display: block;
+  padding: 16px 8px;
+  color: var(--muted);
+  font-size: var(--ui-caption);
+}
+@container (max-width:460px) {
+  .row {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .scale {
+    margin-left: 148px;
+  }
+}

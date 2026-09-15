@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icons";
 import { planningConditionFields } from "@/shared/i18n/planning";
 import { useState, useEffect, useRef } from "react";
 import type { PlanningPreview as Preview } from "@/domain/planning";
@@ -118,6 +119,7 @@ export function PlanningPreview({
           onClick={() => void submit("planning.apply")}
         >
           {t(busy ? "正在保存" : "应用调整")}
+          <Icon name="right" size={15} />
         </Button>
       </footer>
     </section>

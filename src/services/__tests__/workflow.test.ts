@@ -88,6 +88,43 @@ async function action(
   });
 }
 describe("project service boundaries", () => {
+  it("risk dialogue produces a preview without mutation, then uses existing default-preserving decisions", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const before = await service.getProject(c.projectId),
+      catalog = await service.catalog();
+    await finish(
+      service.sendMessage(c, {
+        text: "接受所有中风险",
+        agentId: catalog.defaultAgent,
+        modelId: catalog.defaultModel,
+        requestId: "medium",
+      }),
+    );
+    const s = await service.getProject(c.projectId);
+    expect(s.risks).toEqual(before.risks);
+    const preview = s.messages.at(-1)!.results![0];
+    expect(preview.kind).toBe("risk-preview");
+    if (preview.kind !== "risk-preview") throw new Error();
+    expect(preview.riskIds).toEqual(
+      s.risks.filter((r) => r.level === "medium").map((r) => r.id),
+    );
+    const id = preview.riskIds[0];
+    await service.execute(c, { type: "risk.recommend", riskIds: [id] });
+    const saved = (await service.getProject(c.projectId)).risks.find(
+      (r) => r.id === id,
+    )!.decision;
+    await service.execute(c, {
+      type: "risk.ignoreOrExclude",
+      riskIds: preview.riskIds,
+      onlyUndecided: true,
+    });
+    expect(
+      (await service.getProject(c.projectId)).risks.find((r) => r.id === id)!
+        .decision,
+    ).toEqual(saved);
+  });
   it("updates project-wide exclusion charts from another conversation's strategy and verification snapshots", async () => {
     const c = await project();
     await service.execute(c, { type: "assessment.useSamples" });
@@ -98,6 +135,7 @@ describe("project service boundaries", () => {
       included: 186,
       excluded: 14,
       exclusionRisks: 14,
+      relatedRisks: 16,
       undecided: 26,
     });
     const another = await project();

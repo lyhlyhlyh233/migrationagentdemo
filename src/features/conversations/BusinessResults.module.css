@@ -210,3 +210,10 @@
     min-height: 44px;
   }
 }
+
+.summaryActions button,
+.fileHeading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -54,6 +54,108 @@ async function setup(language: "zh-CN" | "en" = "zh-CN") {
   };
 }
 describe("planning workspace service", () => {
+  it("receives attachment-only adjustments without applying, isolates origins, and clears files on logout", async () => {
+    const { c, state } = await setup();
+    await settle(service.execute(c, { type: "planning.useSample" }));
+    const before = structuredClone(state.planning!);
+    const child = await service.createConversation(
+      c.projectId,
+      "planning",
+      "zh-CN",
+    );
+    const catalog = await service.catalog();
+    const input = {
+      text: "",
+      attachment: new File(["sample"], "adjust.xlsx"),
+      agentId: catalog.defaultAgent,
+      modelId: catalog.defaultModel,
+      requestId: "attachment-1",
+    };
+    await settle(service.sendMessage(c, input));
+    const fileMessage = state.messages.find(
+      (m) => m.requestId === input.requestId && m.role === "user",
+    )!;
+    expect(fileMessage.attachment?.filename).toBe("adjust.xlsx");
+    expect(state.planning!.assets).toEqual(before.assets);
+    expect(state.planning!.preview?.conversationId).toBe(c.conversationId);
+    expect(
+      await (
+        await service.download(c.projectId, fileMessage.attachment!.id)
+      ).blob!.text(),
+    ).toBe("sample");
+    await expect(
+      service.execute(
+        { ...c, conversationId: child.id },
+        { type: "planning.apply", previewId: state.planning!.preview!.id },
+      ),
+    ).rejects.toThrow();
+    const other = await setup();
+    await expect(
+      service.download(other.c.projectId, fileMessage.attachment!.id),
+    ).rejects.toThrow();
+    await service.execute(c, {
+      type: "planning.cancel",
+      previewId: state.planning!.preview!.id,
+    });
+    expect(state.planning!.batches).toEqual(before.batches);
+    await service.logout();
+    expect(service.runtime.attachments.size).toBe(0);
+  });
+  it("validates attachments and preserves one file/message across a cancelled request and retry", async () => {
+    const { c, state } = await setup();
+    const catalog = await service.catalog();
+    const input = {
+      text: "",
+      agentId: catalog.defaultAgent,
+      modelId: catalog.defaultModel,
+      requestId: "retry-file",
+    };
+    await expect(
+      service.sendMessage(c, {
+        ...input,
+        attachment: new File(["x"], "bad.exe"),
+      }),
+    ).rejects.toThrow();
+    const oversized = new File(["x"], "large.pdf");
+    Object.defineProperty(oversized, "size", { value: 20 * 1024 * 1024 + 1 });
+    await expect(
+      service.sendMessage(c, { ...input, attachment: oversized }),
+    ).rejects.toThrow();
+    const attachment = new File(["adjust"], "adjust.pdf");
+    const controller = new AbortController();
+    const pending = service.sendMessage(
+      c,
+      { ...input, attachment },
+      { signal: controller.signal },
+    );
+    const rejected = expect(pending).rejects.toThrow();
+    controller.abort();
+    await settle(rejected);
+    expect(state.planning!.preview).toBeUndefined();
+    await settle(service.sendMessage(c, { ...input, attachment }));
+    expect(
+      state.messages.filter(
+        (m) => m.requestId === input.requestId && m.role === "user",
+      ),
+    ).toHaveLength(1);
+    expect(service.runtime.attachments.size).toBe(1);
+    expect(state.planning!.preview).toBeDefined();
+  });
+  it("sample intake follows preview/cancel/apply and preserves existing inputs", async () => {
+    const { c, state } = await setup();
+    await service.execute(c, { type: "planning.sampleInputs" });
+    expect(state.planning!.preview?.change).toMatchObject({
+      kind: "import",
+      filename: "规划资料-样例.xlsx",
+    });
+    expect(state.planning!.assets[0].system).toBe("");
+    await service.execute(c, {
+      type: "planning.apply",
+      previewId: state.planning!.preview!.id,
+    });
+    expect(state.planning!.assets[0].system).toBeTruthy();
+    expect(state.planning!.conditions.fullBandwidth).toBe(10);
+  });
   it("localizes authored planning guidance and generated results", async () => {
     const { c, state } = await setup("en");
     await settle(service.execute(c, { type: "planning.useSample" }));

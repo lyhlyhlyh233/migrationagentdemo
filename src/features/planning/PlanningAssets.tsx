@@ -16,12 +16,14 @@ export function PlanningAssets({
   view,
   onView,
   locked,
+  readOnly = false,
   attributes = false,
 }: {
   assets: PlanningAsset[];
   view: PlanningView;
   onView: (patch: Partial<PlanningView>) => void;
   locked: boolean;
+  readOnly?: boolean;
   attributes?: boolean;
 }) {
   const t = useTranslation();
@@ -106,43 +108,47 @@ export function PlanningAssets({
           ))}
         </Select>
       </div>
-      <div className={styles.selection}>
-        <span>{t("已选 {0} 台", view.selected.length)}</span>
-        <Button
-          disabled={locked || !filtered.length}
-          onClick={() =>
-            toggle(
-              filtered.map((a) => a.id),
-              true,
-            )
-          }
-        >
-          {t("选择全部筛选结果 {0} 台", filtered.length)}
-        </Button>
-        <Button
-          disabled={locked || !view.selected.length}
-          onClick={() => onView({ selected: [] })}
-        >
-          {t("清空选择")}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className={styles.selection}>
+          <span>{t("已选 {0} 台", view.selected.length)}</span>
+          <Button
+            disabled={locked || !filtered.length}
+            onClick={() =>
+              toggle(
+                filtered.map((a) => a.id),
+                true,
+              )
+            }
+          >
+            {t("选择全部筛选结果 {0} 台", filtered.length)}
+          </Button>
+          <Button
+            disabled={locked || !view.selected.length}
+            onClick={() => onView({ selected: [] })}
+          >
+            {t("清空选择")}
+          </Button>
+        </div>
+      )}
       <table className={`${styles.table} ${styles.assets}`}>
         <thead>
           <tr>
-            <th className={styles.check}>
-              <SelectionCheckbox
-                label={t("选择本页虚拟机")}
-                checked={rows.length > 0 && pageCount === rows.length}
-                mixed={pageCount > 0 && pageCount < rows.length}
-                disabled={locked}
-                onChange={(checked) =>
-                  toggle(
-                    rows.map((a) => a.id),
-                    checked,
-                  )
-                }
-              />
-            </th>
+            {!readOnly && (
+              <th className={styles.check}>
+                <SelectionCheckbox
+                  label={t("选择本页虚拟机")}
+                  checked={rows.length > 0 && pageCount === rows.length}
+                  mixed={pageCount > 0 && pageCount < rows.length}
+                  disabled={locked}
+                  onChange={(checked) =>
+                    toggle(
+                      rows.map((a) => a.id),
+                      checked,
+                    )
+                  }
+                />
+              </th>
+            )}
             <th>{t("虚拟机 / 标识")}</th>
             <th>{t("业务系统")}</th>
             <th>{t("业务等级")}</th>
@@ -152,14 +158,16 @@ export function PlanningAssets({
         <tbody>
           {rows.map((a) => (
             <tr key={a.id} data-selected={selected.has(a.id)}>
-              <td>
-                <SelectionCheckbox
-                  label={t("选择 {0}", a.name)}
-                  checked={selected.has(a.id)}
-                  disabled={locked}
-                  onChange={(checked) => toggle([a.id], checked)}
-                />
-              </td>
+              {!readOnly && (
+                <td>
+                  <SelectionCheckbox
+                    label={t("选择 {0}", a.name)}
+                    checked={selected.has(a.id)}
+                    disabled={locked}
+                    onChange={(checked) => toggle([a.id], checked)}
+                  />
+                </td>
+              )}
               <td>
                 <strong>{a.name}</strong>
                 <details>

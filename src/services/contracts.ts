@@ -102,6 +102,7 @@ export type ProjectCommand =
   | { type: "stage.review"; target: StageId }
   | { type: "planning.confirmScope" }
   | { type: "planning.useSample" }
+  | { type: "planning.sampleInputs" }
   | { type: "planning.requestAdjustment" }
   | { type: "stage.confirm"; target: StageId }
   | { type: "md.check" }
@@ -181,6 +182,7 @@ export interface MigrationService {
       modelId: string;
       requestId: string;
       context?: string;
+      attachment?: File;
     },
     options?: RequestOptions,
   ): Promise<void>;

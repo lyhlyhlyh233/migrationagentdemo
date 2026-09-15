@@ -6,6 +6,7 @@ import type {
 import type { FilePurpose } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { EmptyState } from "@/shared/ui/Status";
+import { Icon } from "@/shared/ui/icons";
 import { Button } from "@/shared/ui/primitives";
 import { useEffect, useRef } from "react";
 import { BusinessResults, type ResultActions } from "./BusinessResults";
@@ -28,7 +29,7 @@ export function Conversation({
   snapshot: ProjectSnapshot;
   chat: ConversationModel;
   view: ConversationView;
-  onUpload: (purpose: FilePurpose, file: File) => void;
+  onUpload: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onCloseWork: () => void;
   compact?: boolean;
 } & ResultActions) {
@@ -122,10 +123,12 @@ export function Conversation({
                             !(compact && r.kind === "assessment-input") &&
                             !(
                               r.kind === "planning-input" &&
-                              (compact || message.id !== latestPlanningInputId)
+                              ((compact && !s.planning?.batches.length) ||
+                                message.id !== latestPlanningInputId)
                             ),
                         )}
                         snapshot={s}
+                        conversationId={chat.id}
                         onUpload={onUpload}
                         activeInput={message.id === latestInputId}
                         {...actions}
@@ -142,7 +145,19 @@ export function Conversation({
                   </ConversationAnswer>
                 </>
               ) : (
-                <p>{message.text}</p>
+                <>
+                  {message.text && <p>{message.text}</p>}
+                  {message.attachment && (
+                    <button
+                      className={styles.messageAttachment}
+                      onClick={() => actions.onDownload(message.attachment!.id)}
+                    >
+                      <Icon name="attach" size={15} />
+                      {message.attachment.filename}
+                      <Icon name="download" size={14} />
+                    </button>
+                  )}
+                </>
               )}
             </article>
           </div>

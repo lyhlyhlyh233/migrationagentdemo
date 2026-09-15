@@ -375,6 +375,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   ) : undefined;
   const executionContent = (
     <ExecutionWorkspace
+      onManage={() => setPanel("tasks")}
       snapshot={s}
       view={p.executionView}
       onView={executionViewChange}
@@ -477,7 +478,16 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       onDraft={(draft) => a.view({ draft, requestId: undefined })}
       onAgent={(agentId) => a.view({ agentId })}
       onModel={(modelId) => a.view({ modelId })}
-      onSend={(text) => a.send(text, agent, model)}
+      onSend={(text) => a.send(text, agent, model, true)}
+      onPrompt={(text) => a.send(text, agent, model)}
+      attachment={view.attachment}
+      onAttachment={(attachment) =>
+        a.view({ attachment, requestId: undefined })
+      }
+      assessmentComplete={s.assessmentStatus === "completed"}
+      planningGenerated={
+        !!s.planning?.batches.length && s.batchConfirmation !== "confirmed"
+      }
       onStop={() => void a.stop()}
       onWork={() =>
         setPanel(
@@ -742,7 +752,17 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onDraft={(draft) => a.view({ draft, requestId: undefined })}
             onAgent={(agentId) => a.view({ agentId })}
             onModel={(modelId) => a.view({ modelId })}
-            onSend={(text) => a.send(text, agent, model)}
+            onSend={(text) => a.send(text, agent, model, true)}
+            onPrompt={(text) => a.send(text, agent, model)}
+            attachment={view.attachment}
+            onAttachment={(attachment) =>
+              a.view({ attachment, requestId: undefined })
+            }
+            assessmentComplete={s.assessmentStatus === "completed"}
+            planningGenerated={
+              !!s.planning?.batches.length &&
+              s.batchConfirmation !== "confirmed"
+            }
             onStop={() => void a.stop()}
             onWork={() => {
               if (chat.stageId === "research")

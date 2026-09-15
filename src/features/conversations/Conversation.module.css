@@ -100,3 +100,17 @@
     font-size: var(--meta-size);
   }
 }
+
+.messageAttachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  color: inherit;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--ui-size);
+}

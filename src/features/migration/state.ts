@@ -3,7 +3,7 @@ import type {
   SimulationScenario,
 } from "@/domain/execution";
 export interface ExecutionView {
-  tab: "connection" | "tasks" | "issues";
+  tab: "dashboard" | "connection" | "tasks" | "issues";
   mode: "batches" | "vms";
   batchId: string;
   issueId: string;

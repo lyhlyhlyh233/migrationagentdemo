@@ -401,13 +401,13 @@
 .timelineScale {
   display: flex;
   justify-content: space-between;
-  margin: 24px 0 8px 80px;
+  margin: 12px 0 8px 150px;
   font-size: var(--ui-caption);
   color: var(--muted);
 }
 .timelineRow {
   display: grid;
-  grid-template-columns: 80px minmax(0, 1fr);
+  grid-template-columns: 150px minmax(0, 1fr);
   align-items: stretch;
   min-height: 58px;
   border-bottom: 1px solid var(--line);
@@ -433,7 +433,8 @@
   border-radius: 4px;
 }
 .syncBar,
-.validationBar {
+.validationBar,
+.bufferBar {
   position: absolute;
   top: 12px;
   height: 14px;
@@ -527,4 +528,149 @@
   .batches td:last-child button {
     white-space: nowrap;
   }
+}
+
+.intakeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.compactConditions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding-block: 12px;
+}
+.compactConditions label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--ui-size);
+}
+.compactConditions input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height);
+}
+.readValues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  margin: 0;
+}
+.readValues > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.readValues dt {
+  font-size: var(--ui-size);
+  color: var(--muted);
+}
+.readValues dd {
+  margin: 0;
+  font-size: var(--ui-size);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.dashboard {
+  overflow: auto;
+  min-height: 0;
+  padding: 16px;
+  font-size: var(--ui-size);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  container-type: inline-size;
+}
+.dashboard p {
+  margin: 0;
+  line-height: 1.6;
+}
+.dashboard h2,
+.dashboard h3 {
+  margin: 0;
+  font-size: var(--ui-title);
+  font-weight: 600;
+}
+.dashboardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dashboardHeader span {
+  font-size: var(--ui-caption);
+}
+.dashboardSection {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.dashboard .warnings {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.dashboard .resourceSummary {
+  margin: 16px 0 0;
+}
+.bufferBar {
+  background: var(--surface-hover);
+  border: 1px solid var(--line-strong);
+}
+.resourceSummary progress[data-over] {
+  accent-color: var(--danger);
+}
+.resourceSummary progress[data-over]::-webkit-progress-value {
+  background: var(--danger);
+}
+@container (max-width:440px) {
+  .readValues,
+  .compactConditions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .timelineRow {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+  .timelineScale {
+    margin-left: 120px;
+  }
+}
+
+.resourceSummary progress {
+  appearance: none;
+  border: 0;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+.resourceSummary progress::-webkit-progress-bar {
+  background: var(--line);
+}
+.resourceSummary progress::-webkit-progress-value {
+  background: var(--info);
+}
+.resourceSummary progress::-moz-progress-bar {
+  background: var(--info);
+}
+.resourceSummary progress[data-over]::-moz-progress-bar {
+  background: var(--danger);
+}
+.validationBar {
+  min-width: 5px;
+}
+
+.cutoverMark {
+  top: 4px;
+  height: 6px;
+  width: 6px;
+  transform: translateX(-3px);
+  border-radius: 1px;
 }

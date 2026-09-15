@@ -19,7 +19,7 @@
 | 项目           | listProjects、createProject、getProject                                             | 返回列表/完整项目快照，保留项目隔离                                       |
 | 会话           | createConversation、renameConversation                                              | 独立 ID、所属阶段、主/子/临时类型                                         |
 | Agent、模型    | catalog                                                                             | 目录 ID、默认值及可选 stageAgents 映射                                    |
-| 回复           | sendMessage、stopReply                                                              | requestId 重试去重；文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
+| 回复           | sendMessage、stopReply                                                              | requestId 重试去重；可选 File 附件、文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
 | 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                         | 阶段条件、人工确认、不可重复启动                                          |
 | 实施/诊断/验收 | execution.connection/preview/apply、execution.diagnose/remedy/recheck、validation.* | 连接与批次控制、诊断确认、逐台验证与反馈，见下文                          |
 | 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action         | 最新状态校验、批量原子性与阶段锁定                                        |
@@ -52,6 +52,8 @@
 风险提交基于最新数据验证项目、阶段锁定、资源与策略。默认批量界面传 `onlyUndecided: true`，服务执行时再次过滤，保护其他会话的新选择；省略或传 false 表示允许覆盖，不能擅自更改语义。一次批量操作先整体校验、再写入，失败不留部分结果；覆盖会重置相关验证状态。
 
 `domain/risk-decisions.ts` 为预览与 Mock 共用判定：忽略可接受约束项，其余不迁；推荐逐项采用各自建议。`domain/assessment.ts` 从全部项目风险计算虚拟机资格；选择整改不等于完成验证，受阻/未验证/本次不迁对象仍排除。详细条件只在 [业务逻辑说明](../业务逻辑说明.md) 维护。
+
+`risk-preview` 消息结果保存目标风险 ID 和已有操作类型，确认仍调用原风险命令；不新增风险算法。`planning.sampleInputs` 只生成样例导入预览，应用沿用 `planning.apply`。
 
 ## 实施、诊断与验证契约
 
@@ -100,6 +102,14 @@
 
 `planning-template`、`batch-plan`、`runbook` 始终引用当前规划资源。Excel 输出是 SpreadsheetML（Excel 2003 XML）`.xls`，不是 XLSX 压缩包。模板三 Sheet、输出五 Sheet，字段与统计见业务说明。日期作为无时区示例值显示，运算统一按 UTC 解释避免跨浏览器日期错位；真实排程需另行约定项目时区。
 
+评估资料的文件选择与样例入口先由界面显示接收预览，再调用原 `upload` 或 `assessment.useSamples`；取消不覆盖当前资料，失败保留选择。此预览只确认资料用途与替换范围，不代表已解析文件。
+
+### 对话附件
+
+`sendMessage` 增加可选 `attachment: File`，有附件时 text 可为空。每条一个、大于 0 且最多 20MB，支持 XLS/XLSX/CSV、DOC/DOCX/PDF/PPT/PPTX/TXT/MD、PNG/JPG/JPEG/WEBP。UI 与服务同时验证；消息保存 `{id, filename, mediaType, size}`，File 在内存附件仓库，下载仍用原 download。Mock 不解析文件；规划阶段生成样例调整预览，其他阶段仅确认接收。未覆盖文字意图继续澄清。
+
+重试复用 requestId，已写入用户消息和附件不重复追加；预览在回复等待成功后生成，并保留发起会话。失败时待发送文件与输入保留，成功后清空；退出清除文件、请求和会话状态。实际后端的上传/消息组合协议由适配器定义，本轮不虚构 URL。
+
 ### 文件与账户行为
 
 问题/反馈附件支持日志、文本、图片、PDF、Excel、DOCX、ZIP，大小须大于 0 且不超过 20MB；按项目和关联记录校验。Mock 的 File 仅保存在 runtime 内存，退出释放；读取不跨项目。诊断不解析附件内容。真实适配需实现服务端文件检测、授权与存储，不能因为接收文件就宣称已分析。
@@ -113,6 +123,7 @@
 | 资源标识                      | 含义                                                |
 | ----------------------------- | --------------------------------------------------- |
 | execution-log:问题ID          | 自动生成的模拟诊断日志，资源归属当前项目            |
+| chat-file:附件ID              | 对话附件的实际文件字节，不进行内容解析               |
 | attachment:附件ID             | 问题或反馈的实际 File 字节，不进行内容解析          |
 | research-template             | 原始迁移调研 XLSX 模板，Mock 从随应用打包的资源读取 |
 | task-log:后接逗号分隔的任务ID | 已选任务的日志下载，Mock 从当前项目任务生成文本     |

@@ -13,11 +13,13 @@ export function PlanningSystems({
   view,
   onView,
   locked,
+  readOnly = false,
 }: {
   assets: PlanningAsset[];
   view: PlanningView;
   onView: (patch: Partial<PlanningView>) => void;
   locked: boolean;
+  readOnly?: boolean;
 }) {
   const t = useTranslation();
   const groups = useMemo(() => {
@@ -57,38 +59,44 @@ export function PlanningSystems({
           }
         />
       </div>
-      <div className={styles.selection}>
-        <span>{t("已选 {0} 台", selected.size)}</span>
-        <Button
-          disabled={locked || !groups.length}
-          onClick={() =>
-            toggle(
-              groups.flatMap((g) => g.members.map((a) => a.id)),
-              true,
-            )
-          }
-        >
-          {t("选择全部筛选结果")}
-        </Button>
-        <Button
-          disabled={locked || !selected.size}
-          onClick={() => onView({ selected: [] })}
-        >
-          {t("清空选择")}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className={styles.selection}>
+          <span>{t("已选 {0} 台", selected.size)}</span>
+          <Button
+            disabled={locked || !groups.length}
+            onClick={() =>
+              toggle(
+                groups.flatMap((g) => g.members.map((a) => a.id)),
+                true,
+              )
+            }
+          >
+            {t("选择全部筛选结果")}
+          </Button>
+          <Button
+            disabled={locked || !selected.size}
+            onClick={() => onView({ selected: [] })}
+          >
+            {t("清空选择")}
+          </Button>
+        </div>
+      )}
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.check}>
-              <SelectionCheckbox
-                label={t("选择本页业务系统")}
-                checked={pageIds.length > 0 && checkedCount === pageIds.length}
-                mixed={checkedCount > 0 && checkedCount < pageIds.length}
-                disabled={locked}
-                onChange={(checked) => toggle(pageIds, checked)}
-              />
-            </th>
+            {!readOnly && (
+              <th className={styles.check}>
+                <SelectionCheckbox
+                  label={t("选择本页业务系统")}
+                  checked={
+                    pageIds.length > 0 && checkedCount === pageIds.length
+                  }
+                  mixed={checkedCount > 0 && checkedCount < pageIds.length}
+                  disabled={locked}
+                  onChange={(checked) => toggle(pageIds, checked)}
+                />
+              </th>
+            )}
             <th>{t("业务系统")}</th>
             <th>{t("虚拟机")}</th>
             <th>{t("业务资料待补充")}</th>
@@ -101,15 +109,17 @@ export function PlanningSystems({
             const count = ids.filter((id) => selected.has(id)).length;
             return (
               <tr key={g.system}>
-                <td>
-                  <SelectionCheckbox
-                    label={t("选择 {0}", g.system || t("待补充"))}
-                    checked={count === ids.length}
-                    mixed={count > 0 && count < ids.length}
-                    disabled={locked}
-                    onChange={(checked) => toggle(ids, checked)}
-                  />
-                </td>
+                {!readOnly && (
+                  <td>
+                    <SelectionCheckbox
+                      label={t("选择 {0}", g.system || t("待补充"))}
+                      checked={count === ids.length}
+                      mixed={count > 0 && count < ids.length}
+                      disabled={locked}
+                      onChange={(checked) => toggle(ids, checked)}
+                    />
+                  </td>
+                )}
                 <td>{g.system || t("待补充")}</td>
                 <td>{ids.length}</td>
                 <td>{g.members.filter((a) => !a.system || !a.grade).length}</td>

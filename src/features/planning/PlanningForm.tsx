@@ -1,3 +1,4 @@
+import { Icon } from "@/shared/ui/icons";
 import type { ProjectSnapshot } from "@/domain/models";
 import { planningIsStale } from "@/domain/planning";
 import type { ProjectCommand } from "@/services/contracts";
@@ -23,7 +24,8 @@ export function PlanningForm({
   return (
     <div className={styles.resultActions}>
       <Button onClick={onOpen}>
-        {t(generated ? "查看与调整规划" : "补充规划资料")}
+        {t(generated ? "查看当前规划" : "补充规划资料")}
+        <Icon name="right" size={15} />
       </Button>
       <Button onClick={() => onDownload("planning-template")}>
         {t("下载规划模板")}
@@ -46,6 +48,7 @@ export function PlanningForm({
                 ? "重新生成模拟初稿"
                 : "生成规划初稿",
           )}
+          <Icon name="right" size={15} />
         </Button>
       )}
     </div>

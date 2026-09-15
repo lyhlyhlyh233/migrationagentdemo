@@ -31,9 +31,11 @@ export function riskOverview(
     ).values(),
   ];
   const exclusions = risks.filter((risk) => !riskReadyForExecution(risk));
-  const excluded = new Set(exclusions.map((risk) => risk.vmName)).size;
+  const excludedNames = new Set(exclusions.map((risk) => risk.vmName));
+  const excluded = excludedNames.size;
+  const related = risks.filter((risk) => excludedNames.has(risk.vmName));
   const groups = new Map<NonNullable<RiskItem["category"]> | "other", number>();
-  for (const risk of exclusions) {
+  for (const risk of related) {
     const category = risk.category ?? "other";
     groups.set(category, (groups.get(category) ?? 0) + 1);
   }
@@ -44,11 +46,12 @@ export function riskOverview(
     excluded,
     undecided: risks.filter((risk) => !hasRiskDecision(risk)).length,
     exclusionRisks: exclusions.length,
+    relatedRisks: related.length,
     categories: [...groups]
       .map(([category, count]) => ({
         category,
         count,
-        share: count / exclusions.length,
+        share: count / related.length,
       }))
       .sort(
         (a, b) => b.count - a.count || a.category.localeCompare(b.category),

@@ -16,8 +16,8 @@ export function StageWork({
 }: {
   stage: StageId;
   snapshot: ProjectSnapshot;
-  onCommand: (cmd: ProjectCommand) => void;
-  onUpload: (purpose: FilePurpose, file: File) => void;
+  onCommand: (cmd: ProjectCommand) => void | Promise<boolean>;
+  onUpload: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onDownload: (id: string) => void;
   onPanel: (panel: PanelId) => void;
 }) {
