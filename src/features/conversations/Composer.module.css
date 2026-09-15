@@ -6,7 +6,8 @@
 .root :global(.shortcut-menu) {
   position: relative;
 }
-.root :global(.shortcut-menu summary) {
+.root :global(.shortcut-menu summary),
+.root .prompt {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -17,6 +18,10 @@
   color: var(--muted);
   white-space: nowrap;
   font-size: var(--ui-size);
+  font-weight: 400;
+  line-height: 1.5;
+  border: 0;
+  background: transparent;
 }
 .root :global(.shortcut-menu summary::-webkit-details-marker) {
   display: none;
@@ -415,27 +420,24 @@
   opacity: 1;
 }
 
-.suggestions {
+.shortcutRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 12px;
-}
-.suggestions button {
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--ui-size);
-  line-height: 1.4;
-  text-align: left;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  min-width: 0;
+  max-width: 100%;
 }
-.suggestions button:hover:not(:disabled) {
+.root .prompt:hover:not(:disabled) {
+  color: var(--accent-ink);
   background: var(--accent-soft);
+}
+@media (max-width: 760px) {
+  .root .prompt,
+  .root :global(.composer-shortcuts .shortcut-menu summary) {
+    min-height: 44px;
+    padding: 7px 6px;
+  }
 }
 .attachment {
   display: flex;

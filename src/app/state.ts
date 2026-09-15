@@ -32,7 +32,7 @@ export interface ProjectUi {
   conversationId: string | null;
   lastStages: Partial<Record<StageId, string>>;
   panel: PanelId;
-  notice: string;
+  actionError: string;
   handoff: StageId | null;
   riskLocation: RiskLocation;
   assessmentRiskOpened: boolean;
@@ -55,7 +55,7 @@ export const projectUi = (): ProjectUi => ({
   conversationId: null,
   lastStages: {},
   panel: null,
-  notice: "",
+  actionError: "",
   handoff: null,
   riskLocation: { mode: "category" },
   assessmentRiskOpened: false,

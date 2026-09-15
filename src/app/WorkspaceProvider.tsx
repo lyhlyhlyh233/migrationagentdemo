@@ -23,11 +23,11 @@ function useWorkspaceState(service: MigrationService) {
       if (!active) return;
       if (e.type === "snapshot")
         dispatchData({ type: "snapshot", snapshot: e.snapshot });
-      else
+      else if (e.type === "error")
         dispatchUi({
           type: "project",
           id: e.projectId,
-          patch: { notice: e.type === "notice" ? e.text : e.message },
+          patch: { actionError: e.message },
         });
     });
     dispatchData({ type: "loading" });

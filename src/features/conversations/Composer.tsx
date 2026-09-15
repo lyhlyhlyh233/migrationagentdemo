@@ -170,12 +170,32 @@ export function Composer({
           {t("回复未完成，输入已保留。发送以重试。")}
         </p>
       )}
-      {stage && !compact && (
+      {((stage && !compact) || !!prompts.length) && (
         <div className={styles.topRow}>
-          <div className="composer-shortcuts">
-            <ShortcutMenu groups={groups} />
+          <div
+            className={styles.shortcutRow}
+            role="group"
+            aria-label={t("快捷对话")}
+          >
+            {stage && !compact && (
+              <div className="composer-shortcuts">
+                <ShortcutMenu groups={groups} />
+              </div>
+            )}
+            {prompts.map((prompt) => (
+              <button
+                type="button"
+                className={styles.prompt}
+                key={prompt}
+                disabled={busy}
+                onClick={() => onPrompt(t(prompt))}
+              >
+                {t(prompt)}
+                <Icon name="right" size={14} />
+              </button>
+            ))}
           </div>
-          {onNext && (
+          {!compact && onNext && (
             <button
               type="button"
               disabled={busy}
@@ -186,21 +206,6 @@ export function Composer({
               <Icon name="right" size={15} />
             </button>
           )}
-        </div>
-      )}
-      {!!prompts.length && (
-        <div className={styles.suggestions} aria-label={t("快捷对话")}>
-          {prompts.map((prompt) => (
-            <button
-              type="button"
-              key={prompt}
-              disabled={busy}
-              onClick={() => onPrompt(t(prompt))}
-            >
-              {t(prompt)}
-              <Icon name="right" size={14} />
-            </button>
-          ))}
         </div>
       )}
       {fileError && (

@@ -2069,3 +2069,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.actionFeedback {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+  margin: 12px 20px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--danger);
+  background: var(--panel);
+  font-size: var(--ui-size);
+  line-height: 1.5;
+}
+.actionFeedback > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

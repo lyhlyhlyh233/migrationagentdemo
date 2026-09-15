@@ -326,9 +326,6 @@ b {
     overflow: visible;
     display: block;
   }
-  .toast {
-    display: none !important;
-  }
 }
 [hidden] {
   display: none !important;
@@ -399,32 +396,6 @@ input[type="checkbox"] {
 [data-tone="warning"] {
   --tone-ink: var(--warning);
   --tone-soft: var(--warning-soft);
-}
-.toast {
-  position: fixed;
-  z-index: var(--z-toast);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  max-width: min(560px, 90vw);
-  padding: 12px 15px;
-  border-radius: 9px;
-  background: var(--ink);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--on-ink);
-}
-.toast button {
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 0;
-  background: transparent;
-  margin-left: 5px;
-  color: var(--on-ink);
 }
 :root[data-theme="white"]
   .workflow-embeds

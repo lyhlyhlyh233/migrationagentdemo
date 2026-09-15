@@ -566,6 +566,19 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onStage={selectStage}
           />
         )}
+        {p.actionError && (
+          <div className={styles.actionFeedback} role="alert">
+            <Icon name="info" size={16} />
+            <span>{t(p.actionError)}</span>
+            <button
+              className="icon-button"
+              aria-label={t("关闭提示")}
+              onClick={() => a.notify("")}
+            >
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        )}
         {chat && !management && (
           <div className="conversation-toolbar">
             <div className="conversation-context">
@@ -916,15 +929,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             />
           }
         />
-      )}
-      {p.notice && (
-        <div className="toast" role="status">
-          <Icon name="info" size={16} />
-          <span>{t(p.notice)}</span>
-          <button aria-label={t("关闭提示")} onClick={() => a.notify("")}>
-            <Icon name="close" size={14} />
-          </button>
-        </div>
       )}
     </main>
   );

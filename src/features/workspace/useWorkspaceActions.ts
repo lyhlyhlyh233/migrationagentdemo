@@ -50,7 +50,7 @@ export function useWorkspaceActions(projectId: string) {
     language: readPreference("language"),
   };
   const notify = (notice: string) =>
-    dispatchUi({ type: "project", id: projectId, patch: { notice } });
+    dispatchUi({ type: "project", id: projectId, patch: { actionError: notice } });
   async function invoke(work: () => Promise<unknown>) {
     notify("");
     try {
