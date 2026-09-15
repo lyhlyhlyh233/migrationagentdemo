@@ -980,10 +980,6 @@
     padding-top: 7px;
   }
 }
-.root :global(.nav-platform h1 > span) {
-  color: var(--ink);
-  font-weight: 500;
-}
 .root :global(.nav-platform .huawei-symbol) {
   width: 26px;
   height: 24px;
@@ -1562,7 +1558,7 @@
 }
 @media (min-width: 761px) {
   .root :global(.nav-platform) {
-    padding-inline: 4px;
+    padding-inline: 0;
     gap: 6px;
   }
   .root :global(.nav-platform h1) {

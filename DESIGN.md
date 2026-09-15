@@ -1,4 +1,4 @@
-# MigrationDirector Plus 视觉规范
+# MigrationDirector Ultimate 视觉规范
 
 面向迁移项目经理与实施工程师的日常工作台。沿用对话为主、进度为辅的布局，参考用户提供的 Codex 截图增强文字对比和业务输出层次。架构与适配说明见 [docs/design.md](docs/design.md)。
 
@@ -59,4 +59,4 @@ Agent 在输入框左下，模型在右下；分类快捷操作紧贴输入框�
 
 ## 品牌资产
 
-平台名为 MigrationDirector Plus。导航、创建页和网页 favicon 使用本地 Huawei 标志，保持原始红色和比例。背景来源见 [public/backgrounds/README.md](public/backgrounds/README.md)。
+平台名为 MigrationDirector Ultimate。导航与创建页共用 `shared/ui/BrandName`，Ultimate 使用独立品牌红色变量 `--brand-edition`，不随青绿或酒红主题改变色相；深色模式提高亮度以保持对比。网页标题使用完整名称。导航、创建页和网页 favicon 使用本地 Huawei 标志，保持原始红色和比例。背景来源见 [public/backgrounds/README.md](public/backgrounds/README.md)。

@@ -2,6 +2,7 @@ import type { ProjectInfo } from "@/domain/models";
 import { useTranslation } from "@/shared/i18n";
 import { Select } from "@/shared/ui/Select";
 import { Icon } from "@/shared/ui/icons";
+import { BrandName } from "@/shared/ui/BrandName";
 import { useState, type FormEvent } from "react";
 import styles from "./ProjectSetup.module.css";
 const blankProject: ProjectInfo = {
@@ -38,7 +39,7 @@ export function ProjectSetup({
       <header>
         <span>
           <span className="huawei-symbol" role="img" aria-label={t("华为")} />
-          MigrationDirector Plus
+          <BrandName />
         </span>
         <button onClick={onCancel}>
           <Icon name="close" size={16} />

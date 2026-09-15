@@ -1,0 +1,9 @@
+.name {
+  white-space: nowrap;
+}
+
+.edition {
+  color: var(--brand-edition);
+  font-size: 0.9em;
+  font-weight: 600;
+}

@@ -1,4 +1,4 @@
-# MigrationDirector Plus
+# MigrationDirector Ultimate
 
 用于迁移项目交付的独立前端，支持调研评估、规划设计、迁移实施、结果验证四个阶段。技术栈为 **Vite + React 19 + TypeScript**，构建后是可部署到内网的静态文件。
 

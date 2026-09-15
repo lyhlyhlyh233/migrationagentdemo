@@ -11,6 +11,7 @@
   --success: #247b50;
   --warning: #946213;
   --danger: #b13b42;
+  --brand-edition: oklch(54% 0.21 23);
   --body-size: 15px;
   --meta-size: 12px;
 }
@@ -27,6 +28,7 @@
   --success: #83caa2;
   --warning: #e4bb76;
   --danger: #ed9699;
+  --brand-edition: oklch(74% 0.16 23);
 }
 [data-tone="info"] {
   color: var(--info);

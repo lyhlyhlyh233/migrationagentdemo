@@ -1,6 +1,6 @@
 # 项目架构
 
-MigrationDirector Plus 是 Vite + React + TypeScript 独立静态前端。保留一个服务契约、React Context 和三个 reducer，不引入新的状态库、依赖注入框架或流程引擎。
+MigrationDirector Ultimate 是 Vite + React + TypeScript 独立静态前端。保留一个服务契约、React Context 和三个 reducer，不引入新的状态库、依赖注入框架或流程引擎。
 
 本文维护源码职责与修改入口；后端对接见 [接口适配说明](integration.md)，业务条件见 [业务逻辑说明](../业务逻辑说明.md)，视觉规则见 [DESIGN.md](../DESIGN.md)。
 

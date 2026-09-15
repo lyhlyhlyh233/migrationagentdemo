@@ -1,6 +1,6 @@
 # AI 接手入口
 
-这是 MigrationDirector Plus 的独立前端。先理解现有结构，再改当前需求；不要继续扩展框架或抽象层。
+这是 MigrationDirector Ultimate 的独立前端。先理解现有结构，再改当前需求；不要继续扩展框架或抽象层。
 
 ## 阅读顺序
 

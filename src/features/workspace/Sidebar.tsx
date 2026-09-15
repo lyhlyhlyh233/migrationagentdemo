@@ -9,6 +9,7 @@ import { stageTitles } from "@/shared/i18n/stages";
 
 import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
+import { BrandName } from "@/shared/ui/BrandName";
 import { ProjectResourceButton } from "@/shared/ui/ProjectResourceButton";
 import { Select } from "@/shared/ui/Select";
 import { StageConversationList } from "./StageNavigation";
@@ -80,7 +81,7 @@ export function Sidebar({
         <div className="nav-platform">
           <span className="huawei-symbol" role="img" aria-label={t("华为")} />
           <h1>
-            MigrationDirector <span>Plus</span>
+            <BrandName />
           </h1>
           <button
             className="icon-button nav-collapse"
