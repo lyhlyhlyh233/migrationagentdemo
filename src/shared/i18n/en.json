@@ -1370,5 +1370,20 @@
   "批量设为本次不迁，从工具迁移范围排除。": "Exclude from this migration and from the tool migration scope.",
   "批量处理 {0} 条风险：可接受约束项设为忽略，其余设为本次不迁。": "Process {0} findings: accept constraints where allowed and exclude the rest.",
   "已保存 {0} 条风险策略，保留 {1} 条已有选择。其中 {2} 条接受约束，{3} 条设为本次不迁。当前工具迁移范围为 {4} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。": "Saved {0} strategies and preserved {1} existing choices: {2} accepted constraints and {3} exclusions. {4} VMs are in tool migration scope. Remediation still requires verification; other risks can be addressed later without blocking planning.",
-  "已保存 {0} 条风险策略。其中 {1} 条接受约束，{2} 条设为本次不迁。当前工具迁移范围为 {3} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。": "Saved {0} strategies: {1} accepted constraints and {2} exclusions. {3} VMs are in tool migration scope. Remediation still requires verification; other risks can be addressed later without blocking planning."
+  "已保存 {0} 条风险策略。其中 {1} 条接受约束，{2} 条设为本次不迁。当前工具迁移范围为 {3} 台。整改项仍需验证；其余风险可稍后处理，不影响继续规划。": "Saved {0} strategies: {1} accepted constraints and {2} exclusions. {3} VMs are in tool migration scope. Remediation still requires verification; other risks can be addressed later without blocking planning.",
+  "共 {0} 项": "{0} items",
+  "级别": "Severity",
+  "虚拟机数": "VMs",
+  "名称": "Name",
+  "标识": "Identifier",
+  "本项策略": "Strategy for this finding",
+  "处理进度": "Decision progress",
+  "风险浏览区": "Risk browser",
+  "策略操作区": "Strategy actions",
+  "虚拟机：{0}": "VM: {0}",
+  "风险事项：{0}": "Risk: {0}",
+  "风险数与处理进度按当前筛选结果统计；迁移资格按全部项目风险计算。": "Risk counts and decision progress reflect the current filters. Eligibility includes all project risks.",
+  "应用策略": "Apply strategy",
+  "选择整改不代表已完成验证。": "Remediation still requires verification.",
+  "规则依据": "Assessment rule"
 }

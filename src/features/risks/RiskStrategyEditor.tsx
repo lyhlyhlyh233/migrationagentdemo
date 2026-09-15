@@ -6,6 +6,7 @@ import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { migrationMethodLabels, riskStrategyLabels } from "@/shared/i18n/risks";
 import { Button } from "@/shared/ui/primitives";
+import dockStyles from "./RiskStrategyDock.module.css";
 import styles from "./RiskStrategyEditor.module.css";
 
 const strategyHints: Record<RiskStrategy, string> = {
@@ -18,12 +19,16 @@ const strategyHints: Record<RiskStrategy, string> = {
 export function RiskStrategyEditor({
   risks,
   saving,
+  locked = false,
+  feedback,
   onSubmit,
   onCancel,
   onlyUndecided = false,
 }: {
   risks: RiskItem[];
   saving: boolean;
+  locked?: boolean;
+  feedback?: string;
   onSubmit: (command: ProjectCommand) => void;
   onCancel: () => void;
   onlyUndecided?: boolean;
@@ -70,6 +75,13 @@ export function RiskStrategyEditor({
       className={styles.root}
       onSubmit={(e) => {
         e.preventDefault();
+        if (
+          saving ||
+          locked ||
+          !targets.length ||
+          (choice === "ignore" && !canIgnore)
+        )
+          return;
         onSubmit(
           choice === "recommended"
             ? {
@@ -90,121 +102,145 @@ export function RiskStrategyEditor({
         );
       }}
     >
-      <header>
-        <strong>{t("如何处理所选风险？")}</strong>
-        <span>
-          {t("{0} 条风险 · {1} 台虚拟机", targets.length, vmCount(targets))}
-          {onlyUndecided &&
-            ` · ${t("本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。", targets.length, risks.length - targets.length, targets.filter(hasRiskDecision).length)}`}
-        </span>
-      </header>
-      {onlyUndecided && (
-        <label className={styles.overwrite}>
-          <input
-            type="checkbox"
-            checked={overwrite}
-            disabled={saving}
-            onChange={(e) => setOverwrite(e.target.checked)}
-          />
-          {t("覆盖已有策略")}
-        </label>
-      )}
-      {!!targets.filter((r) => r.closed).length && (
-        <p className={styles.note}>
-          {t(
-            "将重置 {0} 条已验证记录的验证状态，需按新策略重新核验。",
-            targets.filter((r) => r.closed).length,
-          )}
-        </p>
-      )}
-      {!targets.length && (
-        <p className={styles.note}>
-          {t("没有待处理项。已有策略默认保留，可勾选覆盖或取消操作。")}
-        </p>
-      )}
-      <fieldset
-        className={styles.options}
-        disabled={saving || !targets.length}
-        aria-label={t("处置方式")}
-      >
-        {options.map((option) => (
-          <label
-            key={option.value}
-            className={styles.option}
-            data-selected={choice === option.value}
-            data-disabled={option.value === "ignore" && !canIgnore}
-          >
+      <div className={dockStyles.body}>
+        <header>
+          <span>
+            {t("{0} 条风险 · {1} 台虚拟机", targets.length, vmCount(targets))}
+            {onlyUndecided &&
+              ` · ${t("本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。", targets.length, risks.length - targets.length, targets.filter(hasRiskDecision).length)}`}
+          </span>
+        </header>
+        {onlyUndecided && (
+          <label className={styles.overwrite}>
             <input
-              type="radio"
-              name={`${uid}-strategy`}
-              value={option.value}
-              checked={choice === option.value}
-              disabled={option.value === "ignore" && !canIgnore}
-              onChange={() => choose(option.value)}
+              type="checkbox"
+              checked={overwrite}
+              disabled={saving || locked}
+              onChange={(e) => setOverwrite(e.target.checked)}
             />
-            <span>
-              <strong>
-                {t(option.label)}
-                {option.value === "recommended" && <em>{t("推荐")}</em>}
-              </strong>
-              <small>{t(option.description)}</small>
-            </span>
+            {t("覆盖已有策略")}
           </label>
-        ))}
-      </fieldset>
-      {choice !== "recommended" && (
-        <div className={styles.details}>
-          {choice !== "exclude" && (
-            <fieldset className={styles.methods} disabled={saving}>
-              <legend>{t("迁移方式")}</legend>
-              {(["agentless", "agent", "manual"] as const).map((value) => (
-                <label key={value} data-selected={method === value}>
-                  <input
-                    type="radio"
-                    name={`${uid}-method`}
-                    value={value}
-                    checked={method === value}
-                    disabled={value === "manual" && choice !== "custom"}
-                    onChange={() => setMethod(value)}
-                  />
-                  {t(migrationMethodLabels[value])}
-                </label>
-              ))}
-            </fieldset>
-          )}
-          <label htmlFor={`${uid}-note`}>{t("策略说明")}</label>
-          <textarea
-            id={`${uid}-note`}
-            value={note}
-            disabled={saving}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t("说明采用的方案、约束或验证要求（4 至 500 字）")}
-            required
-            minLength={4}
-            maxLength={500}
-          />
-        </div>
-      )}
-      <footer>
+        )}
+        {!!targets.filter((r) => r.closed).length && (
+          <p className={styles.note}>
+            {t(
+              "将重置 {0} 条已验证记录的验证状态，需按新策略重新核验。",
+              targets.filter((r) => r.closed).length,
+            )}
+          </p>
+        )}
+        {!targets.length && (
+          <p className={styles.note}>
+            {t("没有待处理项。已有策略默认保留，可勾选覆盖或取消操作。")}
+          </p>
+        )}
+        <fieldset
+          className={styles.options}
+          disabled={saving || locked || !targets.length}
+          aria-label={t("处置方式")}
+        >
+          {options.map((option) => (
+            <label
+              key={option.value}
+              className={styles.option}
+              data-selected={choice === option.value}
+              data-disabled={option.value === "ignore" && !canIgnore}
+            >
+              <input
+                type="radio"
+                name={`${uid}-strategy`}
+                value={option.value}
+                checked={choice === option.value}
+                disabled={option.value === "ignore" && !canIgnore}
+                aria-describedby={
+                  option.value === "ignore" && !canIgnore
+                    ? `${uid}-ignore-reason`
+                    : `${uid}-strategy-hint`
+                }
+                onChange={() => choose(option.value)}
+              />
+              <span>
+                <strong>
+                  {t(option.label)}
+                  {option.value === "recommended" && <em>{t("推荐")}</em>}
+                </strong>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        <p className={styles.note} id={`${uid}-strategy-hint`}>
+          {t(options.find((option) => option.value === choice)!.description)}
+        </p>
+        {!canIgnore && (
+          <p className={styles.note} id={`${uid}-ignore-reason`}>
+            {t("所选风险含阻塞或整改项，不能直接忽略。")}
+          </p>
+        )}
+        {choice !== "recommended" && (
+          <div className={styles.details}>
+            {choice !== "exclude" && (
+              <fieldset className={styles.methods} disabled={saving || locked}>
+                <legend>{t("迁移方式")}</legend>
+                {(["agentless", "agent", "manual"] as const).map((value) => (
+                  <label key={value} data-selected={method === value}>
+                    <input
+                      type="radio"
+                      name={`${uid}-method`}
+                      value={value}
+                      checked={method === value}
+                      disabled={value === "manual" && choice !== "custom"}
+                      onChange={() => setMethod(value)}
+                    />
+                    {t(migrationMethodLabels[value])}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            <label htmlFor={`${uid}-note`}>{t("策略说明")}</label>
+            <textarea
+              id={`${uid}-note`}
+              value={note}
+              disabled={saving || locked}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t("说明采用的方案、约束或验证要求（4 至 500 字）")}
+              required
+              minLength={4}
+              maxLength={500}
+            />
+          </div>
+        )}
+        {locked && (
+          <p className={styles.note}>
+            {t("实施准备已开始，策略已锁定；仍可补充验证记录。")}
+          </p>
+        )}
+        {feedback && (
+          <p role="alert" className={styles.error}>
+            {feedback}
+          </p>
+        )}
+      </div>
+      <footer className={dockStyles.actions}>
+        <span className={dockStyles.footnote}>
+          {t("选择整改不代表已完成验证。")}
+        </span>
         <Button onClick={onCancel} disabled={saving}>
-          {t("暂不处理")}
+          {t("取消")}
         </Button>
         <Button
           primary
           type="submit"
           disabled={
             saving ||
+            locked ||
             !targets.length ||
             (choice !== "recommended" && note.trim().length < 4) ||
             (choice === "ignore" && !canIgnore)
           }
         >
-          {t(saving ? "保存中…" : "确认策略")}
+          {t(saving ? "保存中…" : "应用策略")}
         </Button>
       </footer>
-      <p className={styles.note}>
-        {t("确认后记录到对话；选择整改不代表已完成验证。")}
-      </p>
     </form>
   );
 }

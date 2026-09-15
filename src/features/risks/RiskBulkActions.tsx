@@ -9,6 +9,7 @@ import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/shared/ui/primitives";
 import { categoryGroups, ruleGroups, vmCount } from "./presentation";
+import dockStyles from "./RiskStrategyDock.module.css";
 import styles from "./RiskPanel.module.css";
 
 export function RiskBulkToolbar({
@@ -63,21 +64,31 @@ export function RiskBulkToolbar({
       <div className={styles.bulkButtons}>
         <Button
           className={styles.bulkPrimary}
+          data-risk-trigger="bulk-custom"
           disabled={disabled || !selected.length}
           onClick={() => onAction("custom")}
         >
           {t("批量设置策略")}
         </Button>
-        <Button disabled={disabled} onClick={() => onAction("recommended")}>
+        <Button
+          data-risk-trigger="bulk-recommended"
+          disabled={disabled}
+          onClick={() => onAction("recommended")}
+        >
           {t("采用评估建议")}
         </Button>
         <Button
+          data-risk-trigger="bulk-ignore"
           disabled={disabled}
           onClick={() => onAction("ignore-or-exclude")}
         >
           {t(selected.length ? "忽略所选" : "全部忽略")}
         </Button>
-        <Button disabled={disabled} onClick={() => onAction("exclude")}>
+        <Button
+          data-risk-trigger="bulk-exclude"
+          disabled={disabled}
+          onClick={() => onAction("exclude")}
+        >
           {t(selected.length ? "所选不迁" : "全部不迁")}
         </Button>
       </div>
@@ -90,6 +101,8 @@ export function RiskBulkConfirmation({
   risks,
   action,
   saving,
+  locked = false,
+  feedback,
   onSubmit,
   onCancel,
 }: {
@@ -97,6 +110,8 @@ export function RiskBulkConfirmation({
   risks: RiskItem[];
   action: BulkRiskAction;
   saving: boolean;
+  locked?: boolean;
+  feedback?: string;
   onSubmit: (command: ProjectCommand) => void;
   onCancel: () => void;
 }) {
@@ -108,7 +123,7 @@ export function RiskBulkConfirmation({
       className={styles.bulkConfirmation}
       onSubmit={(event) => {
         event.preventDefault();
-        if (saving || !preview.total) return;
+        if (saving || locked || !preview.total) return;
         const common = {
           riskIds: risks.map((r) => r.id),
           onlyUndecided: !overwrite,
@@ -127,68 +142,84 @@ export function RiskBulkConfirmation({
         );
       }}
     >
-      <h3>
-        {t(
-          action === "recommended"
-            ? "确认采用评估建议"
-            : action === "ignore-or-exclude"
-              ? "确认忽略与不迁策略"
-              : "确认本次不迁",
-        )}
-      </h3>
-      <p>
-        {t("所选范围：{0} 条风险 · {1} 台虚拟机", risks.length, vmCount(risks))}
-      </p>
-      <label className={styles.overwrite}>
-        <input
-          type="checkbox"
-          checked={overwrite}
-          disabled={saving}
-          onChange={(event) => setOverwrite(event.target.checked)}
-        />
-        {t("覆盖已有策略")}
-      </label>
-      <p aria-live="polite">
-        {t(
-          "本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。",
-          preview.total,
-          preview.preserved,
-          preview.overwritten,
-        )}
-      </p>
-      {action === "ignore-or-exclude" && (
+      <div className={dockStyles.body}>
         <p>
           {t(
-            "接受约束（忽略）{0} 条；需整改或不支持的 {1} 条设为本次不迁。",
-            preview.ignored,
-            preview.excluded,
+            action === "recommended"
+              ? "确认采用评估建议"
+              : action === "ignore-or-exclude"
+                ? "确认忽略与不迁策略"
+                : "确认本次不迁",
           )}
         </p>
-      )}
-      <p>{t("处理后项目暂时排除 {0} 台虚拟机。", preview.excludedVms)}</p>
-      {!!preview.verified && (
-        <p className={styles.warning}>
+        <p>
           {t(
-            "将重置 {0} 条已验证记录的验证状态，需按新策略重新核验。",
-            preview.verified,
+            "所选范围：{0} 条风险 · {1} 台虚拟机",
+            risks.length,
+            vmCount(risks),
           )}
         </p>
-      )}
-      {!preview.total && (
-        <p className={styles.hint}>
-          {t("没有待处理项。已有策略默认保留，可勾选覆盖或取消操作。")}
+        <label className={styles.overwrite}>
+          <input
+            type="checkbox"
+            checked={overwrite}
+            disabled={saving || locked}
+            onChange={(event) => setOverwrite(event.target.checked)}
+          />
+          {t("覆盖已有策略")}
+        </label>
+        <p aria-live="polite">
+          {t(
+            "本次处理 {0} 条，保留 {1} 条，覆盖 {2} 条已有策略。",
+            preview.total,
+            preview.preserved,
+            preview.overwritten,
+          )}
         </p>
-      )}
-      <footer className={styles.actions}>
+        {action === "ignore-or-exclude" && (
+          <p>
+            {t(
+              "接受约束（忽略）{0} 条；需整改或不支持的 {1} 条设为本次不迁。",
+              preview.ignored,
+              preview.excluded,
+            )}
+          </p>
+        )}
+        <p>{t("处理后项目暂时排除 {0} 台虚拟机。", preview.excludedVms)}</p>
+        {!!preview.verified && (
+          <p className={styles.warning}>
+            {t(
+              "将重置 {0} 条已验证记录的验证状态，需按新策略重新核验。",
+              preview.verified,
+            )}
+          </p>
+        )}
+        {!preview.total && (
+          <p className={styles.hint}>
+            {t("没有待处理项。已有策略默认保留，可勾选覆盖或取消操作。")}
+          </p>
+        )}
+        {locked && (
+          <p className={styles.hint}>
+            {t("实施准备已开始，策略已锁定；仍可补充验证记录。")}
+          </p>
+        )}
+        {feedback && (
+          <p role="alert" className={styles.error}>
+            {feedback}
+          </p>
+        )}
+      </div>
+      <footer className={dockStyles.actions}>
         <Button disabled={saving} onClick={onCancel}>
           {t("取消")}
         </Button>
         <Button
           type="submit"
           className={styles.bulkPrimary}
-          disabled={saving || !preview.total}
+          disabled={saving || locked || !preview.total}
         >
-          {t(saving ? "保存中…" : "确认处理 {0} 项", preview.total)}
+          {t(saving ? "保存中…" : "应用策略")}
         </Button>
       </footer>
     </form>

@@ -87,11 +87,14 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 - `CategoryRiskTable`：按规则、阶段、类别和影响分组，缺失规则保持独立。
 - `RiskVmTable` / `RiskVmDetails`：虚拟机子表、证据与单台例外。
-- `RiskBulkActions` / `RiskStrategyEditor`：批量确认和可见策略选项。
+- `RiskStrategyDock`：非模态底部编辑区域、标题焦点和滚动内容/固定操作按钮布局。
+- `RiskBulkActions` / `RiskStrategyEditor`：底部工具栏、批量确认和可见策略选项；不嵌入表格行。
 - `presentation.ts`：分组、分页定位和风险 ID 选择，使用项目全部风险计算虚拟机资格。
 - `domain/risk-decisions.ts`：预览与服务共用策略判定；`mock/risk-decisions.ts` 在提交时校验最新状态并整体写入。
 
 `ProjectUi.riskLocation` 保存当前项目的类别/虚拟机定位，不跨项目、不持久化到 URL。多选跨页跨类，过滤和查看模式变化时清空。子表分页在收起后保留，筛选变化重置；具体数量与交互见 [业务说明](../业务逻辑说明.md)。
+
+`RiskWorkspace` 将筛选、独立滚动列表和底部操作区分开；管理页外壳与抽屉均提供有界高度。编辑只保存本次目标风险 ID，预览读取最新共享快照，提交仍走原风险命令。编辑期间冻结筛选、模式和多选范围；类别与分页浏览保持可用。取消/失败保留原选择和草稿，成功关闭编辑并清空选择，焦点返回发起入口。无需额外 Provider 或服务契约。
 
 `domain/assessment.ts` 统一计算工具可迁范围，`policies.ts` 计算阶段条件。规划与实施调用同一范围规则；风险是否已选择策略不能代替迁移资格。人工交接仍通过 `stage.review` / `stage.confirm`，不能只改前端导航解锁阶段。
 
@@ -106,7 +109,7 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 | 四阶条件、进度和宽屏布局 | domain/policies、workspace/presentation、ProgressRail、Workspace.module.css |
 | 回答排版、业务结果、输入框 | conversations/ConversationAnswer、BusinessResults、Composer |
 | 表单内容 | research、planning、migration、validation 对应组件 |
-| 表格、风险策略 | risks/RiskWorkspace、CategoryRiskTable、RiskVmTable、RiskStrategyEditor |
+| 表格、风险策略 | risks/RiskWorkspace、CategoryRiskTable、RiskVmTable、RiskStrategyDock、RiskStrategyEditor |
 | 主题、字号、语义颜色 | styles/tokens.css、styles/index.css |
 | 界面文案、阶段/状态标签 | shared/i18n/en.json、stages、status-labels |
 

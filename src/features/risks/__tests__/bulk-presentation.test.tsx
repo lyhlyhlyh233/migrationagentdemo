@@ -18,7 +18,7 @@ const actions = {
   editable: true,
   saving: false,
   onEdit: () => {},
-  editorFor: () => null,
+  editing: false,
   onCommand: async () => true,
 };
 describe("risk table selection and pagination", () => {
@@ -81,7 +81,8 @@ describe("risk table selection and pagination", () => {
     expect(open).toContain("TEST-VM-030");
     expect(open).not.toContain("TEST-VM-020");
     expect(open).not.toContain("TEST-VM-031");
-    expect(open).toContain("虚拟机名称／标识");
+    expect(open).toContain("本项策略");
+    expect(open).toContain("标识");
     expect(render([])).not.toContain("TEST-VM-021");
     expect(render([key])).toContain("TEST-VM-021");
     const thirdPage = renderToStaticMarkup(
@@ -119,6 +120,8 @@ describe("risk table selection and pagination", () => {
     expect(html).toContain("暂时排除");
     expect(html).not.toContain("上一页");
     expect(html).not.toContain("下一页");
+    expect(html).not.toContain("每页条数");
+    expect(html).toContain("共 1 项");
     expect(html).not.toContain('type="checkbox"');
     expect(html).toContain("单独处理");
     expect(vmGroups([...risks, { ...risks[0], id: 2 }])).toHaveLength(1);

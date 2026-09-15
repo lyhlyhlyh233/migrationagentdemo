@@ -13,6 +13,12 @@ export const categoryKey = (risk: RiskItem) => risk.category ?? risk.stage;
 export const undecidedRisks = (risks: RiskItem[]) =>
   risks.filter((r) => r.stage === "research" && !hasRiskDecision(r));
 export const vmCount = (risks: RiskItem[]) => new Set(risks.map(vmKey)).size;
+export const highestRiskLevel = (risks: RiskItem[]): RiskItem["level"] =>
+  risks.some((r) => r.level === "high")
+    ? "high"
+    : risks.some((r) => r.level === "medium")
+      ? "medium"
+      : "low";
 export const strategyLabel = (risk: RiskItem) =>
   risk.closed
     ? "整改已验证"

@@ -206,6 +206,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           ref={scrollViewport}
           className="conversation-scroll"
           data-auto-hide-scrollbar={!management || undefined}
+          data-risk-view={p.panel === "risk" || undefined}
           id="workspace-content"
           tabIndex={-1}
         >

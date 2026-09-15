@@ -18,6 +18,7 @@ import {
   initialCategoryView,
   type CategoryTableView,
 } from "./CategoryRiskTable";
+import { RiskStrategyDock } from "./RiskStrategyDock";
 import { RiskStrategyEditor } from "./RiskStrategyEditor";
 import type { RiskInteractions } from "./RiskVmDetails";
 import { RiskVmTable } from "./RiskVmTable";
@@ -35,6 +36,7 @@ import styles from "./RiskPanel.module.css";
 
 type Editing = {
   key: string;
+  name?: string;
   ids: number[];
   onlyUndecided: boolean;
   quick?: BulkRiskAction;
@@ -81,6 +83,41 @@ export function RiskWorkspace({
   const [feedback, setFeedback] = useState("");
   const [failed, setFailed] = useState(false);
   const submitting = useRef(false);
+  const origin = useRef<HTMLElement | null>(null);
+  const originKey = useRef<string | undefined>(undefined);
+  const footer = useRef<HTMLDivElement>(null);
+  const scopeLocked = saving || !!editing;
+  const editingRisks = editing
+    ? s.risks.filter((r) => editing.ids.includes(r.id))
+    : [];
+  function beginEditing(next: Editing) {
+    if (saving || editing) return;
+    origin.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    originKey.current = origin.current?.dataset.riskTrigger;
+    setFeedback("");
+    setFailed(false);
+    setEditing(next);
+  }
+  function finishEditing() {
+    setEditing(null);
+    requestAnimationFrame(() => {
+      const target = origin.current?.isConnected
+        ? origin.current
+        : originKey.current
+          ? footer.current?.querySelector<HTMLElement>(
+              `[data-risk-trigger="${originKey.current}"]`,
+            )
+          : null;
+      if (target?.isConnected && !target.matches(":disabled"))
+        target.focus({ preventScroll: true });
+      else footer.current?.focus({ preventScroll: true });
+      origin.current = null;
+      originKey.current = undefined;
+    });
+  }
   const editable = canChangeAssessmentDecision(s);
   const included = migrationScope(s).length;
   const visible = s.risks.filter(
@@ -126,14 +163,13 @@ export function RiskWorkspace({
     onLocationChange({ ...location, vmKey: undefined });
   }
   function navigate(next: RiskLocation) {
-    if (saving) return;
-    setEditing(null);
-    setFeedback("");
+    if (saving || (editing && next.mode !== mode)) return;
+    if (!editing) setFeedback("");
     if (next.mode !== mode) setSelected(new Set());
     onLocationChange(next);
   }
   function select(risks: RiskItem[], checked: boolean) {
-    if (saving || !editable) return;
+    if (scopeLocked || !editable) return;
     setSelected((current) => toggleRiskSelection(current, risks, checked));
     setEditing(null);
     setFeedback("");
@@ -160,7 +196,7 @@ export function RiskWorkspace({
         : "保存失败，请检查最新风险状态或稍后重试。输入已保留。",
     );
     if (ok) {
-      setEditing(null);
+      if (editing) finishEditing();
       setSelected(new Set());
     }
     return ok;
@@ -168,297 +204,322 @@ export function RiskWorkspace({
   const interactions: RiskInteractions = {
     editable,
     saving,
+    editing: !!editing,
     onManage,
     onCommand: submit,
     onEdit: (key, risks, onlyUndecided = false) => {
-      if (saving) return;
-      setFeedback("");
-      setFailed(false);
-      setEditing({
+      beginEditing({
         key,
+        name: key.startsWith("vm:") ? risks[0]?.vmName : risks[0]?.description,
         ids: risks.filter((r) => r.stage === "research").map((r) => r.id),
         onlyUndecided,
       });
-    },
-    editorFor: (key) => {
-      if (!editing || editing.key !== key || !editable) return null;
-      const risks = s.risks.filter((r) => editing.ids.includes(r.id));
-      return (
-        <div className={styles.inlineEditor}>
-          {editing.quick ? (
-            <RiskBulkConfirmation
-              key={key + ":" + editing.quick + ":" + editing.ids.join(",")}
-              snapshot={s}
-              risks={risks}
-              action={editing.quick}
-              saving={saving}
-              onSubmit={(cmd) => void submit(cmd)}
-              onCancel={() => setEditing(null)}
-            />
-          ) : (
-            <RiskStrategyEditor
-              key={key + ":" + editing.ids.join(",")}
-              risks={risks}
-              onlyUndecided={editing.onlyUndecided}
-              saving={saving}
-              onSubmit={(cmd) => void submit(cmd)}
-              onCancel={() => setEditing(null)}
-            />
-          )}
-          {failed && (
-            <p role="alert" className={styles.error}>
-              {t(feedback)}
-            </p>
-          )}
-        </div>
-      );
     },
   };
 
   return (
     <div className={styles.workspace} data-drawer={drawer}>
-      <div className={styles.overview}>
-        <span>
-          {t("可纳入")} <strong>{included}</strong>
-        </span>
-        <span>
-          {t("暂时排除")}{" "}
-          <strong data-tone="warning">{s.scopeRows.length - included}</strong>
-        </span>
-        <span>
-          {t("未选策略")}{" "}
-          <strong>{s.risks.filter((r) => !hasRiskDecision(r)).length}</strong>
-        </span>
-      </div>
-      <p className={styles.hint}>
-        {t("风险可稍后处理，受阻对象不会进入实施。")}
-      </p>
-      {!drawer && (
-        <div
-          className={styles.modeSwitch}
-          role="group"
-          aria-label={t("风险查看方式")}
-        >
-          <button
-            aria-pressed={mode === "category"}
-            disabled={saving}
-            onClick={() => navigate({ ...location, mode: "category" })}
-          >
-            {t("按类别")}
-          </button>
-          <button
-            aria-pressed={mode === "vm"}
-            disabled={saving}
-            onClick={() => navigate({ ...location, mode: "vm" })}
-          >
-            {t("按虚拟机")}
-          </button>
+      <div className={styles.workspaceHeader}>
+        <div className={styles.overview}>
+          <span>
+            {t("可纳入")} <strong>{included}</strong>
+          </span>
+          <span>
+            {t("暂时排除")}{" "}
+            <strong data-tone="warning">{s.scopeRows.length - included}</strong>
+          </span>
+          <span>
+            {t("未选策略")}{" "}
+            <strong>{s.risks.filter((r) => !hasRiskDecision(r)).length}</strong>
+          </span>
         </div>
-      )}
-      <div className={styles.filters}>
-        <label className={styles.search}>
-          <Icon name="search" size={16} />
-          <input
-            value={query}
-            disabled={saving}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              resetFilters();
-            }}
-            placeholder={t("搜索风险、规则或虚拟机")}
-            aria-label={t("搜索风险、规则或虚拟机")}
-          />
-        </label>
-        <Select
-          value={level}
-          disabled={saving}
-          onValueChange={(value) => {
-            setLevel(value);
-            resetFilters();
-          }}
-          aria-label={t("风险级别")}
-        >
-          <option value="all">{t("全部级别")}</option>
-          {(["high", "medium", "low"] as const).map((value) => (
-            <option key={value} value={value}>
-              {t(value)}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={status}
-          disabled={saving}
-          onValueChange={(value) => {
-            setStatus(value);
-            resetFilters();
-          }}
-          aria-label={t("处置状态")}
-        >
-          <option value="all">{t("全部状态")}</option>
-          <option value="undecided">{t("未选策略")}</option>
-          <option value="excluded">{t("暂时排除")}</option>
-          <option value="decided">{t("已选策略")}</option>
-        </Select>
-      </div>
-      {!editable && !!s.risks.length && (
         <p className={styles.hint}>
-          {t(
-            s.assessmentStatus === "completed"
-              ? "实施准备已开始，策略已锁定；仍可补充验证记录。"
-              : "评估完成后可选择策略。",
-          )}
+          {t("风险可稍后处理，受阻对象不会进入实施。")}
         </p>
-      )}
-      <RiskBulkToolbar
-        selected={selectedRisks}
-        available={available}
-        saving={saving}
-        editable={editable}
-        onClear={clearSelection}
-        onAction={(action) => {
-          setFeedback("");
-          setFailed(false);
-          setEditing({
-            key: "bulk",
-            ids: (selectedRisks.length ? selectedRisks : available).map(
-              (r) => r.id,
-            ),
-            onlyUndecided: true,
-            quick: action === "custom" ? undefined : action,
-          });
-        }}
-      />
-      {interactions.editorFor("bulk")}
-      {feedback && !editing && (
-        <p
-          role={failed ? "alert" : "status"}
-          className={failed ? styles.error : styles.feedback}
-        >
-          {t(feedback)}
-        </p>
-      )}
-      {!visible.length ? (
-        <p className={styles.empty}>
-          {t(
-            s.risks.length
-              ? "没有符合条件的风险。"
-              : "完成评估后，在这里查看风险与处理建议。",
-          )}
-        </p>
-      ) : mode === "category" ? (
-        <div className={styles.categoryLayout}>
-          <nav className={styles.categories} aria-label={t("风险类别")}>
-            <label className={styles.selectAllCategories}>
-              <SelectionCheckbox
-                label={t("全选所有大类")}
-                {...selectionState(available, selected)}
-                disabled={!editable || saving || !available.length}
-                onChange={(checked) => select(available, checked)}
-              />
-              {t("全选所有大类")}
-            </label>
-            <div className={styles.categoryItems}>
-              {categories.map((group) => (
-                <div
-                  className={styles.categoryItem}
-                  key={group.key}
-                  data-current={category?.key === group.key}
-                >
-                  <SelectionCheckbox
-                    label={t("选择大类 {0}", t(group.label))}
-                    {...selectionState(group.risks, selected)}
-                    disabled={
-                      !editable ||
-                      saving ||
-                      !group.risks.some((r) => r.stage === "research")
-                    }
-                    onChange={(checked) => select(group.risks, checked)}
-                  />
-                  <button
-                    disabled={saving}
-                    aria-current={
-                      category?.key === group.key ? "true" : undefined
-                    }
-                    onClick={() =>
-                      navigate({ mode: "category", category: group.key })
-                    }
-                  >
-                    <strong>{t(group.label)}</strong>
-                    <small>
-                      {t(
-                        "{0} 台 · 未选 {1} 项",
-                        vmCount(group.risks),
-                        undecidedRisks(group.risks).length,
-                      )}
-                    </small>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </nav>
-          {category && (
-            <section
-              className={styles.categoryBody}
-              aria-label={t(category.label)}
-            >
-              <div className={styles.sectionHeading}>
-                <div>
-                  <h3>{t(category.label)}</h3>
-                  <p>
-                    {t(
-                      "{0} 条风险 · {1} 台虚拟机",
-                      category.risks.length,
-                      vmCount(category.risks),
-                    )}
-                    {filtersActive && " · " + t("当前筛选结果")}
-                  </p>
-                </div>
-              </div>
-              <CategoryRiskTable
-                key={category.key}
-                risks={category.risks}
-                allRisks={s.risks}
-                drawer={drawer}
-                selected={selected}
-                onSelect={select}
-                view={categoryViews[category.key] ?? initialCategoryView()}
-                onView={(view) =>
-                  setCategoryViews((current) => ({
-                    ...current,
-                    [category.key]: view,
-                  }))
-                }
-                {...interactions}
-              />
-            </section>
-          )}
-        </div>
-      ) : (
-        <div>
-          <div className={styles.tableSelection}>
-            <span>{t("当前筛选结果")}</span>
+        {!drawer && (
+          <div
+            className={styles.modeSwitch}
+            role="group"
+            aria-label={t("风险查看方式")}
+          >
             <button
-              className={styles.textAction}
-              disabled={!editable || saving || !available.length}
-              onClick={() => select(available, true)}
+              aria-pressed={mode === "category"}
+              disabled={scopeLocked}
+              onClick={() => navigate({ ...location, mode: "category" })}
             >
-              {t("选择全部 {0} 台虚拟机（含所有页）", vmCount(available))}
+              {t("按类别")}
+            </button>
+            <button
+              aria-pressed={mode === "vm"}
+              disabled={scopeLocked}
+              onClick={() => navigate({ ...location, mode: "vm" })}
+            >
+              {t("按虚拟机")}
             </button>
           </div>
-          <RiskVmTable
-            risks={visible}
-            allRisks={s.risks}
-            selected={selected}
-            onSelect={select}
-            label={t("虚拟机风险列表")}
-            pagination={vmPage}
-            onPage={setVmPage}
-            expandedVm={location.vmKey}
-            onExpandVm={(vmKey) => navigate({ ...location, mode: "vm", vmKey })}
-            {...interactions}
-          />
+        )}
+        <div className={styles.filters}>
+          <label className={styles.search}>
+            <Icon name="search" size={16} />
+            <input
+              value={query}
+              disabled={scopeLocked}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                resetFilters();
+              }}
+              placeholder={t("搜索风险、规则或虚拟机")}
+              aria-label={t("搜索风险、规则或虚拟机")}
+            />
+          </label>
+          <Select
+            value={level}
+            disabled={scopeLocked}
+            onValueChange={(value) => {
+              setLevel(value);
+              resetFilters();
+            }}
+            aria-label={t("风险级别")}
+          >
+            <option value="all">{t("全部级别")}</option>
+            {(["high", "medium", "low"] as const).map((value) => (
+              <option key={value} value={value}>
+                {t(value)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={status}
+            disabled={scopeLocked}
+            onValueChange={(value) => {
+              setStatus(value);
+              resetFilters();
+            }}
+            aria-label={t("处置状态")}
+          >
+            <option value="all">{t("全部状态")}</option>
+            <option value="undecided">{t("未选策略")}</option>
+            <option value="excluded">{t("暂时排除")}</option>
+            <option value="decided">{t("已选策略")}</option>
+          </Select>
         </div>
-      )}
+        {!editable && !!s.risks.length && (
+          <p className={styles.hint}>
+            {t(
+              s.assessmentStatus === "completed"
+                ? "实施准备已开始，策略已锁定；仍可补充验证记录。"
+                : "评估完成后可选择策略。",
+            )}
+          </p>
+        )}
+      </div>
+      <div
+        className={styles.listViewport}
+        role="region"
+        aria-label={t("风险浏览区")}
+        tabIndex={0}
+      >
+        {!visible.length ? (
+          <p className={styles.empty}>
+            {t(
+              s.risks.length
+                ? "没有符合条件的风险。"
+                : "完成评估后，在这里查看风险与处理建议。",
+            )}
+          </p>
+        ) : mode === "category" ? (
+          <div className={styles.categoryLayout}>
+            <nav className={styles.categories} aria-label={t("风险类别")}>
+              <label className={styles.selectAllCategories}>
+                <SelectionCheckbox
+                  label={t("全选所有大类")}
+                  {...selectionState(available, selected)}
+                  disabled={!editable || scopeLocked || !available.length}
+                  onChange={(checked) => select(available, checked)}
+                />
+                {t("全选所有大类")}
+              </label>
+              <div className={styles.categoryItems}>
+                {categories.map((group) => (
+                  <div
+                    className={styles.categoryItem}
+                    key={group.key}
+                    data-current={category?.key === group.key}
+                  >
+                    <SelectionCheckbox
+                      label={t("选择大类 {0}", t(group.label))}
+                      {...selectionState(group.risks, selected)}
+                      disabled={
+                        !editable ||
+                        scopeLocked ||
+                        !group.risks.some((r) => r.stage === "research")
+                      }
+                      onChange={(checked) => select(group.risks, checked)}
+                    />
+                    <button
+                      disabled={saving}
+                      aria-current={
+                        category?.key === group.key ? "true" : undefined
+                      }
+                      onClick={() =>
+                        navigate({ mode: "category", category: group.key })
+                      }
+                    >
+                      <strong>{t(group.label)}</strong>
+                      <small>
+                        {t(
+                          "{0} 台 · 未选 {1} 项",
+                          vmCount(group.risks),
+                          undecidedRisks(group.risks).length,
+                        )}
+                      </small>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </nav>
+            {category && (
+              <section
+                className={styles.categoryBody}
+                aria-label={t(category.label)}
+              >
+                <div className={styles.sectionHeading}>
+                  <div>
+                    <h3>{t(category.label)}</h3>
+                    <p>
+                      {t(
+                        "{0} 条风险 · {1} 台虚拟机",
+                        category.risks.length,
+                        vmCount(category.risks),
+                      )}
+                      {filtersActive && " · " + t("当前筛选结果")}
+                    </p>
+                  </div>
+                </div>
+                <CategoryRiskTable
+                  key={category.key}
+                  risks={category.risks}
+                  allRisks={s.risks}
+                  drawer={drawer}
+                  selected={selected}
+                  onSelect={select}
+                  view={categoryViews[category.key] ?? initialCategoryView()}
+                  onView={(view) =>
+                    setCategoryViews((current) => ({
+                      ...current,
+                      [category.key]: view,
+                    }))
+                  }
+                  {...interactions}
+                />
+              </section>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className={styles.tableSelection}>
+              <span>
+                {t(
+                  "风险数与处理进度按当前筛选结果统计；迁移资格按全部项目风险计算。",
+                )}
+              </span>
+              <button
+                className={styles.textAction}
+                disabled={!editable || scopeLocked || !available.length}
+                onClick={() => select(available, true)}
+              >
+                {t("选择全部 {0} 台虚拟机（含所有页）", vmCount(available))}
+              </button>
+            </div>
+            <RiskVmTable
+              risks={visible}
+              allRisks={s.risks}
+              selected={selected}
+              onSelect={select}
+              label={t("虚拟机风险列表")}
+              pagination={vmPage}
+              onPage={setVmPage}
+              expandedVm={location.vmKey}
+              onExpandVm={(vmKey) =>
+                navigate({ ...location, mode: "vm", vmKey })
+              }
+              {...interactions}
+            />
+          </div>
+        )}
+      </div>
+      <div
+        ref={footer}
+        className={styles.dock}
+        data-editing={!!editing}
+        tabIndex={-1}
+        role="region"
+        aria-label={t("策略操作区")}
+      >
+        {editing ? (
+          <RiskStrategyDock
+            key={editing.key}
+            title={
+              editing.key === "bulk"
+                ? t("批量设置策略")
+                : editing.key.startsWith("vm:")
+                  ? t("虚拟机：{0}", editing.name ?? "")
+                  : t("风险事项：{0}", t(editing.name ?? ""))
+            }
+          >
+            {editing.quick ? (
+              <RiskBulkConfirmation
+                snapshot={s}
+                risks={editingRisks}
+                action={editing.quick}
+                saving={saving}
+                locked={!editable}
+                feedback={failed ? t(feedback) : undefined}
+                onSubmit={(cmd) => void submit(cmd)}
+                onCancel={finishEditing}
+              />
+            ) : (
+              <RiskStrategyEditor
+                risks={editingRisks}
+                onlyUndecided={editing.onlyUndecided}
+                saving={saving}
+                locked={!editable}
+                feedback={failed ? t(feedback) : undefined}
+                onSubmit={(cmd) => void submit(cmd)}
+                onCancel={finishEditing}
+              />
+            )}
+          </RiskStrategyDock>
+        ) : (
+          <>
+            <RiskBulkToolbar
+              selected={selectedRisks}
+              available={available}
+              saving={saving}
+              editable={editable}
+              onClear={clearSelection}
+              onAction={(action) => {
+                beginEditing({
+                  key: "bulk",
+                  ids: (selectedRisks.length ? selectedRisks : available).map(
+                    (r) => r.id,
+                  ),
+                  onlyUndecided: true,
+                  quick: action === "custom" ? undefined : action,
+                });
+              }}
+            />
+            {feedback && (
+              <p
+                role={failed ? "alert" : "status"}
+                className={failed ? styles.error : styles.feedback}
+              >
+                {t(feedback)}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

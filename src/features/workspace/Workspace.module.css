@@ -1903,3 +1903,19 @@
     font-size: 17px;
   }
 }
+
+/* Risk management owns its list scroll and bottom editor; other pages keep document scroll. */
+.root :global(.conversation-scroll[data-risk-view="true"]) {
+  overflow: hidden;
+}
+.root
+  :global(.conversation-scroll[data-risk-view="true"] > .conversation-content) {
+  height: 100%;
+  min-height: 0;
+  padding-block: 20px 0;
+  max-width: none;
+}
+.root :global(.management-surface[data-risk-view="true"]) {
+  height: 100%;
+  min-height: 0;
+}

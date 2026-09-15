@@ -8,6 +8,11 @@
   font-size: 12px;
   color: var(--secondary);
 }
+.compact {
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--secondary);
+}
 .root > span:first-child {
   margin-right: auto;
 }

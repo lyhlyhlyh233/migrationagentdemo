@@ -33,7 +33,10 @@ export function ManagementView({
 }) {
   const completed = completedBatches(s);
   return (
-    <section className={`${styles.root} management-surface`}>
+    <section
+      className={`${styles.root} management-surface`}
+      data-risk-view={panel === "risk" || undefined}
+    >
       {panel === "deliverables" ? (
         <Deliverables artifacts={s.artifacts} onDownload={onDownload} />
       ) : panel === "logs" ? (

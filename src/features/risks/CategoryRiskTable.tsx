@@ -1,12 +1,14 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import type { RiskItem } from "@/domain/models";
 import { useTranslation } from "@/shared/i18n";
-import { riskImpactLabels, riskStrategyLabels } from "@/shared/i18n/risks";
+import { riskImpactLabels } from "@/shared/i18n/risks";
+import { Status } from "@/shared/ui/Status";
 import { Icon } from "@/shared/ui/icons";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow, type PageState } from "@/shared/ui/pagination-state";
 import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
 import {
+  highestRiskLevel,
   ruleGroups,
   selectionState,
   strategyLabel,
@@ -46,6 +48,7 @@ export function CategoryRiskTable({
   onView: (view: CategoryTableView) => void;
 } & RiskInteractions) {
   const t = useTranslation();
+  const [details, setDetails] = useState<string[]>([]);
   const groups = ruleGroups(risks);
   const range = pageWindow(groups.length, view.pagination);
   const rows = groups.slice(range.start, range.end);
@@ -59,6 +62,7 @@ export function CategoryRiskTable({
           disabled={
             !actions.editable ||
             actions.saving ||
+            actions.editing ||
             !risks.some((r) => r.stage === "research")
           }
           onClick={() => onSelect(risks, true)}
@@ -79,10 +83,12 @@ export function CategoryRiskTable({
         <table className={`${styles.table} ${styles.riskTable}`}>
           <colgroup>
             <col className={styles.checkboxColumn} />
-            <col style={{ width: "32%" }} />
-            <col style={{ width: "20%" }} />
-            <col style={{ width: "18%" }} />
             <col />
+            <col className={styles.levelColumn} />
+            <col className={styles.impactColumn} />
+            <col className={styles.vmCountColumn} />
+            <col className={styles.strategyColumn} />
+            <col className={styles.actionsColumn} />
           </colgroup>
           <thead>
             <tr>
@@ -93,15 +99,18 @@ export function CategoryRiskTable({
                   disabled={
                     !actions.editable ||
                     actions.saving ||
+                    actions.editing ||
                     !pageRisks.some((r) => r.stage === "research")
                   }
                   onChange={(checked) => onSelect(pageRisks, checked)}
                 />
               </th>
               <th>{t("风险事项")}</th>
+              <th>{t("级别")}</th>
               <th>{t("迁移影响")}</th>
-              <th>{t("受影响虚拟机")}</th>
+              <th>{t("虚拟机数")}</th>
               <th>{t("当前策略")}</th>
+              <th>{t("操作")}</th>
             </tr>
           </thead>
           <tbody>
@@ -109,10 +118,7 @@ export function CategoryRiskTable({
               const risk = items[0];
               const labels = [...new Set(items.map(strategyLabel))];
               const open = view.expanded.includes(key);
-              const editor = actions.editorFor(`rule:${key}`);
-              const recommendations = new Set(
-                items.map((r) => r.recommendedStrategy),
-              );
+              const detailsOpen = details.includes(key);
               const rowSelected = items.some((r) => selected.has(r.id));
               return (
                 <Fragment key={key}>
@@ -124,6 +130,7 @@ export function CategoryRiskTable({
                         disabled={
                           !actions.editable ||
                           actions.saving ||
+                          actions.editing ||
                           !items.some((r) => r.stage === "research")
                         }
                         onChange={(checked) => onSelect(items, checked)}
@@ -131,8 +138,10 @@ export function CategoryRiskTable({
                     </td>
                     <th scope="row">
                       <strong>{t(risk.description)}</strong>
-                      <small>{t(risk.rule ?? "规划风险")}</small>
                     </th>
+                    <td>
+                      <Status value={highestRiskLevel(items)} />
+                    </td>
                     <td>
                       <span className={styles.impact} data-impact={risk.impact}>
                         {t(
@@ -141,13 +150,6 @@ export function CategoryRiskTable({
                             : "规划风险",
                         )}
                       </span>
-                      <small>
-                        {t(
-                          items.some((r) => r.level === "high")
-                            ? "高风险"
-                            : risk.level,
-                        )}
-                      </small>
                     </td>
                     <td>
                       <button
@@ -171,39 +173,69 @@ export function CategoryRiskTable({
                       <span>
                         {t(labels.length === 1 ? labels[0] : "含单台例外")}
                       </span>
-                      {recommendations.size > 1 ? (
-                        <small>{t("按各项建议分别处理")}</small>
-                      ) : (
-                        risk.recommendedStrategy && (
-                          <small>
-                            {t(
-                              "建议：{0}",
-                              t(riskStrategyLabels[risk.recommendedStrategy]),
-                            )}
-                          </small>
-                        )
-                      )}
-                      {items.some((r) => r.stage === "research") && (
+                    </td>
+                    <td>
+                      <div className={styles.rowActions}>
                         <button
                           className={styles.textAction}
-                          disabled={!actions.editable || actions.saving}
+                          aria-expanded={detailsOpen}
                           onClick={() =>
-                            actions.onEdit(`rule:${key}`, items, true)
+                            setDetails(
+                              detailsOpen
+                                ? details.filter((k) => k !== key)
+                                : [...details, key],
+                            )
                           }
                         >
-                          {t("设置策略")}
+                          {t("查看详情")}
                         </button>
-                      )}
+                        {items.some((r) => r.stage === "research") && (
+                          <button
+                            className={styles.textAction}
+                            disabled={
+                              !actions.editable ||
+                              actions.saving ||
+                              actions.editing
+                            }
+                            onClick={() =>
+                              actions.onEdit(`rule:${key}`, items, true)
+                            }
+                          >
+                            {t("设置策略")}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                  {editor && (
+                  {detailsOpen && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={5}>{editor}</td>
+                      <td colSpan={7}>
+                        <dl className={styles.ruleDetails}>
+                          <div>
+                            <dt>{t("规则依据")}</dt>
+                            <dd>{t(risk.rule ?? "规划风险")}</dd>
+                          </div>
+                          <div>
+                            <dt>{t("评估建议")}</dt>
+                            <dd>
+                              {[
+                                ...new Set(
+                                  items.map(
+                                    (r) => r.recommendation ?? r.description,
+                                  ),
+                                ),
+                              ].map((note) => (
+                                <p key={note}>{t(note)}</p>
+                              ))}
+                            </dd>
+                          </div>
+                        </dl>
+                      </td>
                     </tr>
                   )}
                   {open && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={5}>
+                      <td colSpan={7}>
                         <RiskVmTable
                           risks={items}
                           allRisks={allRisks}
@@ -233,6 +265,7 @@ export function CategoryRiskTable({
         </table>
       </div>
       <Pagination
+        compact
         label={t("小类分页")}
         total={groups.length}
         value={view.pagination}

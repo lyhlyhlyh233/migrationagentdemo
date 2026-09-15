@@ -1,4 +1,4 @@
-import { Fragment, useId, useState, type ReactNode } from "react";
+import { Fragment, useId, useState } from "react";
 import type { RiskItem } from "@/domain/models";
 import { excludedFromTool } from "@/domain/assessment";
 import type { ProjectCommand } from "@/services/contracts";
@@ -11,8 +11,8 @@ import styles from "./RiskPanel.module.css";
 export interface RiskInteractions {
   editable: boolean;
   saving: boolean;
+  editing: boolean;
   onEdit: (key: string, risks: RiskItem[], onlyUndecided?: boolean) => void;
-  editorFor: (key: string) => ReactNode;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   onManage?: (location: RiskLocation) => void;
 }
@@ -47,6 +47,7 @@ export function RiskVmDetails({
             {readOnly ? (
               <button
                 className={styles.textAction}
+                disabled={actions.saving || actions.editing}
                 onClick={() =>
                   actions.onManage?.({ mode: "vm", vmKey: vmKey(risk) })
                 }
@@ -57,7 +58,9 @@ export function RiskVmDetails({
               risk.stage === "research" && (
                 <button
                   className={styles.textAction}
-                  disabled={!actions.editable || actions.saving}
+                  disabled={
+                    !actions.editable || actions.saving || actions.editing
+                  }
                   onClick={() => actions.onEdit(`risk:${risk.id}`, [risk])}
                 >
                   {t(risk.decision ? "调整策略" : "选择策略")}
@@ -65,11 +68,10 @@ export function RiskVmDetails({
               )
             )}
           </div>
-          {!readOnly && actions.editorFor(`risk:${risk.id}`)}
           <RiskEvidence
             risk={risk}
             readOnly={readOnly}
-            saving={actions.saving}
+            saving={actions.saving || actions.editing}
             onCommand={actions.onCommand}
           />
         </Fragment>

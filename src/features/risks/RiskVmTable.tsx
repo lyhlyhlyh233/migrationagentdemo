@@ -51,7 +51,7 @@ export function RiskVmTable({
   const rows = groups.slice(range.start, range.end);
   const pageRisks = rows.flatMap((row) => row.risks);
   const selectable = !readOnly;
-  const columns = selectable ? 5 : 4;
+  const columns = (subtable ? 5 : 7) + (selectable ? 1 : 0);
   function toggle(key: string, open: boolean) {
     if (onExpandVm) onExpandVm(open ? undefined : key);
     else
@@ -67,13 +67,19 @@ export function RiskVmTable({
         aria-label={label}
         tabIndex={0}
       >
-        <table className={`${styles.table} ${styles.vmTable}`}>
+        <table
+          className={`${styles.table} ${styles.vmTable}`}
+          data-subtable={subtable}
+        >
           <colgroup>
             {selectable && <col className={styles.checkboxColumn} />}
-            <col style={{ width: "34%" }} />
-            <col style={{ width: "18%" }} />
-            <col style={{ width: "23%" }} />
             <col />
+            <col className={styles.identifierColumn} />
+            {!subtable && <col className={styles.vmCountColumn} />}
+            <col className={styles.strategyColumn} />
+            <col className={styles.strategyColumn} />
+            {!subtable && <col className={styles.progressColumn} />}
+            <col className={styles.actionsColumn} />
           </colgroup>
           <thead>
             <tr>
@@ -85,15 +91,19 @@ export function RiskVmTable({
                     disabled={
                       !actions.editable ||
                       actions.saving ||
+                      actions.editing ||
                       !pageRisks.some((r) => r.stage === "research")
                     }
                     onChange={(checked) => onSelect(pageRisks, checked)}
                   />
                 </th>
               )}
-              <th>{t("虚拟机名称／标识")}</th>
+              <th>{t("名称")}</th>
+              <th>{t("标识")}</th>
+              {!subtable && <th>{t("风险数")}</th>}
               <th>{t("迁移资格")}</th>
-              <th>{t("当前策略")}</th>
+              <th>{t(subtable ? "本项策略" : "当前策略")}</th>
+              {!subtable && <th>{t("处理进度")}</th>}
               <th>{t("操作")}</th>
             </tr>
           </thead>
@@ -122,6 +132,7 @@ export function RiskVmTable({
                           disabled={
                             !actions.editable ||
                             actions.saving ||
+                            actions.editing ||
                             !items.some((r) => r.stage === "research")
                           }
                           onChange={(checked) => onSelect(items, checked)}
@@ -130,10 +141,9 @@ export function RiskVmTable({
                     )}
                     <th scope="row">
                       <strong>{items[0].vmName}</strong>
-                      <small>
-                        {items[0].vmId} · {t("{0} 条风险", items.length)}
-                      </small>
                     </th>
+                    <td>{items[0].vmId || "—"}</td>
+                    {!subtable && <td>{items.length}</td>}
                     <td>
                       <span
                         className={styles.impact}
@@ -142,16 +152,16 @@ export function RiskVmTable({
                         {t(eligible ? "可纳入" : "暂时排除")}
                       </span>
                     </td>
-                    <td>
-                      {t(labels.length === 1 ? labels[0] : "含多项策略")}
-                      <small>
+                    <td>{t(labels.length === 1 ? labels[0] : "含多项策略")}</td>
+                    {!subtable && (
+                      <td>
                         {t(
                           "已选 {0} / {1}",
                           items.filter(hasRiskDecision).length,
                           items.length,
                         )}
-                      </small>
-                    </td>
+                      </td>
+                    )}
                     <td>
                       <div className={styles.rowActions}>
                         <button
@@ -161,11 +171,12 @@ export function RiskVmTable({
                           onClick={() => toggle(key, open)}
                         >
                           <Icon name={open ? "chevron" : "right"} size={12} />
-                          {t(readOnly ? "查看依据" : "查看与处理")}
+                          {t(readOnly ? "查看依据" : "查看详情")}
                         </button>
                         {readOnly && (
                           <button
                             className={styles.textAction}
+                            disabled={actions.saving || actions.editing}
                             onClick={() =>
                               actions.onManage?.({ mode: "vm", vmKey: key })
                             }
@@ -186,6 +197,7 @@ export function RiskVmTable({
                               disabled={
                                 !actions.editable ||
                                 actions.saving ||
+                                actions.editing ||
                                 !items.some((r) => r.stage === "research")
                               }
                               onClick={() =>
@@ -196,7 +208,6 @@ export function RiskVmTable({
                             </Button>
                           </div>
                         )}
-                        {!readOnly && actions.editorFor(`vm:${key}`)}
                         <RiskVmDetails
                           risks={items}
                           readOnly={readOnly}
@@ -212,6 +223,7 @@ export function RiskVmTable({
         </table>
       </div>
       <Pagination
+        compact
         label={t("{0}分页", label)}
         total={groups.length}
         value={pagination}

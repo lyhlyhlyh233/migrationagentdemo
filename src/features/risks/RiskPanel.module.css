@@ -1,6 +1,13 @@
 .root {
   width: 100%;
   min-width: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.heading {
+  flex: 0 0 auto;
 }
 .heading h2 {
   font-size: 22px;
@@ -13,6 +20,36 @@
   line-height: 1.55;
   color: var(--ink);
   container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.workspaceHeader {
+  flex: 0 0 auto;
+}
+.listViewport {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0 6px 12px 0;
+  overflow-anchor: none;
+}
+.dock {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: 45%;
+  border-top: 1px solid var(--line-strong);
+  background: var(--panel);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.dock:not([data-editing="true"]) {
+  overflow-y: auto;
 }
 .overview {
   display: flex;
@@ -241,8 +278,71 @@
 .rowActions {
   display: flex;
   align-items: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 3px 12px;
+}
+.rowActions > button {
+  white-space: nowrap;
+}
+.riskTable {
+  min-width: 880px;
+}
+.vmTable {
+  min-width: 980px;
+}
+.vmTable[data-subtable="true"] {
+  min-width: 760px;
+}
+.levelColumn {
+  width: 66px;
+}
+.impactColumn {
+  width: 136px;
+}
+.vmCountColumn {
+  width: 88px;
+}
+.strategyColumn {
+  width: 116px;
+}
+.actionsColumn {
+  width: 152px;
+}
+.identifierColumn {
+  width: 132px;
+}
+.progressColumn {
+  width: 106px;
+}
+.table > tbody > tr:not(.expandedRow) > :is(td, th) {
+  vertical-align: middle;
+}
+.table thead th {
+  white-space: normal;
+}
+.workspace:lang(en) .actionsColumn {
+  width: 220px;
+}
+.workspace:lang(en) .levelColumn {
+  width: 88px;
+}
+.ruleDetails {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr;
+  gap: 12px 24px;
+  margin: 0;
+  font-size: 13px;
+}
+.ruleDetails dt {
+  color: var(--secondary);
+  margin-bottom: 4px;
+}
+.ruleDetails dd,
+.ruleDetails p {
+  margin: 0;
+}
+.ruleDetails p + p {
+  margin-top: 6px;
 }
 .subtable {
   min-width: 0;
@@ -259,13 +359,9 @@
   padding: 8px 10px;
 }
 .bulkBar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   background: var(--panel);
-  border-block: 1px solid var(--line);
   padding: 10px 0;
-  margin: 0 0 16px;
+  flex: 0 0 auto;
 }
 .selectionSummary {
   display: flex;
@@ -366,18 +462,8 @@
   color: var(--info);
 }
 .expandedRow > td {
-  background: var(--panel);
-  padding: 14px 16px;
-}
-.inlineEditor {
-  padding: 14px 0;
-  border-block: 1px solid var(--line);
-  margin-bottom: 12px;
-}
-.expandedRow .inlineEditor {
-  margin: 0;
-  border: 0;
-  padding: 0;
+  background: var(--surface);
+  padding: 10px 12px;
 }
 .findings {
   min-width: 0;
@@ -490,18 +576,8 @@
   .categories button {
     flex: 0 0 auto;
   }
-  .table {
-    min-width: 580px;
-  }
-  .subtable .table {
-    min-width: 530px;
-  }
-  .bulkBar {
-    position: static;
-  }
 }
 @container (max-width: 480px) {
-  .expandedRow > td > .inlineEditor,
   .expandedRow > td > .findings,
   .expandedRow > td > .sectionHeading {
     position: sticky;
@@ -575,5 +651,61 @@
   .selectAllCategories,
   .tableSelection {
     font-size: 13px;
+  }
+}
+
+@container (max-width: 540px) {
+  .bulkButtons {
+    gap: 6px;
+  }
+  .bulkButtons button {
+    padding: 7px 9px;
+  }
+  .selectionSummary {
+    font-size: 12px;
+  }
+  .filters {
+    margin-block: 10px;
+  }
+  .modeSwitch {
+    margin-block: 8px;
+  }
+  .hint {
+    margin-bottom: 8px;
+  }
+  .ruleDetails {
+    grid-template-columns: 1fr;
+  }
+}
+@container (min-width: 1200px) {
+  .riskTable .levelColumn {
+    width: 6%;
+  }
+  .riskTable .impactColumn {
+    width: 15%;
+  }
+  .riskTable .vmCountColumn {
+    width: 9%;
+  }
+  .riskTable .strategyColumn {
+    width: 13%;
+  }
+  .riskTable .actionsColumn {
+    width: 15%;
+  }
+  .vmTable .identifierColumn {
+    width: 18%;
+  }
+  .vmTable .strategyColumn {
+    width: 14%;
+  }
+  .vmTable .vmCountColumn {
+    width: 8%;
+  }
+  .vmTable .progressColumn {
+    width: 12%;
+  }
+  .vmTable .actionsColumn {
+    width: 16%;
   }
 }

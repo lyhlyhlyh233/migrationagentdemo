@@ -10,15 +10,23 @@ export function Pagination({
   onChange,
   label,
   disabled = false,
+  compact = false,
 }: {
   total: number;
   value: PageState;
   onChange: (value: PageState) => void;
   label: string;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const t = useTranslation();
   const range = pageWindow(total, value);
+  if (compact && total <= 10)
+    return (
+      <nav className={styles.compact} aria-label={label}>
+        {t("共 {0} 项", total)}
+      </nav>
+    );
   return (
     <nav className={styles.root} aria-label={label}>
       <span>
