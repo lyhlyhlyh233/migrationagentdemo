@@ -2,6 +2,7 @@ import type { StageId } from "@/domain/models";
 import {
   assessmentCounts,
   migrationScope,
+  riskOverview,
   riskReadyForExecution,
 } from "@/domain/assessment";
 import { stageEligibility } from "@/domain/policies";
@@ -87,6 +88,61 @@ async function action(
   });
 }
 describe("project service boundaries", () => {
+  it("updates project-wide exclusion charts from another conversation's strategy and verification snapshots", async () => {
+    const c = await project();
+    await service.execute(c, { type: "assessment.useSamples" });
+    await finish(service.execute(c, { type: "assessment.start" }));
+    const before = await service.getProject(c.projectId);
+    expect(riskOverview(before)).toMatchObject({
+      total: 200,
+      included: 186,
+      excluded: 14,
+      exclusionRisks: 14,
+      undecided: 26,
+    });
+    const another = await project();
+    const otherSnapshot = await service.getProject(another.projectId);
+    const child = await service.createConversation(
+      c.projectId,
+      "research",
+      "zh-CN",
+    );
+    const source = { ...c, conversationId: child.id };
+    const events = vi.fn();
+    const unsubscribe = service.subscribe(events);
+    const target = before.risks.find((r) => r.category === "capacity")!;
+    await service.execute(source, {
+      type: "risk.recommend",
+      riskIds: [target.id],
+    });
+    expect(riskOverview(await service.getProject(c.projectId)).excluded).toBe(
+      14,
+    );
+    await service.execute(source, {
+      type: "risk.close",
+      riskId: target.id,
+      description: "已核对容量并完成示例整改验证",
+    });
+    const updated = await service.getProject(c.projectId);
+    expect(riskOverview(updated)).toMatchObject({
+      included: 187,
+      excluded: 13,
+      exclusionRisks: 13,
+    });
+    const snapshotEvent = events.mock.calls
+      .map(([event]) => event)
+      .findLast(
+        (event) => event.type === "snapshot" && event.projectId === c.projectId,
+      );
+    expect(riskOverview(snapshotEvent.snapshot)).toEqual(riskOverview(updated));
+    expect(updated.messages.at(-1)?.conversationId).toBe(child.id);
+    expect(riskOverview(await service.getProject(another.projectId))).toEqual(
+      riskOverview(otherSnapshot),
+    );
+    expect(riskOverview(before).excluded).toBe(14);
+    unsubscribe();
+  });
+
   it("exports assessment as real PPTX plus a complete Excel results workbook", async () => {
     const c = await project();
     await service.execute(c, { type: "assessment.useSamples" });

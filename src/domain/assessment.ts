@@ -17,6 +17,44 @@ export function migrationScope(s: ProjectSnapshot) {
   );
   return s.scopeRows.filter((row) => !excluded.has(String(row[0])));
 }
+
+/** Project-wide figures, independent of risk table filters and selection. */
+export function riskOverview(
+  s: Pick<ProjectSnapshot, "scopeRows" | "risks" | "assessmentStatus">,
+) {
+  const scope = new Set(s.scopeRows.map((row) => String(row[0])));
+  const risks = [
+    ...new Map(
+      s.risks
+        .filter((risk) => scope.has(risk.vmName))
+        .map((risk) => [risk.id, risk]),
+    ).values(),
+  ];
+  const exclusions = risks.filter((risk) => !riskReadyForExecution(risk));
+  const excluded = new Set(exclusions.map((risk) => risk.vmName)).size;
+  const groups = new Map<NonNullable<RiskItem["category"]> | "other", number>();
+  for (const risk of exclusions) {
+    const category = risk.category ?? "other";
+    groups.set(category, (groups.get(category) ?? 0) + 1);
+  }
+  return {
+    ready: s.assessmentStatus === "completed",
+    total: scope.size,
+    included: scope.size - excluded,
+    excluded,
+    undecided: risks.filter((risk) => !hasRiskDecision(risk)).length,
+    exclusionRisks: exclusions.length,
+    categories: [...groups]
+      .map(([category, count]) => ({
+        category,
+        count,
+        share: count / exclusions.length,
+      }))
+      .sort(
+        (a, b) => b.count - a.count || a.category.localeCompare(b.category),
+      ),
+  };
+}
 export const canChangeAssessmentDecision = (s: ProjectSnapshot) =>
   s.assessmentStatus === "completed" && s.mdStatus === "unconfigured";
 export function assessmentCounts(s: ProjectSnapshot) {
