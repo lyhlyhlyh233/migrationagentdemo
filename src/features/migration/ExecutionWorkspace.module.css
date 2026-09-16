@@ -1,0 +1,13 @@
+.root:not([data-compact]) .header {
+  padding: 16px 20px;
+}
+.root:not([data-compact]) .body {
+  padding: 20px;
+}
+
+@media (max-width: 760px) {
+  .root:not([data-compact]) .header,
+  .root:not([data-compact]) .body {
+    padding: 12px;
+  }
+}

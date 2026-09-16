@@ -102,10 +102,7 @@ export function StageConversationList({
                   aria-current={selectedId === chat.id ? "page" : undefined}
                   onClick={() => onSelect(chat.id)}
                 >
-                  <Icon
-                    name={chat.kind === "main" ? "agent" : "chat"}
-                    size={15}
-                  />
+                  <Icon name="chat" size={15} />
                   <span className="delivery-chat-title">
                     {displayTitle(chat)}
                   </span>

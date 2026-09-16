@@ -42,11 +42,11 @@ export function ConfirmationChoices({
             disabled={option.disabled}
             onChange={() => onChange(option.value)}
           />
+          <span className={styles.number} aria-hidden="true">
+            {index + 1}
+          </span>
           <span className={styles.copy}>
             <span className={styles.title}>
-              <span className={styles.number} aria-hidden="true">
-                {index + 1}.
-              </span>
               {t(option.title)}
               {option.recommended && (
                 <span className={styles.recommended}>{t("推荐")}</span>

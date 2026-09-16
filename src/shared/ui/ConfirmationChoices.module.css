@@ -8,6 +8,7 @@
   min-width: 0;
 }
 .option {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -35,19 +36,32 @@
   outline-offset: 1px;
 }
 .option input[type="radio"] {
-  appearance: auto;
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
-  min-height: 18px;
-  margin: 2px 0 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: 0;
   padding: 0;
-  accent-color: var(--accent);
-  cursor: inherit;
+  opacity: 0;
 }
 .number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-top: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
   color: var(--secondary);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.option:has(input:checked) .number {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--panel);
 }
 .copy {
   min-width: 0;

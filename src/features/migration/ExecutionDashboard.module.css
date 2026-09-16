@@ -261,6 +261,43 @@
 .taskName {
   overflow-wrap: anywhere;
 }
+.tasks tr[data-selected] > td {
+  background: var(--accent-soft);
+  border-bottom-color: var(--accent);
+}
+.tasks tr[data-selected] .taskName {
+  color: var(--accent);
+  font-weight: 600;
+}
+.tasks .detailRow > td {
+  padding: 12px;
+  background: var(--surface);
+}
+.details {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.6fr) minmax(0, 1.4fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+.details dt {
+  color: var(--secondary);
+  font-size: var(--ui-caption);
+}
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.detailActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.root .detailActions button {
+  font-size: var(--ui-small);
+  min-height: 30px;
+  padding: 5px 8px;
+}
 .taskName:hover,
 .issueLink:hover {
   text-decoration: underline;

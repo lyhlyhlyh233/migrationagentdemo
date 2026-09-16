@@ -130,7 +130,10 @@ export function PlanningAssets({
           </Button>
         </div>
       )}
-      <table className={`${styles.table} ${styles.assets}`}>
+      <table
+        className={`${styles.table} ${styles.assets}`}
+        data-read-only={readOnly || undefined}
+      >
         <thead>
           <tr>
             {!readOnly && (

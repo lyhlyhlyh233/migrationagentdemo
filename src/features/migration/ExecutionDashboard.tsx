@@ -1,5 +1,8 @@
+import { Fragment, useEffect, useRef } from "react";
 import type { ExecutionState } from "@/domain/execution";
 import { useTranslation } from "@/shared/i18n";
+import { Button } from "@/shared/ui/primitives";
+import { Icon } from "@/shared/ui/icons";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow } from "@/shared/ui/pagination-state";
 import { Select } from "@/shared/ui/Select";
@@ -14,21 +17,25 @@ import styles from "./ExecutionDashboard.module.css";
 export function ExecutionDashboard({
   execution: e,
   selectedBatchId,
+  expandedTaskId,
   onBatch,
   taskPage = 1,
   taskSize = 10,
   onPage,
   onTask,
   onIssue,
+  onDownload,
 }: {
   execution: ExecutionState;
   selectedBatchId?: string;
+  expandedTaskId?: string;
   onBatch: (id: string) => void;
   taskPage?: number;
   taskSize?: number;
   onPage: (value: { page: number; size: number }) => void;
   onTask?: (id: string) => void;
   onIssue?: (id: string) => void;
+  onDownload?: (id: string) => void;
 }) {
   const t = useTranslation(),
     data = executionDashboard(e);
@@ -39,6 +46,10 @@ export function ExecutionDashboard({
   const tasks = e.tasks.filter((task) => task.batchId === batchId);
   const selectedData = executionDashboard({ ...e, tasks });
   const range = pageWindow(tasks.length, { page: taskPage, size: taskSize });
+  const expandedRow = useRef<HTMLTableRowElement>(null);
+  useEffect(() => {
+    expandedRow.current?.scrollIntoView({ block: "nearest" });
+  }, [expandedTaskId, range.page]);
   const time = (value: number) =>
     new Date(value).toLocaleTimeString([], { hour12: false });
   return (
@@ -192,8 +203,11 @@ export function ExecutionDashboard({
                 (item) =>
                   item.taskIds.includes(task.id) && item.state !== "resolved",
               );
+              const validation = e.validations.find(
+                (record) => record.taskId === task.id,
+              );
               const tone =
-                task.phase === "failed"
+                task.phase === "failed" || validation?.business === "failed"
                   ? "danger"
                   : task.phase === "validation"
                     ? "success"
@@ -202,46 +216,113 @@ export function ExecutionDashboard({
                         )
                       ? "warning"
                       : "info";
+              const expanded = expandedTaskId === task.id;
+              const status =
+                task.phase === "validation"
+                  ? validation?.business === "passed"
+                    ? "业务通过"
+                    : validation?.business === "failed"
+                      ? "业务不通过"
+                      : "待业务验证"
+                  : taskExecutionStatus(task);
               return (
-                <tr key={task.id}>
-                  <td>
-                    <button
-                      className={styles.taskName}
-                      onClick={() => onTask?.(task.id)}
-                      title={task.assetId}
-                    >
-                      {task.name}
-                    </button>
-                  </td>
-                  <td>{t(taskExecutionStage(task))}</td>
-                  <td data-tone={tone}>
-                    {issue ? (
+                <Fragment key={task.id}>
+                  <tr
+                    ref={expanded ? expandedRow : undefined}
+                    data-selected={expanded || undefined}
+                  >
+                    <td>
                       <button
-                        className={styles.issueLink}
-                        onClick={() => onIssue?.(issue.id)}
+                        className={styles.taskName}
+                        onClick={() => onTask?.(task.id)}
+                        title={task.assetId}
+                        aria-expanded={expanded}
+                        aria-controls={`task-detail-${task.id}`}
                       >
-                        {t(taskExecutionStatus(task))} ↗
+                        {task.name}
                       </button>
-                    ) : (
-                      t(taskExecutionStatus(task))
-                    )}
-                  </td>
-                  <td>
-                    <div className={styles.taskProgress}>
-                      <span>
-                        <i style={{ width: `${task.progress}%` }} />
-                      </span>
-                      <b>{task.progress}%</b>
-                    </div>
-                  </td>
-                  <td className={styles.rate}>
-                    {task.speed} <small>MB/s</small>
-                  </td>
-                </tr>
+                    </td>
+                    <td>{t(taskExecutionStage(task))}</td>
+                    <td data-tone={tone}>
+                      {issue ? (
+                        <button
+                          className={styles.issueLink}
+                          onClick={() => onIssue?.(issue.id)}
+                        >
+                          {t(status)} ↗
+                        </button>
+                      ) : (
+                        t(status)
+                      )}
+                    </td>
+                    <td>
+                      <div className={styles.taskProgress}>
+                        <span>
+                          <i style={{ width: `${task.progress}%` }} />
+                        </span>
+                        <b>{task.progress}%</b>
+                      </div>
+                    </td>
+                    <td className={styles.rate}>
+                      {task.speed} <small>MB/s</small>
+                    </td>
+                  </tr>
+                  {expanded && (
+                    <tr
+                      className={styles.detailRow}
+                      id={`task-detail-${task.id}`}
+                    >
+                      <td colSpan={5}>
+                        <dl className={styles.details}>
+                          <dt>{t("虚拟机标识")}</dt>
+                          <dd>{task.assetId}</dd>
+                          <dt>{t("目标资源池 / 网络映射")}</dt>
+                          <dd>
+                            {task.computeResource} / {task.network}
+                          </dd>
+                          <dt>{t("割接窗口")}</dt>
+                          <dd>{task.window || "—"}</dd>
+                          <dt>{t("已同步 / 总量")}</dt>
+                          <dd>
+                            {Math.round(task.syncedGB)} / {task.totalGB} GB
+                          </dd>
+                          <dt>{t("最近增量同步")}</dt>
+                          <dd>
+                            {task.lastSync
+                              ? new Date(task.lastSync).toLocaleTimeString()
+                              : t("尚未同步")}
+                          </dd>
+                          {issue && (
+                            <>
+                              <dt>{t("诊断日志")}</dt>
+                              <dd className={styles.detailActions}>
+                                <Button onClick={() => onIssue?.(issue.id)}>
+                                  {t("查看诊断")}
+                                  <Icon name="right" size={14} />
+                                </Button>
+                                {issue.logId && onDownload && (
+                                  <Button
+                                    onClick={() => onDownload(issue.logId!)}
+                                  >
+                                    <Icon name="download" size={14} />
+                                    {t("下载模拟日志")}
+                                  </Button>
+                                )}
+                              </dd>
+                            </>
+                          )}
+                        </dl>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               );
             })}
           </tbody>
         </table>
+        {!tasks.length && (
+          <p className={styles.note}>{t("暂无符合条件的任务")}</p>
+        )}
         <Pagination
           total={tasks.length}
           value={{ page: taskPage, size: taskSize }}

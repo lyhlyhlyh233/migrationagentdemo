@@ -1,6 +1,6 @@
 import { conversationReducer } from "@/features/conversations/state";
 import { describe, expect, it } from "vitest";
-import { initialUi, uiReducer } from "../state";
+import { initialUi, uiReducer, type UiAction } from "../state";
 describe("workspace UI isolation", () => {
   it("remembers the assessment risk prompt across navigation without affecting another project", () => {
     const opened = uiReducer(initialUi, {
@@ -62,6 +62,60 @@ describe("workspace UI isolation", () => {
         expected: "older",
       }),
     ).toBe(next);
+  });
+  it("merges delayed execution patches into the latest project view without replacing navigation", () => {
+    let state = uiReducer(initialUi, {
+      type: "execution-view",
+      id: "a",
+      patch: {
+        batchId: "B-004",
+        connectionDraft: {
+          ip: "192.0.2.10",
+          port: 443,
+          username: "example",
+          password: "",
+        },
+      },
+      contextLabel: "B-004",
+    });
+    const connectionComplete: UiAction = {
+      type: "execution-view",
+      id: "a",
+      patch: { connectionDraft: undefined },
+    };
+    state = uiReducer(state, {
+      type: "execution-view",
+      id: "a",
+      patch: { batchId: "B-003", dashboardPage: 2, selected: ["task-21"] },
+      contextLabel: "B-003 · task-21",
+    });
+    state = uiReducer(state, {
+      type: "execution-view",
+      id: "b",
+      patch: { batchId: "B-007", dashboardPage: 3, selected: ["task-b"] },
+      contextLabel: "B-007",
+    });
+    const other = state.projects.b;
+    state = uiReducer(state, connectionComplete);
+    expect(state.projects.a.executionView).toMatchObject({
+      batchId: "B-003",
+      dashboardPage: 2,
+      selected: ["task-21"],
+      connectionDraft: undefined,
+    });
+    expect(state.projects.a.contextLabel).toBe("B-003 · task-21");
+    state = uiReducer(state, {
+      type: "execution-view",
+      id: "a",
+      patch: { selected: [] },
+    });
+    expect(state.projects.a.executionView).toMatchObject({
+      batchId: "B-003",
+      dashboardPage: 2,
+      selected: [],
+    });
+    expect(state.projects.b).toBe(other);
+    expect(state.projects.a.contextLabel).toBe("B-003 · task-21");
   });
   it("keeps drafts, model selections and expanded work scoped by project and conversation", () => {
     let s = conversationReducer(

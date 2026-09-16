@@ -257,27 +257,22 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       ? s.execution?.tasks.find((t) => issue.taskIds.includes(t.id))
       : undefined;
     dispatchUi({
-      type: "project",
+      type: "execution-view",
       id: s.id,
       patch: {
-        executionView: {
-          ...p.executionView,
-          ...(issue && patch.issueId !== p.executionView.issueId
-            ? {
-                note: issue.note,
-                solution:
-                  issue.solution ??
-                  (issue.category === "network" ? "automatic" : "manual"),
-              }
-            : {}),
-          ...patch,
-        },
-        ...(task
-          ? { contextLabel: `${task.batchId} · ${task.name}` }
-          : patch.batchId
-            ? { contextLabel: patch.batchId }
-            : {}),
+        ...(issue && patch.issueId !== p.executionView.issueId
+          ? {
+              note: issue.note,
+              solution:
+                issue.solution ??
+                (issue.category === "network" ? "automatic" : "manual"),
+            }
+          : {}),
+        ...patch,
       },
+      contextLabel: task
+        ? `${task.batchId} · ${task.name}`
+        : patch.batchId || undefined,
     });
   };
   const validationViewChange = (patch: Partial<ValidationView>) =>
@@ -392,6 +387,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       onUpload={a.upload}
       conversationId={chat?.id ?? null}
       onManage={() => setPanel("planning")}
+      onConversation={() => selectStage("planning")}
       compact={!management}
     />
   );
@@ -548,7 +544,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             (s.planning?.batches.some((b) => b.id === p.validationView.scope)
               ? p.validationView.scope
               : p.executionView.batchId),
-          page: 1,
+          dashboardPage: 1,
+          expandedTask: undefined,
+          selected: [],
         });
       }}
     />
@@ -586,7 +584,20 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       executionViewChange({
         tab: work.view,
         ...(work.issueId ? { issueId: work.issueId } : {}),
-        ...(task ? { batchId: task.batchId, mode: "vms", page: 1 } : {}),
+        ...(task
+          ? {
+              batchId: task.batchId,
+              dashboardPage:
+                Math.floor(
+                  (s.execution?.tasks
+                    .filter((item) => item.batchId === task.batchId)
+                    .findIndex((item) => item.id === task.id) ?? 0) /
+                    p.executionView.dashboardSize,
+                ) + 1,
+              expandedTask: task.id,
+              selected: [task.id],
+            }
+          : {}),
       });
       if (management) setPanel("tasks");
       else openSidePanel("execution");
@@ -600,10 +611,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       onConfirmation={openConfirmation}
       executionInput={executionInput}
       planningDraftDirty={planningDraftDirty}
-      onPlanningTimeline={() => {
-        planningViewChange({ tab: "timeline" });
-        setPanel("planning");
-      }}
+      onPlanningTimeline={() => setPanel("planning")}
       snapshot={s}
       chat={chat}
       view={view}
@@ -883,10 +891,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 executionInput={executionInput}
                 planningInput={planningInput}
                 planningDraftDirty={planningDraftDirty}
-                onPlanningTimeline={() => {
-                  planningViewChange({ tab: "timeline" });
-                  setPanel("planning");
-                }}
+                onPlanningTimeline={() => setPanel("planning")}
                 snapshot={s}
                 chat={chat}
                 view={view}

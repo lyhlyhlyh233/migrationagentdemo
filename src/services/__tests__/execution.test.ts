@@ -893,20 +893,30 @@ describe("batch execution and business validation", () => {
       id: `scale-${i}`,
       name: `scale-vm-${i}`,
     }));
-    const html = renderToStaticMarkup(
-      createElement(ExecutionWorkspace, {
-        snapshot,
-        view: { ...initialExecutionView(), tab: "tasks", mode: "vms" },
-        onView: () => {},
-        onCommand: async () => true,
-        onDownload: () => {},
-        onUpload: async () => true,
-        conversationId: null,
-      }),
-    );
-    expect(html.match(/<tr/g) || []).toHaveLength(21);
-    expect(html).toContain("scale-vm-19");
-    expect(html).not.toContain("scale-vm-20");
+    for (const compact of [false, true]) {
+      const html = renderToStaticMarkup(
+        createElement(ExecutionWorkspace, {
+          snapshot,
+          view: {
+            ...initialExecutionView(),
+            batchId: base.batchId,
+            dashboardPage: 2,
+            dashboardSize: 20,
+          },
+          compact,
+          onView: () => {},
+          onCommand: async () => true,
+          onDownload: () => {},
+          onUpload: async () => true,
+          conversationId: null,
+        }),
+      );
+      expect(html.match(/<tr/g) || []).toHaveLength(21);
+      expect(html).toContain(">scale-vm-20<");
+      expect(html).toContain(">scale-vm-39<");
+      expect(html).not.toContain(">scale-vm-19<");
+      expect(html).not.toContain(">scale-vm-40<");
+    }
   });
   it("cleans timers, requests and attachment state at logout without late events", async () => {
     const { c, s } = await setup();

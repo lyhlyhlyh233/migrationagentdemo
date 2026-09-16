@@ -83,6 +83,12 @@ export const initialUi: UiState = {
 };
 export type UiAction =
   | { type: "planning-view"; id: string; patch: Partial<PlanningView> }
+  | {
+      type: "execution-view";
+      id: string;
+      patch: Partial<ExecutionView>;
+      contextLabel?: string;
+    }
   | { type: "global"; patch: Partial<Omit<UiState, "projects">> }
   | { type: "project"; id: string; patch: Partial<ProjectUi> }
   | {
@@ -101,6 +107,20 @@ export function uiReducer(s: UiState, a: UiAction): UiState {
       projects: {
         ...s.projects,
         [a.id]: { ...p, planningView: { ...p.planningView, ...a.patch } },
+      },
+    };
+  if (a.type === "execution-view")
+    return {
+      ...s,
+      projects: {
+        ...s.projects,
+        [a.id]: {
+          ...p,
+          executionView: { ...p.executionView, ...a.patch },
+          ...(a.contextLabel !== undefined
+            ? { contextLabel: a.contextLabel }
+            : {}),
+        },
       },
     };
   if (a.type === "project")

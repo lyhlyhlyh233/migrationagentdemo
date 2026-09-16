@@ -2156,5 +2156,9 @@
   "继续补充": "Add more details",
   "暂不应用本次导入，返回对话补充资料。": "Return to chat with more information without applying this import.",
   "暂不导入": "Skip this import",
-  "取消预览，保留现有规划资料。": "Discard the preview and keep existing planning data."
+  "取消预览，保留现有规划资料。": "Discard the preview and keep existing planning data.",
+  "尚未生成规划，请在规划会话中补充资料并生成初稿。": "No plan yet. Add planning information and generate a draft in the planning conversation.",
+  "进入规划会话": "Open planning conversation",
+  "本批次虚拟机": "Virtual machines in this batch",
+  "割接时间": "Cutover time"
 }

@@ -1301,13 +1301,11 @@
   font-size: var(--ui-size);
   line-height: 20px;
 }
-.root :global(.stage-chat-link > svg) {
+.root :global(.stage-chat-link > svg),
+.root :global(.temporary-conversations button > svg) {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  color: var(--secondary);
-}
-.root :global(.stage-chat-row.selected .stage-chat-link > svg) {
+  width: 15px;
+  height: 15px;
   color: inherit;
 }
 .root :global(.stage-chat-link > span:first-of-type) {
@@ -1857,7 +1855,7 @@
   --side-nav-width: 256px;
   --side-panel-width: clamp(
     420px,
-    var(--side-panel-size, calc((100% - var(--side-nav-width)) * 0.30)),
+    var(--side-panel-size, calc((100% - var(--side-nav-width)) * 0.3)),
     calc(100% - var(--side-nav-width) - 360px)
   );
   grid-template-columns: var(--side-nav-width) minmax(0, 1fr) var(

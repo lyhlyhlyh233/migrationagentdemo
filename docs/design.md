@@ -117,10 +117,10 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 - `mock/execution-engine.ts`：每项目一个模拟循环，按并发限制推进已确认的当前阶段；创建完成停在 `created`，全量完成停在 `full-complete`，等待状态不继续同步。增量经确认后才进入持续同步，割接另行确认。图表、批次和任务读取同一状态，切页继续执行，退出清理。
 - `mock/execution-issues.ts`：故障归并、日志、诊断、人工/自动方案与复查；仅用户批准后处理。
 - `mock/validation.ts`：批量技术接受/业务确认、反馈、实际附件及阶段性报告。`execution-discussion.ts` 处理限定的问答和预览请求。
-- `ExecutionWorkspace` 用于独立任务页的列表、范围选择及浏览；实施侧面板使用实时看板，不再内嵌连接/任务/问题页签。连接表单从大工作台拆出，在对话内配置；`ExecutionIssueEditor` 和 `ExecutionPreview` 由对话确认区复用，展示单个问题或固定操作预览。独立任务页也把控制交给同一阶段会话，`ValidationWorkspace` 保留既有验证表格与条件。
+- `ExecutionWorkspace` 在独立页与实施侧面板复用 `ExecutionDashboard`，仅独立页增加页面标题和内边距，不再维护第二套任务列表或批量工具栏。项目内 `ExecutionView` 共享批次、分页与展开任务；结果中的指定任务按同一顺序定位批次及分页。连接表单从大工作台拆出，在对话内配置；`ExecutionIssueEditor` 和 `ExecutionPreview` 由对话确认区复用，展示单个问题或固定操作预览。独立任务页也把控制交给同一阶段会话，`ValidationWorkspace` 保留既有验证表格与条件。
 - `ExecutionDashboard` 与纯展示聚合 `execution-dashboard.ts` 读取现有任务时间、阶段及趋势，不写业务快照、不增加计时器。
-- `ExecutionView`、`ValidationView` 按项目存入 `uiReducer`，保留草稿、分页和选择。连接密码仅在此内存草稿及检测请求中暂存，成功后清空；不进入服务快照。
-- `PlanningSummary` 是精简侧面板，展示七项规划结论与 `PlanningTimeline`，状态及数量复用导出所用的计算。`ResourceForecast` 仅保留在独立资源视图；完整四视图仍由 `PlanningWorkspace` 提供，共用项目规划资料和草稿。
+- `ExecutionView`、`ValidationView` 按项目存入 `uiReducer`，保留草稿、分页和选择。实施查看状态通过 `execution-view` 增量合并，异步连接或执行回执只修改指定字段，不覆盖用户已切换的批次和页码。连接密码仅在此内存草稿及检测请求中暂存，成功后清空；不进入服务快照。
+- `PlanningSummary` 为侧面板与独立页共用看板，展示七项规划结论、待核对事项和 `PlanningTimeline`，状态及数量复用导出所用的计算。独立页在甘特图下组合只读 `PlanningAssets`，只展示当前批次；完整资料、依赖及资源字段保留在导出。
 
 新能力继续走 `execute/upload/download` 与原有快照事件，不增加状态 Provider 或新的网络端点。远程执行独立于聊天 pending；停止回复仅停止生成。操作确认从当前项目资源状态校验，不按当前会话所属阶段绕过保护。具体命令和并发语义见接口说明。
 
@@ -132,14 +132,14 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 - `mock/planning-data.ts` 从评估范围生成示例资产，保留稳定 ID 和已有属性，初始化进入规划时的评估基线。
 - `mock/planning.ts` 校验、生成、预览和应用修改，同时更新原实施任务结构。`mock/planning-files.ts` 从同一规划快照输出模板、五 Sheet 计划和 RunBook。
-- `PlanningWorkspace` 装配视图与服务回调。`PlanningInputs`、`PlanningAssets` / `PlanningSystems`、`PlanningBatches`、`PlanningResources` / `PlanningTimeline`、`PlanningPreview` 分别呈现对应功能，不在组件中生成业务样例。
+- `PlanningWorkspace` 装配共享看板、批次虚拟机及服务回调，使用现有 `expandedBatch/query/grade/assetPage` 保存查看状态；没有结果时只提供返回规划会话入口。`PlanningInputs`、`PlanningPreview` 继续服务于对话资料与确认流程，不在组件中生成业务样例。
 - `PlanningView` 通过已有 `uiReducer` 的 `planning-view` action 按项目增量保存。折叠、切页不丢资料草稿、分页和选择。表格只渲染当前页，默认 20 条，可切 50/100，不创建 1 万行 DOM。
 - `WorkspaceSidePanel` 使用风险、规划、实施、验证四个明确页签，状态按项目保留，宽度采用对话 70% / 面板 30% 默认值及原拖动规则。执行详情仍独立于页签。
 - `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险、任务和验证管理页也复用该容器；对话为约 28% / 360–600px，与工作台留 16px 间隔，窄屏切换查看模式。
 
 规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，样例资料使用 `planning.sampleInputs` 进入相同预览流程。
 
-生成后独立页使用 `PlanningReadOnlyInputs` 及只读资产/资源组件，批次不再包含编辑表单。生成后的调整预览由 `ConversationConfirmation` 复用 `PlanningPreview` 呈现，`BusinessResults` 保留预览引用和重新打开入口，只允许发起会话确认；生成前资料导入同样在输入框确认区展示编号选项，原资料行仅保留查看预览入口。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
+生成后独立页只读复用 `PlanningSummary` 及批次 `PlanningAssets`，移除旧四视图和重复资料/资源组件。生成后的调整预览由 `ConversationConfirmation` 复用 `PlanningPreview` 呈现，`BusinessResults` 保留预览引用和重新打开入口，只允许发起会话确认；生成前资料导入同样在输入框确认区展示编号选项，原资料行仅保留查看预览入口。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
 
 Composer 的待发送 File、普通草稿和当前确认引用位于 `conversationReducer` 中，按项目/会话隔离；业务预览仍由服务持有。切入确认模式不清空普通草稿或 File，取消/完成后恢复。消息仅保留文件引用与元信息，快捷对话不顺带发送草稿附件。不新增确认队列、状态 Provider 或流程引擎。
 
