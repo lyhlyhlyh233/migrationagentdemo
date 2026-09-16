@@ -130,13 +130,6 @@ export function ConversationConfirmation({
     snapshot.execution?.tasks.filter((task) =>
       execution?.taskIds.includes(task.id),
     ) ?? [];
-  const noteInput = (
-    <ConfirmationNote
-      value={note}
-      onChange={(note) => patch({ note })}
-      disabled={busy}
-    />
-  );
   return (
     <div
       ref={ref}
@@ -147,20 +140,24 @@ export function ConversationConfirmation({
     >
       {planning && (
         <section className={styles.body}>
-          <h3>
-            {t(importing ? "如何处理这次导入资料？" : "如何处理这次规划调整？")}
-          </h3>
-          <details className={styles.details}>
-            <summary>
-              {t("查看修改前后 · {0} 项", planning.rows.length)}
-            </summary>
-            <PlanningPreview
-              preview={planning}
-              onCommand={command}
-              canApply={snapshot.batchConfirmation !== "confirmed"}
-              summaryOnly
-            />
-          </details>
+          <header className={styles.intro}>
+            <h3>
+              {t(
+                importing ? "如何处理这次导入资料？" : "如何处理这次规划调整？",
+              )}
+            </h3>
+            <details className={styles.details}>
+              <summary>
+                {t("查看修改前后 · {0} 项", planning.rows.length)}
+              </summary>
+              <PlanningPreview
+                preview={planning}
+                onCommand={command}
+                canApply={snapshot.batchConfirmation !== "confirmed"}
+                summaryOnly
+              />
+            </details>
+          </header>
           <ConfirmationChoices
             value={choice}
             onChange={(choice) => patch({ choice })}
@@ -190,8 +187,11 @@ export function ConversationConfirmation({
               },
             ]}
           />
-          {noteInput}
-          <div className={styles.actions}>
+          <ConfirmationNote
+            value={note}
+            onChange={(note) => patch({ note })}
+            disabled={busy}
+          >
             <Button
               disabled={busy}
               onClick={() =>
@@ -238,28 +238,26 @@ export function ConversationConfirmation({
               )}
               <Icon name="right" size={15} />
             </Button>
-          </div>
+          </ConfirmationNote>
         </section>
       )}
       {execution && (
         <section className={styles.body}>
           <header className={styles.intro}>
             <h3>{t("是否确认{0}？", t(actionLabels[execution.action]))}</h3>
-            <div className={styles.context}>
-              <span className={styles.scope}>
-                {t("当前范围：{0} 台虚拟机", execution.taskIds.length)}
-              </span>
-              <details className={styles.details}>
-                <summary>{t("查看操作影响")}</summary>
-                <ExecutionPreview
-                  preview={execution}
-                  conversationId={conversationId}
-                  busy={busy}
-                  onCommand={command}
-                  summaryOnly
-                />
-              </details>
-            </div>
+            <span className={styles.scope}>
+              {t("当前范围：{0} 台虚拟机", execution.taskIds.length)}
+            </span>
+            <details className={styles.details}>
+              <summary>{t("查看操作影响")}</summary>
+              <ExecutionPreview
+                preview={execution}
+                conversationId={conversationId}
+                busy={busy}
+                onCommand={command}
+                summaryOnly
+              />
+            </details>
           </header>
           <ConfirmationChoices
             value={choice}
@@ -294,8 +292,11 @@ export function ConversationConfirmation({
               disabled={busy}
             />
           )}
-          {noteInput}
-          <div className={styles.actions}>
+          <ConfirmationNote
+            value={note}
+            onChange={(note) => patch({ note })}
+            disabled={busy}
+          >
             <Button
               disabled={busy}
               onClick={() =>
@@ -362,7 +363,7 @@ export function ConversationConfirmation({
               )}
               <Icon name="right" size={15} />
             </Button>
-          </div>
+          </ConfirmationNote>
         </section>
       )}
       {value.kind === "issue" && (
@@ -408,16 +409,18 @@ export function ConversationConfirmation({
       )}
       {approval?.action.kind === "stage" && (
         <section className={styles.body}>
-          <h3>{t(approval.title)}</h3>
-          <p className={styles.scope}>{t(approval.description)}</p>
-          <details className={styles.details}>
-            <summary>{t("查看交接范围")}</summary>
-            <ul className={styles.checks}>
-              {approval.checks.map((check) => (
-                <li key={check}>{t(check)}</li>
-              ))}
-            </ul>
-          </details>
+          <header className={styles.intro}>
+            <h3>{t(approval.title)}</h3>
+            <details className={styles.details}>
+              <summary>{t("查看交接范围")}</summary>
+              <p className={styles.scope}>{t(approval.description)}</p>
+              <ul className={styles.checks}>
+                {approval.checks.map((check) => (
+                  <li key={check}>{t(check)}</li>
+                ))}
+              </ul>
+            </details>
+          </header>
           <ConfirmationChoices
             value={choice}
             onChange={(choice) => patch({ choice })}
@@ -436,8 +439,11 @@ export function ConversationConfirmation({
               },
             ]}
           />
-          {noteInput}
-          <div className={styles.actions}>
+          <ConfirmationNote
+            value={note}
+            onChange={(note) => patch({ note })}
+            disabled={busy}
+          >
             <Button disabled={busy} onClick={onClose}>
               {t("取消")}
             </Button>
@@ -470,7 +476,7 @@ export function ConversationConfirmation({
               )}
               <Icon name="right" size={15} />
             </Button>
-          </div>
+          </ConfirmationNote>
         </section>
       )}
       {error && value.kind !== "issue" && (
@@ -534,17 +540,19 @@ function TaskChoices({
   const batches = [...new Set(tasks.map((task) => task.batchId))].join("、");
   return (
     <section className={styles.body}>
-      <h3>
-        {t("是否{0}？", t(actionLabels[action]))} · {batches}
-      </h3>
-      <span className={styles.scope}>
-        {t(
-          "固定范围 {0} 台，可操作 {1} 台，跳过 {2} 台",
-          tasks.length,
-          eligible.length,
-          tasks.length - eligible.length,
-        )}
-      </span>
+      <header className={styles.intro}>
+        <h3>
+          {t("是否{0}？", t(actionLabels[action]))} · {batches}
+        </h3>
+        <span className={styles.scope}>
+          {t(
+            "固定范围 {0} 台，可操作 {1} 台，跳过 {2} 台",
+            tasks.length,
+            eligible.length,
+            tasks.length - eligible.length,
+          )}
+        </span>
+      </header>
       <ConfirmationChoices
         value={choice}
         onChange={(choice) => onChange({ ...value, choice })}
@@ -641,8 +649,7 @@ function TaskChoices({
         value={value.note ?? ""}
         onChange={(note) => onChange({ ...value, note })}
         disabled={busy}
-      />
-      <div className={styles.actions}>
+      >
         <Button disabled={busy} onClick={onClose}>
           {t("取消")}
         </Button>
@@ -667,7 +674,7 @@ function TaskChoices({
           {t(choice === "later" ? "暂不执行" : "预览操作")}
           <Icon name="right" size={15} />
         </Button>
-      </div>
+      </ConfirmationNote>
     </section>
   );
 }

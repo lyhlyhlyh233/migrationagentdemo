@@ -43,30 +43,14 @@
   gap: 8px;
 }
 .intro {
-  display: grid;
-  gap: 4px;
-}
-.context {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 4px 12px;
 }
-.context > details[open] {
+.intro > details[open] {
   flex-basis: 100%;
   min-width: 0;
-}
-.heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.heading button {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
 }
 .scope {
   color: var(--muted);
@@ -147,19 +131,6 @@
 }
 .fields input {
   width: 100%;
-}
-.actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  background: var(--panel);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  padding-block: 8px 4px;
-  border-top: 1px solid var(--line);
 }
 .checks {
   margin: 0;

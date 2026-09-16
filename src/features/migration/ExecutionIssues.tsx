@@ -77,6 +77,14 @@ export function ExecutionIssueEditor({
     ["manual", "repair-failed"].includes(issue.state);
   const selectedSolution =
     issue.category === "network" ? view.solution : "manual";
+  const affectedTasks = snapshot.execution!.tasks.filter((task) =>
+    issue.taskIds.includes(task.id),
+  );
+  const diagnosticError = [
+    "log-failed",
+    "inconclusive",
+    "repair-failed",
+  ].includes(issue.state);
   async function send(command: ProjectCommand, close = false) {
     setPending(true);
     setFailed(false);
@@ -95,26 +103,52 @@ export function ExecutionIssueEditor({
       <div className={styles.heading}>
         <h3 id={`${id}-title`}>{t(issue.title)}</h3>
         <span data-tone={issue.state === "resolved" ? "success" : "warning"}>
-          {t(issueStateLabels[issue.state])}
+          {t(issueStateLabels[issue.state])} ·{" "}
+          {t("{0} 台虚拟机", affectedTasks.length)}
         </span>
       </div>
-      <p className={styles.scope}>
-        {snapshot
-          .execution!.tasks.filter((task) => issue.taskIds.includes(task.id))
-          .map((task) => `${task.batchId} / ${task.name}`)
-          .join("、")}
-      </p>
-      <p className={styles.diagnosis}>
-        {t(issue.diagnosis || "正在核对模拟日志，请稍候。")}
-      </p>
+      {diagnosticError && (
+        <p role="alert" className={styles.error}>
+          {t(issue.diagnosis || issueStateLabels[issue.state])}
+        </p>
+      )}
       <details className={styles.evidence}>
         <summary>{t("诊断依据与日志")}</summary>
+        <p className={styles.scope}>
+          {affectedTasks
+            .map((task) => `${task.batchId} / ${task.name}`)
+            .join("、")}
+        </p>
+        {!diagnosticError && (
+          <p className={styles.diagnosis}>
+            {t(issue.diagnosis || "正在核对模拟日志，请稍候。")}
+          </p>
+        )}
         <p>{t(issue.evidence)}</p>
-        {issue.logId && (
-          <Button onClick={() => onDownload(issue.logId!)}>
-            <Icon name="download" size={14} />
-            {t("下载模拟日志")}
-          </Button>
+        {(issue.logId || !readonly) && (
+          <div className={styles.attachments}>
+            {issue.logId && (
+              <Button onClick={() => onDownload(issue.logId!)}>
+                <Icon name="download" size={14} />
+                {t("下载模拟日志")}
+              </Button>
+            )}
+            {!readonly && (
+              <button
+                className={styles.textAction}
+                disabled={working}
+                onClick={() =>
+                  void send({
+                    type: "execution.diagnose",
+                    issueId,
+                    simulate: view.diagnosticFailure || undefined,
+                  })
+                }
+              >
+                {t("重新诊断")}
+              </button>
+            )}
+          </div>
         )}
       </details>
       {canChoose && (
@@ -157,11 +191,6 @@ export function ExecutionIssueEditor({
           ]}
         />
       )}
-      <ConfirmationNote
-        value={view.note}
-        onChange={(note) => onView({ note })}
-        disabled={working || readonly}
-      />
       {canChoose &&
         choice !== "later" &&
         (selectedSolution === "manual" ||
@@ -235,22 +264,11 @@ export function ExecutionIssueEditor({
           {t("操作未完成，选择与输入已保留，请重试。")}
         </p>
       )}
-      <div className={styles.actions}>
-        {!readonly && (
-          <button
-            className={styles.textAction}
-            disabled={working}
-            onClick={() =>
-              void send({
-                type: "execution.diagnose",
-                issueId,
-                simulate: view.diagnosticFailure || undefined,
-              })
-            }
-          >
-            {t("重新诊断")}
-          </button>
-        )}
+      <ConfirmationNote
+        value={view.note}
+        onChange={(note) => onView({ note })}
+        disabled={working || readonly}
+      >
         {onCancel && (
           <Button disabled={working} onClick={onCancel}>
             {t("取消")}
@@ -324,7 +342,7 @@ export function ExecutionIssueEditor({
             <Icon name="right" size={14} />
           </Button>
         )}
-      </div>
+      </ConfirmationNote>
     </section>
   );
 }

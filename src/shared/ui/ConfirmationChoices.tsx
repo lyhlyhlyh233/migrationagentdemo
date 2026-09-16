@@ -1,5 +1,6 @@
-import { useId, useLayoutEffect, useRef } from "react";
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
+import { Icon } from "./icons";
 import styles from "./ConfirmationChoices.module.css";
 
 export interface ConfirmationChoice {
@@ -64,10 +65,12 @@ export function ConfirmationNote({
   value,
   onChange,
   disabled = false,
+  children,
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  children?: ReactNode;
 }) {
   const t = useTranslation();
   const id = useId();
@@ -79,18 +82,22 @@ export function ConfirmationNote({
     element.style.height = `${element.scrollHeight + 2}px`;
   }, [value]);
   return (
-    <label className={styles.note} htmlFor={id}>
-      <span>{t("补充说明（可选）")}</span>
-      <textarea
-        ref={textarea}
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        rows={1}
-        placeholder={t("补充当前选择的说明…")}
-        title={t("补充当前选择的说明，不会作为额外操作指令。")}
-      />
-    </label>
+    <div className={styles.note}>
+      <div className={styles.noteField}>
+        <Icon name="edit" size={17} />
+        <textarea
+          ref={textarea}
+          id={id}
+          aria-label={t("补充说明（可选）")}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          rows={1}
+          placeholder={t("补充说明（可选）")}
+          title={t("补充当前选择的说明，不会作为额外操作指令。")}
+        />
+      </div>
+      {children && <div className={styles.noteActions}>{children}</div>}
+    </div>
   );
 }
