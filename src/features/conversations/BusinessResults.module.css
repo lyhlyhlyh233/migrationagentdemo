@@ -1,9 +1,17 @@
 .results {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin: 12px 0 8px;
   max-width: 100%;
   font-size: var(--ui-small);
+}
+.results > * {
+  flex-basis: 100%;
+  min-width: 0;
+}
+.results > .quickActions {
+  flex-basis: auto;
 }
 .metrics {
   display: grid;

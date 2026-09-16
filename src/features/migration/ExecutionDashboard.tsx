@@ -1,9 +1,14 @@
 import type { ExecutionState } from "@/domain/execution";
-import { phaseLabels } from "@/domain/execution";
 import { useTranslation } from "@/shared/i18n";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow } from "@/shared/ui/pagination-state";
-import { executionDashboard } from "./execution-dashboard";
+import { Select } from "@/shared/ui/Select";
+import {
+  batchProgressGroups,
+  executionDashboard,
+  taskExecutionStage,
+  taskExecutionStatus,
+} from "./execution-dashboard";
 import styles from "./ExecutionDashboard.module.css";
 
 export function ExecutionDashboard({
@@ -33,7 +38,6 @@ export function ExecutionDashboard({
   const tasks = e.tasks.filter((task) => task.batchId === batchId);
   const selectedData = executionDashboard({ ...e, tasks });
   const range = pageWindow(tasks.length, { page: taskPage, size: taskSize });
-  const span = Math.max(1000, (data.latest ?? 0) - (data.start ?? 0));
   const time = (value: number) =>
     new Date(value).toLocaleTimeString([], { hour12: false });
   return (
@@ -44,61 +48,88 @@ export function ExecutionDashboard({
           {t("{0} 个批次 · {1} 台虚拟机", data.batches.length, e.tasks.length)}
         </span>
       </div>
-      <div className={styles.timeline}>
-        <div className={styles.timelineHead}>
+      <div
+        className={styles.batchChart}
+        role="group"
+        aria-label={t("批次任务状态分布")}
+      >
+        <div className={styles.chartHead}>
           <span>{t("批次")}</span>
-          <span>{t("已创建")}</span>
-          <span>{t("已割接")}</span>
           <span className={styles.axis}>
-            {data.start === undefined ? (
-              t("实际执行进度")
-            ) : (
-              <>
-                <span>{time(data.start)}</span>
-                <span>{time(data.latest!)}</span>
-              </>
-            )}
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
           </span>
+          <span>{t("已割接")}</span>
         </div>
         {data.batches.map((batch) => (
           <button
             className={styles.batchRow}
             key={batch.id}
             aria-pressed={batchId === batch.id}
+            aria-label={`${t(
+              "选择批次 {0}，{1} 台虚拟机，已割接 {2} 台",
+              batch.id,
+              batch.total,
+              batch.complete,
+            )}; ${batch.segments.map((segment) => `${t(segment.label)} ${segment.count}`).join(", ")}`}
             onClick={() => onBatch(batch.id)}
           >
             <strong>{batch.id}</strong>
-            <span>
-              {batch.created}/{batch.total}
+            <span className={styles.batchTrack} aria-hidden="true">
+              {batch.segments
+                .filter((segment) => segment.count > 0)
+                .map((segment) => (
+                  <span
+                    key={segment.id}
+                    className={styles.segment}
+                    data-tone={segment.tone}
+                    style={{ width: `${(segment.count / batch.total) * 100}%` }}
+                    title={t(
+                      "{0}：{1} 台（{2}%）",
+                      t(segment.label),
+                      segment.count,
+                      Math.round((segment.count / batch.total) * 100),
+                    )}
+                  >
+                    {segment.count / batch.total >= 0.12 ? segment.count : ""}
+                  </span>
+                ))}
             </span>
-            <span>
-              {batch.complete}/{batch.total}
-            </span>
-            <span className={styles.track}>
-              {batch.start !== undefined && (
-                <span
-                  className={styles.bar}
-                  data-tone={batch.tone}
-                  style={{
-                    left: `${((batch.start - (data.start ?? batch.start)) / span) * 100}%`,
-                    width: `${Math.max(1, (((batch.end ?? batch.start) - batch.start) / span) * 100)}%`,
-                  }}
-                />
-              )}
-              <span className={styles.status} data-tone={batch.tone}>
-                {t(batch.label)}
-                {batch.failed ? ` · ${batch.failed}` : ""}
-              </span>
+            <span className={styles.batchTotal}>
+              {batch.complete}
+              <small>/{batch.total}</small>
             </span>
           </button>
         ))}
+        <div className={styles.legend}>
+          {batchProgressGroups.map((group) => (
+            <span key={group.id}>
+              <i data-tone={group.tone} />
+              {t(group.label)}
+            </span>
+          ))}
+        </div>
+        {!data.batches.length && (
+          <p className={styles.note}>{t("暂无迁移批次")}</p>
+        )}
       </div>
       <div className={styles.section}>
         <div className={styles.heading}>
-          <h3>
-            {batchId} · {t("任务统计")}
-          </h3>
-          <span>{t("选择批次查看详情")}</span>
+          <h3>{t("任务统计")}</h3>
+          <Select
+            className={styles.batchSelect}
+            aria-label={t("选择批次")}
+            value={batchId ?? ""}
+            disabled={!data.batches.length}
+            onValueChange={onBatch}
+          >
+            {data.batches.map((batch) => (
+              <option key={batch.id} value={batch.id}>
+                {t("{0} · {1} 台虚拟机", batch.id, batch.total)}
+              </option>
+            ))}
+          </Select>
         </div>
         <div className={styles.distribution} aria-hidden="true">
           {selectedData.distribution
@@ -135,6 +166,7 @@ export function ExecutionDashboard({
         <table className={styles.tasks}>
           <colgroup>
             <col />
+            <col className={styles.stageCol} />
             <col className={styles.stateCol} />
             <col className={styles.progressCol} />
             <col className={styles.rateCol} />
@@ -142,6 +174,7 @@ export function ExecutionDashboard({
           <thead>
             <tr>
               <th>{t("虚拟机")}</th>
+              <th>{t("阶段")}</th>
               <th>{t("状态")}</th>
               <th>{t("同步进度")}</th>
               <th>{t("速率")}</th>
@@ -174,16 +207,17 @@ export function ExecutionDashboard({
                       {task.name}
                     </button>
                   </td>
+                  <td>{t(taskExecutionStage(task))}</td>
                   <td data-tone={tone}>
                     {issue ? (
                       <button
                         className={styles.issueLink}
                         onClick={() => onIssue?.(issue.id)}
                       >
-                        {t(phaseLabels[task.phase])} ↗
+                        {t(taskExecutionStatus(task))} ↗
                       </button>
                     ) : (
-                      t(phaseLabels[task.phase])
+                      t(taskExecutionStatus(task))
                     )}
                   </td>
                   <td>

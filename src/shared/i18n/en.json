@@ -655,7 +655,7 @@
   "当前虚拟机未关联未闭环风险": "No open risks linked to this VM",
   "任务创建前仍将执行兼容性与资源检查。": "Compatibility and resource checks still run before task creation.",
   "当前批次": "Current batch",
-  "暂无迁移批次": "No migration batches",
+  "暂无迁移批次": "No migration batches yet",
   "同步": "Sync",
   "定时同步": "Schedule sync",
   "日志下载": "Download logs",
@@ -2097,5 +2097,14 @@
   "待全量同步": "Awaiting full sync",
   "待增量同步": "Awaiting incremental sync",
   "等待全量同步": "Awaiting full sync",
-  "等待增量同步": "Awaiting incremental sync"
+  "等待增量同步": "Awaiting incremental sync",
+  "批次任务状态分布": "Task status by batch",
+  "选择批次 {0}，{1} 台虚拟机，已割接 {2} 台": "Select batch {0}, {1} VMs, {2} cut over",
+  "{0}：{1} 台（{2}%）": "{0}: {1} VMs ({2}%)",
+  "{0} · {1} 台虚拟机": "{0} · {1} VMs",
+  "阶段待确认": "Stage unknown",
+  "执行中": "Running",
+  "进行中": "In progress",
+  "阶段": "Stage",
+  "创建任务": "Task creation"
 }

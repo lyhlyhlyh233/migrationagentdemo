@@ -40,43 +40,40 @@
 .root [data-tone="muted"] {
   color: var(--muted);
 }
-.timeline {
+.batchChart {
   min-width: 0;
 }
-.timelineHead,
+.chartHead,
 .batchRow {
   display: grid;
-  grid-template-columns: 45px 57px 57px minmax(0, 1fr);
+  grid-template-columns: 52px minmax(0, 1fr) 50px;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
 }
-.timelineHead {
-  background: var(--surface);
-  padding: 7px 8px;
+.chartHead {
+  padding: 0 8px 5px;
   font-size: var(--ui-caption);
   color: var(--secondary);
-  border-radius: 6px 6px 0 0;
+}
+.chartHead > :last-child {
+  text-align: right;
 }
 .axis {
   display: flex;
   justify-content: space-between;
-  gap: 4px;
   font-variant-numeric: tabular-nums;
 }
 .batchRow {
   width: 100%;
   min-height: 38px;
-  padding: 5px 8px;
+  padding: 8px;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-radius: 6px;
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-.batchRow > span {
-  font-variant-numeric: tabular-nums;
 }
 .batchRow strong {
   font-weight: 550;
@@ -91,27 +88,75 @@
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
-.track {
-  position: relative;
+.batchTrack {
+  display: flex;
+  overflow: hidden;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--surface-hover);
+}
+.root .segment {
   display: flex;
   align-items: center;
-  height: 27px;
-  min-width: 0;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--info);
+  color: var(--panel);
+  font-size: var(--ui-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
-.bar {
-  position: absolute;
-  height: 6px;
-  bottom: 2px;
-  min-width: 3px;
+.root .segment[data-tone="muted"] {
+  background: var(--line-strong);
+  color: var(--text);
+}
+.root .segment[data-tone="success"] {
+  background: var(--success);
+}
+.root .segment[data-tone="warning"] {
+  background: var(--warning);
+}
+.root .segment[data-tone="danger"] {
+  background: var(--danger);
+}
+.batchTotal {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.batchTotal small {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: var(--ui-caption);
+  font-weight: 400;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  padding: 8px 8px 0;
+  color: var(--secondary);
+  font-size: var(--ui-caption);
+}
+.legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend i {
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
   background: currentColor;
 }
-.status {
-  position: relative;
-  align-self: flex-start;
-  font-size: var(--ui-caption);
-  line-height: 18px;
-  white-space: nowrap;
+.legend i[data-tone="muted"] {
+  background: var(--line-strong);
+}
+.root .batchSelect {
+  width: auto;
+  max-width: 100%;
+  min-height: var(--control-compact);
+  font-size: var(--ui-small);
 }
 .section {
   display: flex;
@@ -166,14 +211,17 @@
   table-layout: fixed;
   font-size: var(--ui-small);
 }
+.stageCol {
+  width: 18%;
+}
 .stateCol {
-  width: 84px;
+  width: 19%;
 }
 .progressCol {
-  width: 100px;
+  width: 20%;
 }
 .rateCol {
-  width: 75px;
+  width: 17%;
 }
 .tasks th {
   text-align: left;
@@ -247,23 +295,29 @@
   .root {
     gap: 12px;
   }
-  .timelineHead,
+  .chartHead,
   .batchRow {
-    grid-template-columns: 38px 47px 47px minmax(0, 1fr);
-    gap: 4px;
+    grid-template-columns: 46px minmax(0, 1fr) 45px;
+    gap: 8px;
     padding-inline: 5px;
   }
   .states {
     gap: 6px 8px;
   }
+  .stageCol {
+    width: 22%;
+  }
   .stateCol {
-    width: 73px;
+    width: 21%;
   }
   .progressCol {
-    width: 79px;
+    width: 16%;
   }
-  .rateCol {
-    width: 64px;
+  .taskProgress > span {
+    display: none;
+  }
+  .taskProgress b {
+    min-width: 0;
   }
   .tasks th,
   .tasks td {

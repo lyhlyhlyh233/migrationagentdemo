@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { ExecutionState, ExecutionTask } from "@/domain/execution";
-import { executionDashboard } from "../execution-dashboard";
+import {
+  batchProgressGroups,
+  executionDashboard,
+  taskExecutionStage,
+  taskExecutionStatus,
+} from "../execution-dashboard";
 const task = (
   id: string,
   phase: ExecutionTask["phase"],
@@ -35,6 +40,99 @@ const state = (tasks: ExecutionTask[]): ExecutionState => ({
   finalized: false,
 });
 describe("actual execution dashboard", () => {
+  it("partitions each batch into exclusive progress segments without mixing batches", () => {
+    const phases: ExecutionTask["phase"][] = [
+      "pending",
+      "creating",
+      "created",
+      "full",
+      "full-complete",
+      "incremental",
+      "ready",
+      "cutover",
+      "validation",
+      "paused",
+      "failed",
+    ];
+    for (const phase of phases) {
+      expect(
+        batchProgressGroups.filter((group) => group.phases.includes(phase)),
+      ).toHaveLength(1);
+    }
+    const { batches } = executionDashboard(
+      state([
+        ...phases.map((phase, i) => task(String(i), phase)),
+        task("second-batch", "validation", { batchId: "B02" }),
+      ]),
+    );
+    expect(
+      Object.fromEntries(batches[0].segments.map((s) => [s.id, s.count])),
+    ).toEqual({ waiting: 4, active: 4, complete: 1, paused: 1, failed: 1 });
+    expect(
+      Object.fromEntries(batches[1].segments.map((s) => [s.id, s.count])),
+    ).toEqual({ waiting: 0, active: 0, complete: 1, paused: 0, failed: 0 });
+    for (const batch of batches) {
+      expect(
+        batch.segments.reduce((sum, segment) => sum + segment.count, 0),
+      ).toBe(batch.total);
+    }
+  });
+  it("displays stage separately from confirmation and running state", () => {
+    const expected: [ExecutionTask["phase"], string][] = [
+      ["pending", "创建任务"],
+      ["creating", "创建任务"],
+      ["created", "创建任务"],
+      ["full", "全量同步"],
+      ["full-complete", "全量同步"],
+      ["incremental", "增量同步"],
+      ["ready", "增量同步"],
+      ["cutover", "割接"],
+      ["validation", "结果验证"],
+    ];
+    for (const [phase, label] of expected) {
+      expect(taskExecutionStage(task(phase, phase))).toBe(label);
+    }
+  });
+  it("shows the interrupted stage for paused and failed tasks, without guessing when missing", () => {
+    for (const phase of ["paused", "failed"] as const) {
+      expect(
+        taskExecutionStage(task(phase, phase, { resumePhase: "creating" })),
+      ).toBe("创建任务");
+      expect(
+        taskExecutionStage(task(phase, phase, { resumePhase: "full" })),
+      ).toBe("全量同步");
+      expect(
+        taskExecutionStage(task(phase, phase, { resumePhase: "incremental" })),
+      ).toBe("增量同步");
+      expect(
+        taskExecutionStage(task(phase, phase, { resumePhase: "cutover" })),
+      ).toBe("割接");
+      expect(taskExecutionStage(task(phase, phase))).toBe("阶段待确认");
+      expect(
+        taskExecutionStage(task(phase, phase, { resumePhase: "failed" })),
+      ).toBe("阶段待确认");
+    }
+  });
+  it("keeps stage completion distinct from migration completion", () => {
+    expect(taskExecutionStatus(task("created", "created"))).toBe("已完成");
+    expect(taskExecutionStage(task("created", "created"))).toBe("创建任务");
+    expect(taskExecutionStatus(task("full-complete", "full-complete"))).toBe(
+      "已完成",
+    );
+    expect(taskExecutionStage(task("full-complete", "full-complete"))).toBe(
+      "全量同步",
+    );
+    expect(taskExecutionStatus(task("ready", "ready"))).toBe("已就绪");
+    expect(taskExecutionStatus(task("validation", "validation"))).toBe(
+      "待验证",
+    );
+    expect(
+      taskExecutionStatus(task("paused", "paused", { resumePhase: "full" })),
+    ).toBe("已暂停");
+    expect(
+      taskExecutionStatus(task("failed", "failed", { resumePhase: "cutover" })),
+    ).toBe("异常");
+  });
   it("separates creation and confirmation gates from active synchronization", () => {
     const phases: ExecutionTask["phase"][] = [
       "pending",

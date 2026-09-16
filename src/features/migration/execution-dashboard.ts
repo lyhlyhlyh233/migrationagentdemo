@@ -1,4 +1,76 @@
 import type { ExecutionState, ExecutionTask } from "@/domain/execution";
+
+export const batchProgressGroups: {
+  id: string;
+  label: string;
+  tone: string;
+  phases: ExecutionTask["phase"][];
+}[] = [
+  {
+    id: "waiting",
+    label: "待执行",
+    tone: "muted",
+    phases: ["pending", "created", "full-complete", "ready"],
+  },
+  {
+    id: "active",
+    label: "执行中",
+    tone: "info",
+    phases: ["creating", "full", "incremental", "cutover"],
+  },
+  {
+    id: "complete",
+    label: "割接完成",
+    tone: "success",
+    phases: ["validation"],
+  },
+  { id: "paused", label: "暂停", tone: "warning", phases: ["paused"] },
+  { id: "failed", label: "异常", tone: "danger", phases: ["failed"] },
+];
+
+/** Current execution stage, kept separate from a task's running/waiting status. */
+export function taskExecutionStage(task: ExecutionTask) {
+  const phase =
+    task.phase === "paused" || task.phase === "failed"
+      ? task.resumePhase
+      : task.phase;
+  switch (phase) {
+    case "pending":
+    case "creating":
+    case "created":
+      return "创建任务";
+    case "full":
+    case "full-complete":
+      return "全量同步";
+    case "incremental":
+    case "ready":
+      return "增量同步";
+    case "cutover":
+      return "割接";
+    case "validation":
+      return "结果验证";
+    default:
+      return "阶段待确认";
+  }
+}
+
+export function taskExecutionStatus(task: ExecutionTask) {
+  const labels: Record<ExecutionTask["phase"], string> = {
+    pending: "待创建",
+    creating: "进行中",
+    created: "已完成",
+    full: "同步中",
+    "full-complete": "已完成",
+    incremental: "同步中",
+    ready: "已就绪",
+    cutover: "进行中",
+    validation: "待验证",
+    paused: "已暂停",
+    failed: "异常",
+  };
+  return labels[task.phase];
+}
+
 export const taskStateGroups = [
   { id: "pending", label: "待创建", tone: "muted", phases: ["pending"] },
   { id: "creating", label: "创建中", tone: "info", phases: ["creating"] },
@@ -57,6 +129,12 @@ export function executionDashboard(e: ExecutionState) {
     return {
       id,
       total: tasks.length,
+      segments: batchProgressGroups.map(({ id, label, tone, phases }) => ({
+        id,
+        label,
+        tone,
+        count: tasks.filter((task) => phases.includes(task.phase)).length,
+      })),
       started: tasks.filter((t) => t.created || !!t.startedAt).length,
       created: tasks.filter((t) => t.created).length,
       complete,
