@@ -3,8 +3,9 @@
   min-height: 0;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(400px, 34%, 720px);
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 28%, 600px);
   grid-template-rows: auto minmax(0, 1fr);
+  column-gap: 16px;
 }
 .toolbar {
   grid-column: 1 / -1;
@@ -27,12 +28,13 @@
   min-height: 0;
 }
 .chat {
+  --input-size: var(--ui-size);
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   border-left: 1px solid var(--line-strong);
-  background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface));
+  background: transparent;
 }
 .chat > header {
   display: flex;
@@ -41,7 +43,7 @@
   gap: 8px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--accent-soft) 75%, var(--surface));
+  background: transparent;
 }
 .identity {
   display: flex;
@@ -103,6 +105,7 @@
 }
 @media (max-width: 1280px) {
   .root {
+    column-gap: 0;
     grid-template-columns: minmax(0, 1fr);
   }
   .chat {

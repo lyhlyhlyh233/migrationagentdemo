@@ -117,7 +117,8 @@
 
 /* Management discussions have a distinct identity; stage messages stay open. */
 .root[data-variant="management"] {
-  font-size: 1rem;
+  --body-size: var(--ui-size);
+  font-size: var(--body-size);
 }
 .root[data-variant="management"] .answer {
   position: relative;

@@ -793,6 +793,10 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
                 <ManagementDiscussion
                   key={s.id}
                   activeOperation={!!confirmation || !!view.connectionOpen}
+                  agentLabel={
+                    data.catalog!.agents.find((item) => item.id === agent)
+                      ?.label ?? "通用智能体"
+                  }
                   title={
                     t(chat?.title ?? "") === t(stageName[stage])
                       ? t(stageName[stage])

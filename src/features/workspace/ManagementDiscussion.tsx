@@ -9,6 +9,7 @@ export function ManagementDiscussion({
   conversation,
   composer,
   title,
+  agentLabel,
   collapsed,
   onCollapse,
   onReturn,
@@ -20,6 +21,7 @@ export function ManagementDiscussion({
   conversation: ReactNode;
   composer: ReactNode;
   title: string;
+  agentLabel: string;
   collapsed: boolean;
   onCollapse: (collapsed: boolean) => void;
   onReturn: () => void;
@@ -58,7 +60,7 @@ export function ManagementDiscussion({
             <div className={styles.identity}>
               <AssistantMark size={48} />
               <div className={styles.identityText}>
-                <strong>{t("AI 协作")}</strong>
+                <strong>{t(agentLabel)}</strong>
                 <span>{title}</span>
               </div>
             </div>

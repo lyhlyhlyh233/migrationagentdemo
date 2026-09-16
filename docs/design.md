@@ -135,7 +135,7 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 - `PlanningWorkspace` 装配视图与服务回调。`PlanningInputs`、`PlanningAssets` / `PlanningSystems`、`PlanningBatches`、`PlanningResources` / `PlanningTimeline`、`PlanningPreview` 分别呈现对应功能，不在组件中生成业务样例。
 - `PlanningView` 通过已有 `uiReducer` 的 `planning-view` action 按项目增量保存。折叠、切页不丢资料草稿、分页和选择。表格只渲染当前页，默认 20 条，可切 50/100，不创建 1 万行 DOM。
 - `WorkspaceSidePanel` 使用风险、规划、实施、验证四个明确页签，状态按项目保留，宽度采用对话 70% / 面板 30% 默认值及原拖动规则。执行详情仍独立于页签。
-- `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险、任务和验证管理页也复用该容器；对话为约 34% / 400–720px，窄屏切换查看模式。
+- `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险、任务和验证管理页也复用该容器；对话为约 28% / 360–600px，与工作台留 16px 间隔，窄屏切换查看模式。
 
 规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，样例资料使用 `planning.sampleInputs` 进入相同预览流程。
 
@@ -173,4 +173,4 @@ CSS Modules 就近维护，复杂既有表格可用 Module 根节点约束内部
 
 `ProjectSnapshot.demoMode` 仅由 Mock 默认启用，严格测试可通过构造选项关闭。缺失样例补齐、实施中间态初始化与冻结状态全部由服务管理；组件仅依据 `execution.sampleProgress` 选择默认 B-004、展示示例标签。目录 `sampleConnection` 提供可编辑的 Mock 初值；UI 不引用模拟 fixture。执行循环跳过冻结样例，明确提交的任务才恢复推进，避免打开页面就运行整个场景。演示交接封存已有规划基线，较早的生成结果或停止回复不能覆盖交接后的状态。真实适配保留原阶段条件。
 
-独立风险页在 `RiskPanel` 补齐页面内边距，内嵌 `RiskWorkspace` 不重复加 padding。`ManagementDiscussion` 与 `Conversation` 的 management 变体共用 `AssistantMark`，仅改变管理页对话的标识、头像和背景，业务数据仍使用同一会话。
+独立风险页在 `RiskPanel` 补齐页面内边距，内嵌 `RiskWorkspace` 不重复加 padding。`ManagementDiscussion` 与 `Conversation` 的 management 变体共用 `AssistantMark`，仅改变管理页对话的标识、头像与局部文字层级；正文和输入固定使用 14px，不附加画布底色，标题跟随当前 Agent 目录标签，业务数据仍使用同一会话。
