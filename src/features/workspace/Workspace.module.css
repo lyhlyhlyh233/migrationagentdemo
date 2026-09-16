@@ -1360,6 +1360,43 @@
   color: var(--accent-ink);
   border-radius: 6px;
 }
+/* White-theme accents are confined to the current stage and navigation. */
+:global(:root[data-theme="white"])
+  .root
+  :global(
+    :is(
+      .project-resources button.selected,
+      .stage-chat-row.selected,
+      .temporary-conversations button.selected,
+      .progress-rail li.viewed-stage button
+    )
+  ) {
+  color: var(--navigation-ink);
+  background: var(--navigation-soft);
+}
+:global(:root[data-theme="white"])
+  .root
+  :global(.project-resources button.selected > svg) {
+  color: var(--navigation-ink);
+}
+:global(:root[data-theme="white"])
+  .root
+  :global(.progress-rail .current .stage-sequence) {
+  color: var(--on-accent);
+  background: var(--navigation-accent);
+  border-color: var(--navigation-accent);
+}
+:global(:root[data-theme="white"])
+  .root
+  :global(.stage-flow-preview .preview-current .preview-stage-icon) {
+  color: var(--navigation-ink);
+  background: var(--navigation-soft);
+}
+:global(:root[data-theme="white"])
+  .root
+  :global(.stage-flow-preview .preview-current .preview-stage-copy strong) {
+  color: var(--navigation-ink);
+}
 .root :global(.shared-task-note) {
   margin-block: 12px;
   color: var(--muted);

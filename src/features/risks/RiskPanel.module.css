@@ -232,6 +232,14 @@
   color: var(--secondary);
   margin-top: 4px;
 }
+:global(:root[data-theme="white"]) .categoryItem[data-current="true"],
+:global(:root[data-theme="white"]) .categories button[aria-current] {
+  background: var(--navigation-soft);
+}
+:global(:root[data-theme="white"]) .categories button[aria-current],
+:global(:root[data-theme="white"]) .categories button[aria-current] small {
+  color: var(--navigation-ink);
+}
 .categoryBody {
   min-width: 0;
 }

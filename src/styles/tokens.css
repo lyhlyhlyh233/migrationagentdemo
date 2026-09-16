@@ -22,6 +22,12 @@
   --control-compact: 2rem;
   --input-size: 1rem;
 }
+:root[data-theme="white"] {
+  /* Navigation selection only; actions and business states keep their colors. */
+  --navigation-accent: oklch(0.53714 0.08638 196.96);
+  --navigation-ink: oklch(0.42 0.069 197);
+  --navigation-soft: oklch(0.95938 0.01068 189.82);
+}
 :root[data-theme="dark"] {
   --text: #e8e9ec;
   --muted: #aaaeb7;

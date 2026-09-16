@@ -65,6 +65,12 @@
 .tabItem > button:hover {
   color: var(--ink);
 }
+:global(:root[data-theme="white"]) .tabItem:has([aria-selected="true"]) {
+  background: var(--navigation-soft);
+}
+:global(:root[data-theme="white"]) .tabItem > button[aria-selected="true"] {
+  color: var(--navigation-ink);
+}
 .tabItem > .closeTab {
   justify-content: center;
   width: 28px;
