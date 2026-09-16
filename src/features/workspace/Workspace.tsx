@@ -525,6 +525,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   );
   const validationContent = (
     <ValidationWorkspace
+      compact={!management}
       snapshot={s}
       view={p.validationView}
       onView={validationViewChange}

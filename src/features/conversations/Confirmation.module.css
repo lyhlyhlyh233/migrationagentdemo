@@ -1,21 +1,23 @@
 .root {
-  max-width: var(--reading-width);
+  width: 100%;
+  max-width: 880px;
   margin: 0 auto;
   border: 1px solid var(--line-strong);
   border-radius: 16px;
   background: var(--panel);
   font-size: var(--ui-size);
   line-height: 1.5;
-  max-height: min(58vh, 620px);
+  max-height: min(50vh, 440px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  container-type: inline-size;
 }
 .root:focus {
   outline: none;
 }
 .root > section {
   margin: 0;
-  padding: 16px;
+  padding: 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -26,19 +28,34 @@
   font-weight: 600;
 }
 .root p {
-  margin: 8px 0;
+  margin: 0;
   font-size: var(--ui-size);
 }
 .root > .error {
   margin: 0;
-  padding: 0 16px 16px;
+  padding: 0 12px 12px;
 }
 .root button {
   font-size: var(--ui-size);
 }
 .body {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+}
+.intro {
+  display: grid;
+  gap: 4px;
+}
+.context {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.context > details[open] {
+  flex-basis: 100%;
+  min-width: 0;
 }
 .heading {
   display: flex;
@@ -141,7 +158,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
-  padding-top: 12px;
+  padding-block: 8px 4px;
   border-top: 1px solid var(--line);
 }
 .checks {
@@ -153,11 +170,6 @@
 }
 .error {
   color: var(--danger);
-}
-@media (max-width: 760px) {
-  .root {
-    max-height: 58vh;
-  }
 }
 @container (max-width: 500px) {
   .fields {

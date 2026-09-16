@@ -1271,6 +1271,8 @@
   "建议：{0}": "Suggested: {0}",
   "收起详情": "Hide details",
   "查看详情": "View details",
+  "详情": "Details",
+  "补充当前选择的说明…": "Add a note about this choice…",
   "评估建议": "Assessment recommendation",
   "风险处置方案": "Risk strategy",
   "保留迁移约束，继续纳入可迁范围。": "Retain the constraints and keep eligible VMs in scope.",

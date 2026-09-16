@@ -243,20 +243,24 @@ export function ConversationConfirmation({
       )}
       {execution && (
         <section className={styles.body}>
-          <h3>{t("是否确认{0}？", t(actionLabels[execution.action]))}</h3>
-          <span className={styles.scope}>
-            {t("当前范围：{0} 台虚拟机", execution.taskIds.length)}
-          </span>
-          <details className={styles.details}>
-            <summary>{t("查看操作影响")}</summary>
-            <ExecutionPreview
-              preview={execution}
-              conversationId={conversationId}
-              busy={busy}
-              onCommand={command}
-              summaryOnly
-            />
-          </details>
+          <header className={styles.intro}>
+            <h3>{t("是否确认{0}？", t(actionLabels[execution.action]))}</h3>
+            <div className={styles.context}>
+              <span className={styles.scope}>
+                {t("当前范围：{0} 台虚拟机", execution.taskIds.length)}
+              </span>
+              <details className={styles.details}>
+                <summary>{t("查看操作影响")}</summary>
+                <ExecutionPreview
+                  preview={execution}
+                  conversationId={conversationId}
+                  busy={busy}
+                  onCommand={command}
+                  summaryOnly
+                />
+              </details>
+            </div>
+          </header>
           <ConfirmationChoices
             value={choice}
             onChange={(choice) => patch({ choice })}

@@ -8,9 +8,10 @@ import { Select } from "@/shared/ui/Select";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow } from "@/shared/ui/pagination-state";
 import { useTranslation } from "@/shared/i18n";
-import styles from "@/features/migration/Execution.module.css";
+import styles from "./Validation.module.css";
 export function ValidationWorkspace({
   snapshot: s,
+  compact = false,
   view: v,
   onView,
   onCommand,
@@ -20,6 +21,7 @@ export function ValidationWorkspace({
   onContext,
 }: {
   snapshot: ProjectSnapshot;
+  compact?: boolean;
   view: ValidationView;
   onView: (patch: Partial<ValidationView>) => void;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
@@ -114,15 +116,24 @@ export function ValidationWorkspace({
       accepted: "差异已接受",
     };
   return (
-    <section className={styles.root} aria-label={t("结果验证工作区")}>
+    <section
+      className={styles.root}
+      data-compact={compact || undefined}
+      aria-label={t("结果验证工作区")}
+    >
       <header className={styles.header}>
         <div>
-          <h2>{t("结果验证")}</h2>
+          {!compact && <h2>{t("结果验证")}</h2>}
           <small>
             {t(e.finalized ? "最终交付已确认" : "阶段性结果 · 模拟核对")}
           </small>
         </div>
-        <Button onClick={onReturn}>{t("返回迁移实施")}</Button>
+        <div className={styles.utilities}>
+          <Button onClick={onReturn}>{t("返回迁移实施")}</Button>
+          <Button onClick={() => onDownload("validation-report")}>
+            {t("下载验证汇总")}
+          </Button>
+        </div>
       </header>
       <div className={styles.body}>
         <div className={styles.summary}>
@@ -152,8 +163,17 @@ export function ValidationWorkspace({
             {t("操作未完成，输入与选择已保留。请根据提示调整后重试。")}
           </p>
         )}
-        <div className={styles.toolbar}>
+        <div className={styles.filters}>
+          <input
+            type="search"
+            aria-label={t("搜索批次、虚拟机或业务系统")}
+            value={v.query}
+            disabled={locked}
+            onChange={(x) => reset({ query: x.target.value })}
+            placeholder={t("搜索批次、虚拟机或业务系统")}
+          />
           <Select
+            aria-label={t("任务分组")}
             value={v.group}
             disabled={locked}
             onValueChange={(group) =>
@@ -180,6 +200,7 @@ export function ValidationWorkspace({
             ))}
           </Select>
           <Select
+            aria-label={t("全部状态")}
             value={v.status}
             disabled={locked}
             onValueChange={(status) => reset({ status })}
@@ -191,72 +212,68 @@ export function ValidationWorkspace({
               </option>
             ))}
           </Select>
-          <input
-            type="search"
-            value={v.query}
-            disabled={locked}
-            onChange={(x) => reset({ query: x.target.value })}
-            placeholder={t("搜索批次、虚拟机或业务系统")}
-          />
         </div>
-        <div className={styles.toolbar}>
-          <span>{t("已选 {0} 台虚拟机", selected.length)}</span>
-          <Button
-            disabled={locked}
-            onClick={() =>
-              toggle(
-                filtered.map((r) => r.task.id),
-                true,
-              )
-            }
-          >
-            {t("选择全部筛选结果")}
-          </Button>
-          <Button disabled={locked} onClick={() => onView({ selected: [] })}>
-            {t("清空选择")}
-          </Button>
-        </div>
-        <div className={styles.toolbar}>
-          <Button
-            primary
-            disabled={locked || !selected.length}
-            onClick={() =>
-              onView({ editor: "record", editorRevision: e.revision, note: "" })
-            }
-          >
-            {t("批量业务验证")}
-          </Button>
-          <Button
-            disabled={
-              locked ||
-              !selected.length ||
-              selected.some((r) => r.val.technical !== "different")
-            }
-            onClick={() =>
-              onView({
-                editor: "difference",
-                editorRevision: e.revision,
-                note: "",
-              })
-            }
-          >
-            {t("接受预期差异")}
-          </Button>
-          <Button
-            disabled={locked}
-            onClick={() =>
-              onView({
-                editor: "feedback",
-                editorRevision: e.revision,
-                note: "",
-              })
-            }
-          >
-            {t("反馈问题")}
-          </Button>
-          <Button onClick={() => onDownload("validation-report")}>
-            {t("下载验证汇总")}
-          </Button>
+        <div className={styles.bulk}>
+          <div className={styles.selection}>
+            <span>{t("已选 {0} 台虚拟机", selected.length)}</span>
+            <Button
+              disabled={locked}
+              onClick={() =>
+                toggle(
+                  filtered.map((r) => r.task.id),
+                  true,
+                )
+              }
+            >
+              {t("选择全部筛选结果")}
+            </Button>
+            <Button disabled={locked} onClick={() => onView({ selected: [] })}>
+              {t("清空选择")}
+            </Button>
+          </div>
+          <div className={styles.toolbar}>
+            <Button
+              primary
+              disabled={locked || !selected.length}
+              onClick={() =>
+                onView({
+                  editor: "record",
+                  editorRevision: e.revision,
+                  note: "",
+                })
+              }
+            >
+              {t("批量业务验证")}
+            </Button>
+            <Button
+              disabled={
+                locked ||
+                !selected.length ||
+                selected.some((r) => r.val.technical !== "different")
+              }
+              onClick={() =>
+                onView({
+                  editor: "difference",
+                  editorRevision: e.revision,
+                  note: "",
+                })
+              }
+            >
+              {t("接受预期差异")}
+            </Button>
+            <Button
+              disabled={locked}
+              onClick={() =>
+                onView({
+                  editor: "feedback",
+                  editorRevision: e.revision,
+                  note: "",
+                })
+              }
+            >
+              {t("反馈问题")}
+            </Button>
+          </div>
         </div>
         {v.editor && (
           <section className={styles.editor}>
@@ -378,128 +395,147 @@ export function ValidationWorkspace({
             </div>
           </section>
         )}
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  aria-label={t("选择本页")}
-                  disabled={locked}
-                  checked={
-                    !!pageIds.length &&
-                    pageIds.every((id) => v.selected.includes(id))
-                  }
-                  onChange={(x) => toggle(pageIds, x.target.checked)}
-                />
-              </th>
-              <th>{t("虚拟机 / 业务系统")}</th>
-              <th>{t("技术核对")}</th>
-              <th>{t("业务验证")}</th>
-              <th>{t("操作")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {page.map(({ task: x, val }) => (
-              <Fragment key={x.id}>
-                <tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label={t("选择 {0}", x.name)}
-                      disabled={locked}
-                      checked={v.selected.includes(x.id)}
-                      onChange={(event) => toggle([x.id], event.target.checked)}
-                    />
-                  </td>
-                  <td data-label={t("虚拟机")}>
-                    <strong>{x.name}</strong>
-                    <small>
-                      {x.batchId} · {x.system || t("未填写业务系统")}
-                    </small>
-                  </td>
-                  <td data-label={t("技术核对")}>
-                    <span
-                      data-tone={
-                        val.technical === "different" ? "warning" : "success"
-                      }
-                    >
-                      {t(techLabel[val.technical])}
-                    </span>
-                  </td>
-                  <td data-label={t("业务验证")}>
-                    <span
-                      data-tone={
-                        val.business === "passed"
-                          ? "success"
-                          : val.business === "failed"
-                            ? "danger"
-                            : "warning"
-                      }
-                    >
-                      {t(statusLabel[val.business])}
-                    </span>
-                  </td>
-                  <td>
-                    <Button
-                      onClick={() => {
-                        onView({ expanded: v.expanded === x.id ? "" : x.id });
-                        onContext?.(`${x.batchId} · ${x.name}`);
-                      }}
-                    >
-                      {t("查看详情")}
-                    </Button>
-                  </td>
-                </tr>
-                {v.expanded === x.id && (
+        <div className={styles.results}>
+          <table className={styles.table}>
+            <colgroup>
+              <col className={styles.checkColumn} />
+              <col />
+              <col className={styles.statusColumn} />
+              <col className={styles.statusColumn} />
+              <col className={styles.actionColumn} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    aria-label={t("选择本页")}
+                    disabled={locked}
+                    checked={
+                      !!pageIds.length &&
+                      pageIds.every((id) => v.selected.includes(id))
+                    }
+                    onChange={(x) => toggle(pageIds, x.target.checked)}
+                  />
+                </th>
+                <th>{t("虚拟机 / 业务系统")}</th>
+                <th>{t("技术核对")}</th>
+                <th>{t("业务验证")}</th>
+                <th>{t("操作")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {page.map(({ task: x, val }) => (
+                <Fragment key={x.id}>
                   <tr>
-                    <td colSpan={5}>
-                      <dl className={styles.details}>
-                        <dt>{t("配置对照 · 源端 / 规划 / 目标")}</dt>
-                        <dd>
-                          {val.configuration.map((c) => (
-                            <div key={c.field}>
-                              {t(c.field)}：{c.source} / {c.expected} /{" "}
-                              {c.actual}
-                            </div>
-                          ))}
-                        </dd>
-                        <dt>{t("虚拟机标识")}</dt>
-                        <dd>{x.assetId}</dd>
-                        <dt>{t("源端网络")}</dt>
-                        <dd>{t(val.sourceValue)}</dd>
-                        <dt>{t("规划目标")}</dt>
-                        <dd>
-                          {x.computeResource} / {val.expectedValue}
-                        </dd>
-                        <dt>{t("实际目标")}</dt>
-                        <dd>{val.actualValue}</dd>
-                        <dt>{t("技术差异与处理说明")}</dt>
-                        <dd>
-                          {t(val.acceptanceNote || val.difference || "无差异")}
-                        </dd>
-                        <dt>{t("业务确认记录")}</dt>
-                        <dd>
-                          {t(val.note || "尚未填写")} {t(val.confirmedBy || "")}{" "}
-                          {val.confirmedAt?.replace("T", " ").slice(0, 19)}
-                        </dd>
-                      </dl>
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={t("选择 {0}", x.name)}
+                        disabled={locked}
+                        checked={v.selected.includes(x.id)}
+                        onChange={(event) =>
+                          toggle([x.id], event.target.checked)
+                        }
+                      />
+                    </td>
+                    <td data-label={t("虚拟机")}>
+                      <strong>{x.name}</strong>
+                      <small>
+                        {x.batchId}
+                        {x.system && ` · ${x.system}`}
+                      </small>
+                    </td>
+                    <td data-label={t("技术核对")}>
+                      <span
+                        data-tone={
+                          val.technical === "different" ? "warning" : "success"
+                        }
+                      >
+                        {t(techLabel[val.technical])}
+                      </span>
+                    </td>
+                    <td data-label={t("业务验证")}>
+                      <span
+                        data-tone={
+                          val.business === "passed"
+                            ? "success"
+                            : val.business === "failed"
+                              ? "danger"
+                              : "warning"
+                        }
+                      >
+                        {t(statusLabel[val.business])}
+                      </span>
+                    </td>
+                    <td>
+                      <Button
+                        aria-expanded={v.expanded === x.id}
+                        aria-label={t("{0} 验证结果详情", x.name)}
+                        onClick={() => {
+                          onView({ expanded: v.expanded === x.id ? "" : x.id });
+                          onContext?.(`${x.batchId} · ${x.name}`);
+                        }}
+                      >
+                        {t("详情")}
+                      </Button>
                     </td>
                   </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
-        <Pagination
-          total={filtered.length}
-          value={{ page: v.page, size: v.size }}
-          onChange={(x) => onView(x)}
-          sizes={[20, 50, 100]}
-          label={t("验证结果")}
-          compact
-          disabled={locked}
-        />
+                  {v.expanded === x.id && (
+                    <tr>
+                      <td colSpan={5}>
+                        <dl className={styles.details}>
+                          <dt>{t("配置对照 · 源端 / 规划 / 目标")}</dt>
+                          <dd>
+                            {val.configuration.map((c) => (
+                              <div key={c.field}>
+                                {t(c.field)}：{c.source} / {c.expected} /{" "}
+                                {c.actual}
+                              </div>
+                            ))}
+                          </dd>
+                          <dt>{t("业务系统")}</dt>
+                          <dd>{x.system || t("未填写业务系统")}</dd>
+                          <dt>{t("虚拟机标识")}</dt>
+                          <dd>{x.assetId}</dd>
+                          <dt>{t("源端网络")}</dt>
+                          <dd>{t(val.sourceValue)}</dd>
+                          <dt>{t("规划目标")}</dt>
+                          <dd>
+                            {x.computeResource} / {val.expectedValue}
+                          </dd>
+                          <dt>{t("实际目标")}</dt>
+                          <dd>{val.actualValue}</dd>
+                          <dt>{t("技术差异与处理说明")}</dt>
+                          <dd>
+                            {t(
+                              val.acceptanceNote || val.difference || "无差异",
+                            )}
+                          </dd>
+                          <dt>{t("业务确认记录")}</dt>
+                          <dd>
+                            {t(val.note || "尚未填写")}{" "}
+                            {t(val.confirmedBy || "")}{" "}
+                            {val.confirmedAt?.replace("T", " ").slice(0, 19)}
+                          </dd>
+                        </dl>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+          <Pagination
+            total={filtered.length}
+            value={{ page: v.page, size: v.size }}
+            onChange={(x) => onView(x)}
+            sizes={[20, 50, 100]}
+            label={t("验证结果")}
+            compact
+            disabled={locked}
+          />
+        </div>
         <section className={styles.stack}>
           <h3>{t("问题反馈与附件")}</h3>
           {!e.feedback.length && (

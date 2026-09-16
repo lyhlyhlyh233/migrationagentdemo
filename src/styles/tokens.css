@@ -76,9 +76,6 @@ summary:focus-visible {
 }
 
 @media (min-width: 1920px) {
-  :root {
-    --body-size: 1.125rem;
-  }
   .ui-select-trigger,
   .ui-select-option,
   .ui-select-group {

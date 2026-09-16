@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "@/shared/i18n";
 import styles from "./ConfirmationChoices.module.css";
 
@@ -42,11 +42,11 @@ export function ConfirmationChoices({
             disabled={option.disabled}
             onChange={() => onChange(option.value)}
           />
-          <span className={styles.number} aria-hidden="true">
-            {index + 1}
-          </span>
           <span className={styles.copy}>
             <span className={styles.title}>
+              <span className={styles.number} aria-hidden="true">
+                {index + 1}.
+              </span>
               {t(option.title)}
               {option.recommended && (
                 <span className={styles.recommended}>{t("推荐")}</span>
@@ -71,16 +71,25 @@ export function ConfirmationNote({
 }) {
   const t = useTranslation();
   const id = useId();
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const element = textarea.current;
+    if (!element) return;
+    element.style.height = "0px";
+    element.style.height = `${element.scrollHeight + 2}px`;
+  }, [value]);
   return (
     <label className={styles.note} htmlFor={id}>
       <span>{t("补充说明（可选）")}</span>
       <textarea
+        ref={textarea}
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        rows={2}
-        placeholder={t("补充当前选择的说明，不会作为额外操作指令。")}
+        rows={1}
+        placeholder={t("补充当前选择的说明…")}
+        title={t("补充当前选择的说明，不会作为额外操作指令。")}
       />
     </label>
   );
