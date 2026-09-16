@@ -12,6 +12,7 @@ import { Icon } from "@/shared/ui/icons";
 import { BrandName } from "@/shared/ui/BrandName";
 import { ProjectResourceButton } from "@/shared/ui/ProjectResourceButton";
 import { Select } from "@/shared/ui/Select";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { StageConversationList } from "./StageNavigation";
 export function Sidebar({
   snapshot: s,
@@ -209,7 +210,7 @@ export function Sidebar({
         <div className="nav-bottom">
           <div className="user-profile">
             <span>
-              <Icon name="user" size={17} />
+              <UserAvatar />
             </span>
             <div>
               <strong>{t("当前用户")}</strong>

@@ -1360,24 +1360,12 @@
   color: var(--accent-ink);
   border-radius: 6px;
 }
-/* White-theme accents are confined to the current stage and navigation. */
+/* White-theme accents are confined to the current stage and right panel. */
 :global(:root[data-theme="white"])
   .root
-  :global(
-    :is(
-      .project-resources button.selected,
-      .stage-chat-row.selected,
-      .temporary-conversations button.selected,
-      .progress-rail li.viewed-stage button
-    )
-  ) {
+  :global(.progress-rail li.viewed-stage button) {
   color: var(--navigation-ink);
   background: var(--navigation-soft);
-}
-:global(:root[data-theme="white"])
-  .root
-  :global(.project-resources button.selected > svg) {
-  color: var(--navigation-ink);
 }
 :global(:root[data-theme="white"])
   .root

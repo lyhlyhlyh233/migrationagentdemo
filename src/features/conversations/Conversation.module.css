@@ -152,6 +152,4 @@
   right: 0;
   top: 8px;
   border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
 }

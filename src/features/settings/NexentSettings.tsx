@@ -1,5 +1,6 @@
 import { useTranslation } from "@/shared/i18n/index";
 import { Icon } from "@/shared/ui/icons";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { useRef, useState, type FormEvent } from "react";
 
 import type { NexentConfiguration } from "@/domain/models";
@@ -260,7 +261,7 @@ export function AccountSettings({ onSignOut }: { onSignOut: () => void }) {
       <h3 id="account-title">{t("当前账户")}</h3>
       <div className="settings-account-row">
         <span className="settings-avatar">
-          <Icon name="user" size={20} />
+          <UserAvatar />
         </span>
         <div>
           <strong>{t("当前用户")}</strong>

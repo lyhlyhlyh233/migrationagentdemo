@@ -8,6 +8,7 @@ import { useTranslation } from "@/shared/i18n";
 import { EmptyState } from "@/shared/ui/Status";
 import { Icon } from "@/shared/ui/icons";
 import { AssistantMark } from "@/shared/ui/AssistantMark";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { Button } from "@/shared/ui/primitives";
 import { useEffect, useRef } from "react";
 import { BusinessResults, type ResultActions } from "./BusinessResults";
@@ -122,11 +123,7 @@ export function Conversation({
                   role="img"
                   aria-label={t(message.role === "user" ? "你" : "助手")}
                 >
-                  {message.role === "user" ? (
-                    <Icon name="user" size={15} />
-                  ) : (
-                    <AssistantMark />
-                  )}
+                  {message.role === "user" ? <UserAvatar /> : <AssistantMark />}
                 </span>
               )}
               {message.role === "agent" ? (
