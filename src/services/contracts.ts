@@ -119,7 +119,7 @@ export type ProjectCommand = (
   | { type: "assessment.choosePlan"; plan: AssessmentPlan }
   | { type: "stage.review"; target: StageId }
   | { type: "planning.confirmScope" }
-  | { type: "planning.useSample" }
+  | { type: "planning.generate" }
   | { type: "planning.sampleInputs" }
   | { type: "planning.requestAdjustment" }
   | { type: "stage.confirm"; target: StageId }

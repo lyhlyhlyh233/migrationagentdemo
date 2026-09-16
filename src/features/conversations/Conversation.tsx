@@ -1,4 +1,4 @@
-import type { ConversationView } from "@/app/state";
+import type { ConversationView } from "@/stores/workspaceState";
 import type {
   Conversation as ConversationModel,
   ProjectSnapshot,
@@ -7,8 +7,6 @@ import type { FilePurpose } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { EmptyState } from "@/shared/ui/Status";
 import { Icon } from "@/shared/ui/icons";
-import { AssistantMark } from "@/shared/ui/AssistantMark";
-import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { Button } from "@/shared/ui/primitives";
 import { useEffect, useRef } from "react";
 import { BusinessResults, type ResultActions } from "./BusinessResults";
@@ -25,8 +23,6 @@ export function Conversation({
   view,
   onUpload,
   onCloseWork,
-  compact = false,
-  variant = "stage",
   ...actions
 }: {
   snapshot: ProjectSnapshot;
@@ -34,8 +30,6 @@ export function Conversation({
   view: ConversationView;
   onUpload: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onCloseWork: () => void;
-  compact?: boolean;
-  variant?: "stage" | "management";
 } & ResultActions) {
   const t = useTranslation();
   const end = useRef<HTMLDivElement>(null);
@@ -80,8 +74,7 @@ export function Conversation({
     m.results?.some(
       (r) =>
         r.kind === "planning-input" ||
-        (!s.planning?.batches.length && r.kind === "planning-preview") ||
-        (r.kind === "summary" && r.stageId === "planning"),
+        (!s.planning?.batches.length && r.kind === "planning-preview"),
     ),
   )?.id;
   const pending = s.pending[chat.id];
@@ -96,7 +89,7 @@ export function Conversation({
     } else end.current?.scrollIntoView({ block: "end", behavior: "instant" });
   }, [chat.id, messages.length, busy, lastRole]);
   return (
-    <div className={styles.root} data-variant={variant}>
+    <div className={styles.root}>
       <div
         ref={log}
         role="log"
@@ -117,15 +110,6 @@ export function Conversation({
               }
               key={message.id}
             >
-              {variant === "management" && message.role !== "system" && (
-                <span
-                  className={styles.avatar}
-                  role="img"
-                  aria-label={t(message.role === "user" ? "你" : "助手")}
-                >
-                  {message.role === "user" ? <UserAvatar /> : <AssistantMark />}
-                </span>
-              )}
               {message.role === "agent" ? (
                 <>
                   <ConversationAnswer
@@ -138,11 +122,9 @@ export function Conversation({
                       <BusinessResults
                         results={message.results.filter(
                           (r) =>
-                            !(compact && r.kind === "assessment-input") &&
                             !(
                               r.kind === "planning-input" &&
-                              ((compact && !s.planning?.batches.length) ||
-                                message.id !== latestPlanningInputId)
+                              message.id !== latestPlanningInputId
                             ),
                         )}
                         snapshot={s}
@@ -197,8 +179,7 @@ export function Conversation({
           }
         />
       )}
-      {!compact &&
-        chat.stageId &&
+      {chat.stageId &&
         chat.stageId !== "planning" &&
         chat.stageId !== "research" &&
         view.workOpen && (

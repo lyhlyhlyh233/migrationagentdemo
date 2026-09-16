@@ -31,6 +31,13 @@ export async function command(
   if (options.signal?.aborted) throw new ServiceError("ABORTED", "操作已取消");
   const s = rt.context(c);
   requireCondition(s.info, "请先创建项目");
+  const demoCommand =
+    cmd.type === "assessment.useSamples" ||
+    cmd.type === "planning.sampleInputs" ||
+    "simulateFailure" in cmd ||
+    "simulate" in cmd ||
+    "scenario" in cmd;
+  requireCondition(!demoCommand || rt.demoTools, "当前服务未启用演示工具");
   if (cmd.type === "confirmation.record") {
     recordConfirmation(rt, c, cmd.subject, cmd.choice, cmd.note);
     return;
@@ -81,7 +88,7 @@ export async function command(
     return;
   }
   if (cmd.type === "assessment.start") return assess(rt, c, options);
-  if (cmd.type === "planning.useSample")
+  if (cmd.type === "planning.generate")
     return plan(rt, c, "迁移规划信息-示例.xlsx", options);
   if (cmd.type === "md.check") return checkMd(rt, c, options);
   if (cmd.type === "execution.confirm") {

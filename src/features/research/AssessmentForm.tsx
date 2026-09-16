@@ -11,9 +11,11 @@ export function AssessmentForm({
   onUpload,
   onDownload,
   disabled = false,
+  demoTools = false,
 }: {
   snapshot: ProjectSnapshot;
   disabled?: boolean;
+  demoTools?: boolean;
   onCommand: (cmd: ProjectCommand) => void | Promise<boolean>;
   onUpload: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onDownload: (id: string) => void | Promise<unknown>;
@@ -35,15 +37,17 @@ export function AssessmentForm({
       title={t("评估资料")}
       actions={
         <>
-          <Button
-            disabled={locked}
-            onClick={() => {
-              setError(false);
-              setPending({ kind: "sample" });
-            }}
-          >
-            {t("使用样例数据")}
-          </Button>
+          {demoTools && (
+            <Button
+              disabled={locked}
+              onClick={() => {
+                setError(false);
+                setPending({ kind: "sample" });
+              }}
+            >
+              {t("使用样例数据")}
+            </Button>
+          )}
           <Button
             primary
             disabled={locked || s.assessmentStatus !== "ready"}

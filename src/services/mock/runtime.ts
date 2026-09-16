@@ -9,6 +9,7 @@ import { translateText } from "@/shared/i18n/text";
 import type { RequestOptions, ServiceEvent } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
 export class MockRuntime {
+  constructor(readonly demoTools = true) {}
   projects = new Map<string, ProjectSnapshot>();
   files = new Map<
     string,

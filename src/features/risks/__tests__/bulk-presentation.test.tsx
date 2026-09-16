@@ -3,15 +3,12 @@ import { describe, expect, it } from "vitest";
 import { pageWindow } from "@/shared/ui/pagination-state";
 import {
   categoryGroups,
+  vmCount,
   ruleGroups,
   selectionState,
   toggleRiskSelection,
-  vmGroups,
 } from "../presentation";
 import { CategoryRiskTable, initialCategoryView } from "../CategoryRiskTable";
-import { RiskVmTable } from "../RiskVmTable";
-import { RiskWorkspace } from "../RiskWorkspace";
-import { MockMigrationService } from "@/services/mock";
 import { largeRiskFixture } from "./risk-fixtures";
 
 const actions = {
@@ -53,109 +50,38 @@ describe("risk table selection and pagination", () => {
     );
   });
 
-  it("renders real VM subtables with 10 rows and preserves controlled pages after reopening", () => {
+  it("keeps category pagination and static VM counts without removed detail links", () => {
     const risks = largeRiskFixture();
-    const groups = ruleGroups(risks);
-    const key = groups[0].key;
-    const view = {
-      ...initialCategoryView(),
-      expanded: [key],
-      vmPages: { [key]: { page: 3, size: 10 } },
-    };
-    const render = (expanded: string[], readOnlyVms = false) =>
+    const render = (page: number) =>
       renderToStaticMarkup(
         <CategoryRiskTable
           risks={risks}
-          allRisks={risks}
-          readOnlyVms={readOnlyVms}
-          selected={new Set()}
+          selected={new Set(risks.map((r) => r.id))}
           onSelect={() => {}}
-          view={{ ...view, expanded }}
+          view={{ ...initialCategoryView(), pagination: { page, size: 20 } }}
           onView={() => {}}
           {...actions}
         />,
       );
-    const open = render([key]);
-    expect(open.match(/<table/g)).toHaveLength(2);
-    const panel = render([key], true);
-    expect(panel.match(/<table/g)).toHaveLength(1);
-    expect(panel).not.toContain("TEST-VM-021");
-    expect(open).toContain("TEST-VM-021");
-    expect(open).toContain("TEST-VM-030");
-    expect(open).not.toContain("TEST-VM-020");
-    expect(open).not.toContain("TEST-VM-031");
-    expect(open).toContain("本项策略");
-    expect(open).toContain("标识");
-    expect(render([])).not.toContain("TEST-VM-021");
-    expect(render([key])).toContain("TEST-VM-021");
-    const thirdPage = renderToStaticMarkup(
-      <CategoryRiskTable
-        risks={risks}
-        allRisks={risks}
-        readOnlyVms
-        selected={new Set(risks.map((r) => r.id))}
-        onSelect={() => {}}
-        view={{ ...view, expanded: [], pagination: { page: 3, size: 20 } }}
-        onView={() => {}}
-        {...actions}
-      />,
-    );
-    expect(thirdPage).toContain("Risk 105");
-    expect(thirdPage).not.toContain("Shared disk constraint");
-    expect(thirdPage).toContain('checked=""');
+    const first = render(1);
+    expect(first.match(/<table/g)).toHaveLength(1);
+    expect(first).toContain("Shared disk constraint");
+    expect(first).not.toContain("单独处理");
+    expect(first).not.toContain("TEST-VM-021");
+    const third = render(3);
+    expect(third).toContain("Risk 105");
+    expect(third).not.toContain("Shared disk constraint");
+    expect(third).toContain('checked=""');
+    expect(render(1)).toContain("Shared disk constraint");
   });
-
-  it("computes VM eligibility using all risks and hides pagination arrows on one page", () => {
+  it("deduplicates VM totals and clamps pagination after filters", () => {
     const risks = largeRiskFixture().slice(0, 1);
-    const html = renderToStaticMarkup(
-      <RiskVmTable
-        risks={risks}
-        allRisks={[...risks, { ...risks[0], id: 999, impact: "blocked" }]}
-        pagination={{ page: 1, size: 10 }}
-        onPage={() => {}}
-        label="VM list"
-        readOnly
-        selected={new Set()}
-        onSelect={() => {}}
-        {...actions}
-      />,
-    );
-    expect(html).toContain("暂时排除");
-    expect(html).not.toContain("上一页");
-    expect(html).not.toContain("下一页");
-    expect(html).not.toContain("每页条数");
-    expect(html).toContain("共 1 项");
-    expect(html).not.toContain('type="checkbox"');
-    expect(html).toContain("单独处理");
-    expect(vmGroups([...risks, { ...risks[0], id: 2 }])).toHaveLength(1);
+    expect(vmCount([...risks, { ...risks[0], id: 2 }])).toBe(1);
     expect(pageWindow(5, { page: 8, size: 20 })).toEqual({
       page: 1,
       pages: 1,
       start: 0,
       end: 5,
     });
-  });
-
-  it("opens a deep-linked VM on its actual page with risks expanded", async () => {
-    const service = new MockMigrationService();
-    const snapshot = await service.getProject("lobby");
-    snapshot.risks = largeRiskFixture();
-    const html = renderToStaticMarkup(
-      <RiskWorkspace
-        snapshot={snapshot}
-        location={{
-          mode: "vm",
-          vmKey: "id:fixture-vm-53",
-          sourceRiskIds: snapshot.risks.slice(10).map((r) => r.id),
-        }}
-        onLocationChange={() => {}}
-        onCommand={async () => true}
-      />,
-    );
-    expect(html).toContain("TEST-VM-053");
-    expect(html).toContain("清除范围，查看全部");
-    expect(html).toContain("Shared disk constraint");
-    expect(html).not.toContain("TEST-VM-021");
-    service.dispose();
   });
 });

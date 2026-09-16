@@ -13,15 +13,15 @@
 
 ## 最短代码阅读路线
 
-`src/app/main.tsx` → `App.tsx` / `WorkspaceProvider.tsx` → `config.ts` / `services/index.ts` → `services/contracts.ts` → `features/workspace/useWorkspaceActions.ts` → `domain/models.ts` / `policies.ts`。
+`src/app/main.tsx` → `App.tsx` / `WorkspaceProvider.tsx` → `workspaceSession.ts` / `stores/workspaceStore.ts` → `config.ts` / `services/index.ts` → `services/contracts.ts` → `features/workspace/useWorkspaceActions.ts` → `domain/models.ts` / `policies.ts`。
 
-业务执行位于 `services/mock/`，展示和局部草稿位于 `features/`。HTTP 模板故意未实现后端地址，切换 http 模式应显示未接入，不能伪装成成功。
+业务执行位于 `services/mock/`，公共状态位于 `stores/`，展示和局部交互位于 `features/`。薄 Provider 稳定注入会话 store，组件用 `useWorkspace(selector)` 订阅；`preferencesStore` 仅持久化主题、背景、语言。HTTP 模板故意未实现后端地址，切换 http 模式应显示未接入，不能伪装成成功。
 
 `V1_0914` 是已有历史交接标签，当前代码包含之后的提交，不要移动标签。对接时优先修改适配器及必要的领域映射，不将大页面搬进另一个大 Hook，不增加流程引擎或通用注册系统。ESLint 已检查主要依赖方向。
 
-规划改动从 `domain/planning.ts` → `services/mock/planning-data.ts` / `planning.ts` / `planning-files.ts` → `features/planning/PlanningWorkspace.tsx` 阅读。视图草稿按项目存在 `app/state.ts`；管理页小对话由 `ManagementDiscussion` 复用阶段记录。先读接口文档的规划 revision 和预览归属约定，不把 Mock 估算当成真实计算。
+规划改动从 `domain/planning.ts` → `services/mock/planning-data.ts` / `planning.ts` / `planning-files.ts` → `PlanningIntake` / `PlanningSummary` 阅读。公共视图类型在 `stores/*State.ts`，规划草稿按项目保存；生成使用中性 `planning.generate`。先读接口文档的 revision 和预览归属，不把 Mock 估算当成真实计算。
 
-实施/验证从 `domain/execution.ts` → `mock/execution-state.ts` / `execution.ts` / `execution-engine.ts` → `execution-issues.ts` / `validation.ts` → `ExecutionWorkspace` / `ValidationWorkspace` 阅读。旧任务读模型由新执行状态投影，不再独立执行。实际附件在 runtime 内存，密码仅用于请求；实施安排与批准计划分离。精简规划侧面板在 `PlanningSummary`，不要再塞回完整工作台。
+实施/验证从 `domain/execution.ts` → `mock/execution-state.ts` / `execution.ts` / `execution-engine.ts` → `execution-issues.ts` / `validation.ts` → `ExecutionWorkspace` / `ValidationWorkspace` 阅读。旧任务读模型由新执行状态投影，不再独立执行。实际附件在 runtime 内存，密码仅用于请求；实施安排与批准计划分离。精简规划侧面板在 `PlanningSummary`，不要再塞回完整工作台。五个独立管理页和其专属视图已经删除，现有侧面板、对话下载与最近活动保留。
 
 ## 修改时必须保留
 
@@ -33,6 +33,8 @@
 - 历史统计快照与实时任务状态分开；旧确认项不能重复执行。
 - 模型和 Agent 由服务目录提供，输入框左 Agent、右模型。
 - 白/黑/绿/红主题、全局背景、中英文和手机导航。
+- `Catalog.capabilities?.demoTools === true` 才显示样例/模拟工具；推荐批次来自服务，不按示例数组下标选择。
+- 共享账户仅保存脱敏 AccountState；密码和 API Key 留表单局部，成功清空、失败保留，不进入 store 或持久存储。
 
 ## 模拟范围
 

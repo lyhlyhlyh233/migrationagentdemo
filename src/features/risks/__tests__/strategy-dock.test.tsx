@@ -96,7 +96,7 @@ describe("risk strategy dock", () => {
     }
   });
 
-  it("keeps strategy tools before the risk list and reports VM filter scope", async () => {
+  it("keeps strategy tools before the category risk list", async () => {
     const service = new MockMigrationService();
     try {
       const snapshot = await service.getProject("lobby");
@@ -104,7 +104,7 @@ describe("risk strategy dock", () => {
       const html = renderToStaticMarkup(
         <RiskWorkspace
           snapshot={snapshot}
-          location={{ mode: "vm" }}
+          location={{}}
           onLocationChange={() => {}}
           onCommand={async () => false}
         />,
@@ -112,8 +112,8 @@ describe("risk strategy dock", () => {
       expect(html.indexOf('aria-label="风险浏览区"')).toBeGreaterThan(
         html.indexOf('aria-label="策略操作区"'),
       );
-      expect(html).toContain("风险数与处理进度按当前筛选结果统计");
-      expect(html).toContain("处理进度");
+      expect(html).toContain("全部筛选结果 · 105 条风险 · 105 台虚拟机");
+      expect(html).not.toContain("单独处理");
       expect(html).not.toContain("如何处理所选风险");
     } finally {
       service.dispose();

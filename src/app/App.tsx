@@ -1,4 +1,4 @@
-import { useWorkspace } from "@/app/context";
+import { useWorkspace, useWorkspaceSession } from "@/app/context";
 import { ProjectSetup } from "@/features/projects/ProjectSetup";
 import { SettingsDrawer } from "@/features/settings/SettingsDrawer";
 import { Workspace } from "@/features/workspace/Workspace";
@@ -11,22 +11,30 @@ import { Component, useState, type ReactNode } from "react";
 import { WorkspaceProvider, useServiceSession } from "./WorkspaceProvider";
 function Session({ onSignOut }: { onSignOut: () => void }) {
   const t = useTranslation();
-  const { service, data, ui, dispatchUi, retry } = useWorkspace();
+  const { service, retry, store } = useWorkspaceSession();
+  const loading = useWorkspace((s) => s.data.loading);
+  const loadError = useWorkspace((s) => s.data.error);
+  const creatingProject = useWorkspace((s) => s.ui.creating);
+  const dispatchUi = useWorkspace((s) => s.dispatchUi);
+  const account = useWorkspace((s) => s.account);
+  const demoTools = useWorkspace(
+    (s) => s.data.catalog?.capabilities?.demoTools === true,
+  );
   const [settings, setSettings] = useState(false);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
-  if (data.loading) return <EmptyState title="正在载入工作空间…" />;
-  if (data.error)
+  if (loading) return <EmptyState title="正在载入工作空间…" />;
+  if (loadError)
     return (
       <EmptyState
         title="工作空间未能加载"
-        detail={data.error}
+        detail={loadError}
         action={<Button onClick={retry}>{t("重试")}</Button>}
       />
     );
   return (
     <>
-      {ui.creating ? (
+      {creatingProject ? (
         <ProjectSetup
           busy={creating}
           error={error}
@@ -57,6 +65,8 @@ function Session({ onSignOut }: { onSignOut: () => void }) {
         <Workspace onSettings={() => setSettings(true)} />
       )}
       <SettingsDrawer
+        account={account}
+        demoTools={demoTools}
         open={settings}
         onClose={() => setSettings(false)}
         onSignOut={async () => {
@@ -68,10 +78,12 @@ function Session({ onSignOut }: { onSignOut: () => void }) {
           }
         }}
         onConfigureAccount={async (configuration) => {
-          await service.configureAccount(configuration);
+          const account = await service.configureAccount(configuration);
+          store.getState().setAccount(account);
+          return account;
         }}
       />
-      {error && !ui.creating && <div role="alert">{t(error)}</div>}
+      {error && !creatingProject && <div role="alert">{t(error)}</div>}
     </>
   );
 }
@@ -80,6 +92,7 @@ function AppSession() {
   const { service, reset } = useServiceSession();
   const [signedOut, setSignedOut] = useState(false);
   const [session, setSession] = useState(0);
+  if (!service) return <EmptyState title="正在载入工作空间…" />;
   return signedOut ? (
     <main className="signed-out-page">
       <EmptyState

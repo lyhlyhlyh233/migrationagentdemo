@@ -11,9 +11,11 @@ export function PlanningForm({
   onDownload,
   onOpen,
   dirty = false,
+  demoTools = false,
 }: {
   snapshot: ProjectSnapshot;
   dirty?: boolean;
+  demoTools?: boolean;
   onCommand: (cmd: ProjectCommand) => void;
   onDownload: (id: string) => void;
   onOpen: () => void;
@@ -39,13 +41,15 @@ export function PlanningForm({
             s.batchConfirmation === "confirmed" ||
             !!s.planning?.preview
           }
-          onClick={() => onCommand({ type: "planning.useSample" })}
+          onClick={() => onCommand({ type: "planning.generate" })}
         >
           {t(
             s.planningStatus === "generating"
               ? "正在生成"
               : stale
-                ? "重新生成模拟初稿"
+                ? demoTools
+                  ? "重新生成模拟初稿"
+                  : "重新生成规划初稿"
                 : "生成规划初稿",
           )}
           <Icon name="right" size={15} />

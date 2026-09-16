@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
 import { canValidate } from "@/domain/execution";
 import type { ProjectCommand, FilePurpose } from "@/services/contracts";
-import type { ValidationView } from "@/features/migration/state";
+import type { ValidationView } from "@/stores/executionState";
 import { Button } from "@/shared/ui/primitives";
 import { Select } from "@/shared/ui/Select";
 import { Pagination } from "@/shared/ui/Pagination";
@@ -11,6 +11,7 @@ import { useTranslation } from "@/shared/i18n";
 import styles from "./Validation.module.css";
 export function ValidationWorkspace({
   snapshot: s,
+  demoTools = false,
   compact = false,
   view: v,
   onView,
@@ -21,6 +22,7 @@ export function ValidationWorkspace({
   onContext,
 }: {
   snapshot: ProjectSnapshot;
+  demoTools?: boolean;
   compact?: boolean;
   view: ValidationView;
   onView: (patch: Partial<ValidationView>) => void;
@@ -125,7 +127,13 @@ export function ValidationWorkspace({
         <div>
           {!compact && <h2>{t("结果验证")}</h2>}
           <small>
-            {t(e.finalized ? "最终交付已确认" : "阶段性结果 · 模拟核对")}
+            {t(
+              e.finalized
+                ? "最终交付已确认"
+                : demoTools
+                  ? "阶段性结果 · 模拟核对"
+                  : "阶段性结果",
+            )}
           </small>
         </div>
         <div className={styles.utilities}>
@@ -645,7 +653,9 @@ export function ValidationWorkspace({
                         >
                           {t(
                             f.status === "review"
-                              ? "确认模拟复查通过"
+                              ? demoTools
+                                ? "确认模拟复查通过"
+                                : "确认复查通过"
                               : "提交处理说明",
                           )}
                         </Button>

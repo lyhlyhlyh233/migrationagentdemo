@@ -17,6 +17,7 @@ export type ConversationConfirmation = {
 /** Conversation-local interaction state. Business replies and task state belong to the service. */
 export interface ConversationView {
   draft: string;
+  notice?: string;
   attachment?: File;
   agentId?: string;
   modelId?: string;

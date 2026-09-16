@@ -11,6 +11,59 @@ const actions = {
   onNavigateStage: () => {},
 };
 describe("business result rendering", () => {
+  it("keeps planning intake visible after a risk summary reply", async () => {
+    const service = new MockMigrationService();
+    const snapshot = await service.getProject("lobby");
+    const base = {
+      conversationId: "planning-chat",
+      stageId: "planning" as const,
+      time: "10:00",
+      role: "agent" as const,
+    };
+    snapshot.messages = [
+      {
+        ...base,
+        id: 1,
+        text: "补充规划资料",
+        results: [{ kind: "planning-input" }],
+      },
+      {
+        ...base,
+        id: 2,
+        text: "当前风险概况",
+        results: [
+          {
+            kind: "summary",
+            stageId: "planning",
+            title: "风险概况",
+            metrics: [],
+          },
+        ],
+      },
+    ];
+    const html = renderToStaticMarkup(
+      <Conversation
+        snapshot={snapshot}
+        chat={{
+          id: "planning-chat",
+          title: "规划",
+          kind: "main",
+          stageId: "planning",
+        }}
+        view={{ draft: "" }}
+        planningInput={
+          <section aria-label="规划资料补充">导入与基础约束</section>
+        }
+        onUpload={() => {}}
+        onCloseWork={() => {}}
+        {...actions}
+      />,
+    );
+    expect(html).toContain('aria-label="规划资料补充"');
+    expect(html).toContain("导入与基础约束");
+    expect(html).toContain("当前风险概况");
+    service.dispose();
+  });
   it("limits a file list to three rows with expansion and real download controls", async () => {
     const service = new MockMigrationService();
     const snapshot = await service.getProject("lobby");
@@ -100,6 +153,25 @@ describe("business result rendering", () => {
     expect(html.indexOf('aria-label="评估统计"')).toBeLessThan(
       html.indexOf('aria-label="复制回答正文"'),
     );
+    service.dispose();
+  });
+  it("waits for the originating reply before opening a connection editor", async () => {
+    const service = new MockMigrationService();
+    const snapshot = await service.getProject("lobby");
+    snapshot.pending = { migration: { startedAt: 0, runId: "pending-reply" } };
+    const render = (conversationId: string) =>
+      renderToStaticMarkup(
+        <BusinessResults
+          snapshot={snapshot}
+          conversationId={conversationId}
+          results={[{ kind: "execution-work", view: "connection" }]}
+          {...actions}
+        />,
+      );
+    expect(render("migration")).toMatch(/<button[^>]*disabled/);
+    expect(render("other")).not.toMatch(/<button[^>]*disabled/);
+    delete snapshot.pending.migration;
+    expect(render("migration")).not.toMatch(/<button[^>]*disabled/);
     service.dispose();
   });
   it("renders confirmed approvals without another execution button", async () => {

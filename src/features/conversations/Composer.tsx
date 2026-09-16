@@ -3,7 +3,7 @@ import {
   messageAttachmentAccept,
   messageAttachmentError,
 } from "@/shared/attachments";
-import type { PanelId } from "@/app/state";
+import type { PanelId } from "@/stores/workspaceState";
 import type { Catalog, StageId } from "@/domain/models";
 import {
   ShortcutMenu,
@@ -72,7 +72,13 @@ export function Composer({
     stage === "research" && assessmentComplete
       ? ["跳过所有高风险", "接受所有中风险", "解读剩余风险"]
       : stage === "planning" && planningGenerated
-        ? ["将 B02 割接改到周六", "降低单批次并发", "使用样例数据调整规划"]
+        ? [
+            "将 B02 割接改到周六",
+            "降低单批次并发",
+            ...(catalog.capabilities?.demoTools === true
+              ? ["使用样例数据调整规划"]
+              : []),
+          ]
         : stage === "migration" || executionPrompts.length
           ? executionPrompts
           : [];
@@ -130,7 +136,7 @@ export function Composer({
                   },
                   {
                     label: "说明这个批次的安排依据",
-                    description: "解释示例分批规则",
+                    description: "解释分批规则",
                     onClick: () => onPrompt(t("说明这个批次的安排依据")),
                   },
                 ]

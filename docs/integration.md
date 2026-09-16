@@ -14,18 +14,18 @@
 
 ## 能力与返回内容
 
-| 能力           | 契约入口                                                                            | 适配重点                                                                  |
-| -------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 项目           | listProjects、createProject、getProject                                             | 返回列表/完整项目快照，保留项目隔离                                       |
-| 会话           | createConversation、renameConversation                                              | 独立 ID、所属阶段、主/子/临时类型                                         |
-| Agent、模型    | catalog                                                                             | 目录 ID、默认值及可选 stageAgents 映射                                    |
+| 能力           | 契约入口                                                                            | 适配重点                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 项目           | listProjects、createProject、getProject                                             | 返回列表/完整项目快照，保留项目隔离                                                       |
+| 会话           | createConversation、renameConversation                                              | 独立 ID、所属阶段、主/子/临时类型                                                         |
+| Agent、模型    | catalog                                                                             | 目录 ID、默认值及可选 stageAgents 映射                                                    |
 | 回复           | sendMessage、stopReply                                                              | requestId 重试去重；可选 File 附件、文本、思考摘要、领域结果、耗时；按 runId 停止当前思考 |
-| 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                         | 阶段条件、人工确认、不可重复启动                                          |
-| 实施/诊断/验收 | execution.connection/preview/apply、execution.diagnose/remedy/recheck、validation.* | 连接与批次控制、诊断确认、逐台验证与反馈，见下文                          |
-| 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action         | 最新状态校验、批量原子性与阶段锁定                                        |
-| 文件           | upload(File)、download                                                              | File 输入，Blob、filename、mediaType 输出                                 |
-| 账户           | getAccount、configureAccount、logout                                                | 区分配置与真实验证，不回传明文凭据                                        |
-| 实时状态       | subscribe、dispose                                                                  | 统一事件、取消订阅、请求和连接清理                                        |
+| 评估/规划/交接 | execute 的 assessment、planning、stage 命令                                         | 阶段条件、人工确认、不可重复启动                                                          |
+| 实施/诊断/验收 | execution.connection/preview/apply、execution.diagnose/remedy/recheck、validation.* | 连接与批次控制、诊断确认、逐台验证与反馈，见下文                                          |
+| 风险/任务      | risk.decide、risk.recommend、risk.ignoreOrExclude、risk.close、tasks.action         | 最新状态校验、批量原子性与阶段锁定                                                        |
+| 文件           | upload(File)、download                                                              | File 输入，Blob、filename、mediaType 输出                                                 |
+| 账户           | getAccount、configureAccount、logout                                                | 区分配置与真实验证，不回传明文凭据                                                        |
+| 实时状态       | subscribe、dispose                                                                  | 统一事件、取消订阅、请求和连接清理                                                        |
 
 契约是前端能力边界，不需要拆成等量后端接口。`assessment.choosePlan` 是保留的兼容命令，当前页面已没有总体方案选择入口；`assessment-decision` 也是历史结果标记，不需要为其新增后端能力。
 
@@ -35,8 +35,10 @@
 - `EMPTY_WORKSPACE_ID`（值为 `lobby`）是无项目工作空间的保留标识，不是实际迁移项目。`getProject` 需返回其 `info: null` 快照，`listProjects` 不列出它；可以在适配器内维护此工作空间或映射后端会话空间，无需创建名为 lobby 的业务项目。真实项目不能占用此标识。
 - `createProject` 提供评估主会话，阶段确认后由服务创建下一阶段主会话。前端按 `kind/stageId` 查找；初次自动问答也由服务产出，组件不补造消息。
 - `catalog.defaultAgent/defaultModel` 以及 `stageAgents` 中的值必须属于相应目录；阶段代码与 Agent ID 独立。未提供阶段映射时使用 defaultAgent。
+- `Catalog.capabilities?.demoTools === true` 才启用样例资料、示例连接、故障注入及模拟说明，缺省关闭。UI 只读取能力，不读取服务模式；`ProjectSnapshot.demoMode` 是另一项 Mock 宽松推进标记，不能代替这个能力。
+- `execution.recommendedBatchId` 是可选查看建议，必须指向实际批次。UI 优先保留有效用户选择，否则采用有效推荐值，再回退首批；不从样例标记推算数组下标。
 - `ProjectSnapshot` 是前端视图快照，适配器可聚合多个 API 的数据；组件不得修改。`revision` 在同一项目和服务生命周期中递增，较旧快照会被 reducer 忽略；相同 revision 应代表同一数据。
-- `subscribe` 同步返回取消订阅函数。当前事件为完整快照、通知或错误；SSE/WebSocket/轮询在适配器内转换和合并，不进入组件。
+- `subscribe` 同步返回取消订阅函数。当前事件为完整快照、通知或错误；SSE/WebSocket/轮询在适配器内转换和合并，不进入组件。应用桥接层把带 conversationId 的 notice/error 保存到对应会话，否则保存为项目提示；通知不改变当前会话。
 - 创建、重命名、命令与上传成功返回前，需发布对应项目的最新快照。界面依赖事件更新共享数据；只返回一个 ID 而不发快照会让新项目或会话无法显示。订阅在初始读取前建立，读取和事件可能交错，依靠 revision 处理旧数据。
 - `sendMessage` 完整回复后兑现 Promise；失败通过拒绝让界面保留原文和 requestId。长任务可持续发布进度，`execute/upload` 完成当前操作后兑现；后端若只返回 job ID，适配器需跟踪结果，不能把“已提交”伪装成“已完成”。
 - `OperationContext` 的项目、会话、阶段和 operationId 在发起时固定。事件中的消息也要保留这些关联，不能取任务完成时当前打开的会话。通知是界面提示，不能替代操作 Promise 的失败结果。
@@ -59,22 +61,22 @@
 
 `ProjectSnapshot.execution` 保存脱敏 连接信息（不含密码）、任务、诊断、验证、反馈、趋势、revision 和可选 preview。稳定项目/任务/资产/批次/问题 ID 串联资源。`vmTasks/creationTasks/validationTasks` 是兼容读模型，只由执行快照投影，不能另起模拟状态。
 
-| 命令                                 | 语义                                                                                                                                      |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| execution.connection                 | 输入 IP、端口、用户名、密码；检测成功后应用，失败保留原有效配置。模拟权限故障下旧配置仍不可用；密码不回传。存在控制操作时禁止替换有效连接 |
-| execution.preview                    | action + taskIds，按操作附目标批次、窗口、目标资源、网络、演示场景；整体校验后固定 ID、发起会话和 revision，仅预览                        |
-| execution.apply / cancel             | previewId；应用前再查资源条件和版本，仅发起会话可处理，一次写入。start/full/increment/cutover 四个动作均有独立确认及前置条件，重复点击不得重复执行           |
-| execution.diagnose                   | issueId；再次模拟采集与诊断，可演示日志失败/无结论，同一问题不并发运行                                                                    |
-| execution.remedy / recheck           | issueId、方案与说明，可演示失败；自动方案需确认，人工方案需处理说明和复查，完成后不自动恢复任务                                           |
-| validation.acceptDifference / record | 固定 taskIds、说明、业务结论，UI 提交打开编辑时的 expectedRevision；整体校验技术与阻塞条件，冲突不覆盖                                    |
-| validation.feedback / feedbackReview | 固定关联范围、问题及阻塞标记；处理后再确认模拟复查。UI 编辑携带 expectedRevision，冲突保留输入                                            |
-| validation.finalize                  | 检查全部纳入范围均完成技术和业务验证，确认最终交付后只读                                                                                  |
+| 命令                                 | 语义                                                                                                                                               |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| execution.connection                 | 输入 IP、端口、用户名、密码；检测成功后应用，失败保留原有效配置。模拟权限故障下旧配置仍不可用；密码不回传。存在控制操作时禁止替换有效连接          |
+| execution.preview                    | action + taskIds，按操作附目标批次、窗口、目标资源、网络、演示场景；整体校验后固定 ID、发起会话和 revision，仅预览                                 |
+| execution.apply / cancel             | previewId；应用前再查资源条件和版本，仅发起会话可处理，一次写入。start/full/increment/cutover 四个动作均有独立确认及前置条件，重复点击不得重复执行 |
+| execution.diagnose                   | issueId；再次模拟采集与诊断，可演示日志失败/无结论，同一问题不并发运行                                                                             |
+| execution.remedy / recheck           | issueId、方案与说明，可演示失败；自动方案需确认，人工方案需处理说明和复查，完成后不自动恢复任务                                                    |
+| validation.acceptDifference / record | 固定 taskIds、说明、业务结论，UI 提交打开编辑时的 expectedRevision；整体校验技术与阻塞条件，冲突不覆盖                                             |
+| validation.feedback / feedbackReview | 固定关联范围、问题及阻塞标记；处理后再确认模拟复查。UI 编辑携带 expectedRevision，冲突保留输入                                                     |
+| validation.finalize                  | 检查全部纳入范围均完成技术和业务验证，确认最终交付后只读                                                                                           |
 
 `execution.revision` 只随控制、问题和验证内容变化更新，正常同步数值不会让每份预览失效；每次应用仍检查最新资源状态。验证命令保留可选 expectedRevision 以兼容调用，当前 UI 总是携带打开表单时的值；适配真实服务应强制乐观并发校验。调页、筛选和聊天不改变业务版本。
 
 连接检测、创建/同步、日志获取、修复、复查均为 Mock，不构造真实端点。沿用 `execution.preview` / `execution.apply`，`action: start` 仅创建任务，新增的 `action: full` 仅授权全量同步。创建完成进入 `created`（待全量），全量完成进入 `full-complete`（待增量）；这些等待状态不自行产生进度、同步量或心跳。`increment` 确认后进入持续增量，`cutover` 仍需独立确认才产生验证记录。每项目一个执行循环；恢复/重试只允许明确的实际中断阶段，不能用兜底状态跨过确认。配置差异和时间线是示例值，不代表远端核验或真实窗口检查。实施安排变化不修改已批准规划。具体业务门禁只在业务文档维护。
 
-消息的 `execution-work` 结果包含 view 及可选 issueId/taskIds，UI 用于打开对话内连接、单个问题或验证区域，不代表执行授权。调整操作范围复用 `execution.preview` 的可选 `replacePreviewId`：必须匹配当前预览、原发起会话及版本，完整校验后才替换；失败保留原预览，其他会话不能覆盖。`execution-preview` 保存固定 previewId，输入框确认区只读取该 ID 对应的共享预览；旧消息不能误操作后来的预览。`execution-prompt` 是下一步快捷语言，不是任务控制命令。`sendMessage` 的 `MessageInput.executionContext` 可带 `taskIds` 和 `batchId`，明确执行工作区来源。所选 ID 在异步等待前复制，完整校验项目归属，优先于文本中的批次；无多选时，用户明确写出的批次优先于页面批次。这样任务页即使沿用评估或规划会话，也能生成执行预览，结果仍写回原会话。`context` 仅为可清除的展示说明，不能替代稳定 ID。语言操作仅建立预览，独立任务页的所选对象同样先进入对话确认。阶段引导回复可停止，迁移循环不受聊天 stopReply 控制。
+消息的 `execution-work` 结果包含 view 及可选 issueId/taskIds，UI 用于打开对话内连接、单个问题或验证区域，不代表执行授权。调整操作范围复用 `execution.preview` 的可选 `replacePreviewId`：必须匹配当前预览、原发起会话及版本，完整校验后才替换；失败保留原预览，其他会话不能覆盖。`execution-preview` 保存固定 previewId，输入框确认区只读取该 ID 对应的共享预览；旧消息不能误操作后来的预览。`execution-prompt` 是下一步快捷语言，不是任务控制命令。`sendMessage` 的 `MessageInput.executionContext` 可带 `taskIds` 和 `batchId`，明确执行工作区来源。所选 ID 在异步等待前复制，完整校验项目归属，优先于文本中的批次；无多选时，用户明确写出的批次优先于页面批次。执行查看上下文与会话所属阶段分别保留，结果始终写回原发起会话。`context` 仅为可清除的展示说明，不能替代稳定 ID。语言操作仅建立预览，现有实施看板提供的范围同样先进入对话确认。阶段引导回复可停止，迁移循环不受聊天 stopReply 控制。
 
 原有 md.check / executeTasks / creation.update / cutover.complete 等兼容命令不能旁路新确认；旧 UI 已删除，接入新服务应使用上述契约，不恢复两套任务控制逻辑。
 
@@ -86,13 +88,13 @@
 
 沿用 `execute`，不约定新 HTTP 端点：
 
-| 命令               | 输入与行为                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------ |
-| planning.save      | expectedRevision + patch；约束、容量、依赖或选定资产属性，整体校验后写入，已生成计划标记待更新         |
-| planning.useSample | 按最新评估资格生成示例批次，复用 planning 执行锁；失败或停止后可重试                                   |
-| planning.preview   | expectedRevision + change；window（窗口/缓冲）、move（资产归属）、conditions 或 import；只建立前后对照 |
-| planning.apply     | previewId；检查发起会话、规划 revision、最新风险及阶段锁定，确认后一次应用                             |
-| planning.cancel    | previewId；仅删除待确认预览，不修改原计划                                                              |
+| 命令              | 输入与行为                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| planning.save     | expectedRevision + patch；约束、容量、依赖或选定资产属性，整体校验后写入，已生成计划标记待更新         |
+| planning.generate | 按最新评估资格生成规划，复用 planning 执行锁；Mock 内部生成示例批次，失败或停止后可重试                |
+| planning.preview  | expectedRevision + change；window（窗口/缓冲）、move（资产归属）、conditions 或 import；只建立前后对照 |
+| planning.apply    | previewId；检查发起会话、规划 revision、最新风险及阶段锁定，确认后一次应用                             |
+| planning.cancel   | previewId；仅删除待确认预览，不修改原计划                                                              |
 
 `planning.confirmScope` 保留兼容旧流程，新界面在人工交接时直接继承范围。进入 planning 自动产生一次引导问答；进入 migration 后规划只读。资料或风险变化、待确认预览会阻止旧计划交接；仍无需逐项处理风险。
 
@@ -123,7 +125,7 @@
 | 资源标识                      | 含义                                                |
 | ----------------------------- | --------------------------------------------------- |
 | execution-log:问题ID          | 自动生成的模拟诊断日志，资源归属当前项目            |
-| chat-file:附件ID              | 对话附件的实际文件字节，不进行内容解析               |
+| chat-file:附件ID              | 对话附件的实际文件字节，不进行内容解析              |
 | attachment:附件ID             | 问题或反馈的实际 File 字节，不进行内容解析          |
 | research-template             | 原始迁移调研 XLSX 模板，Mock 从随应用打包的资源读取 |
 | task-log:后接逗号分隔的任务ID | 已选任务的日志下载，Mock 从当前项目任务生成文本     |
@@ -134,7 +136,9 @@ PPTX 在下载时动态加载 PptxGenJS 生成实际 OOXML 文件；Excel 沿用
 
 评估输出固定为 `assessment-report`（PPTX 汇报）和 `assessment-results`（Excel 结果，SpreadsheetML `.xls`），两者下载时读取同一套当前评估及策略数据；规划模板、计划和 RunBook 随生成、保存、应用调整和下载更新为当前内容；范围清单及风险处置方案随风险变化更新。聊天历史统计不变，下载引用取得当前内容。本轮没有文件版本库。
 
-项目操作日志由消息中的 operation 标记及来源会话生成，没有独立审计后端。`getAccount` 只返回 configured、verified 和方式；Mock 只保存此状态，设置表单本次内存保存用户输入，退出清除，不落 localStorage。真实凭据的传输、保管、验证和登录态按内网平台规范在适配器/后端实现，配置成功不能等同于 verified。
+业务操作记录继续由消息中的 operation 标记及来源会话生成，UI 保留当前会话最近活动，不提供项目独立日志页，也没有独立审计后端。
+
+`getAccount` 与 `configureAccount` 返回脱敏 AccountState（configured、verified、method）。应用启动读取账户状态，保存后消费服务返回值；公共 store 只保留这些字段，不回填 API Key/密码。秘密仅用于表单与请求，成功清空、失败保留、表单卸载清除，不落 localStorage。Migration 连接密码也只留表单，公共连接草稿仅保存 IP、端口及用户名。真实传输、保管、验证和登录态按内网平台规范在适配器/后端实现，配置成功不能等同于 verified。
 
 ## 取消、错误与退出
 
@@ -144,7 +148,7 @@ PPTX 在下载时动态加载 PptxGenJS 生成实际 OOXML 文件；Excel 沿用
 
 组件在 Promise 失败时保留输入、选择和位置。服务应释放可重试的执行锁并发布一致状态；真实任务是否已产生副作用需通过后端状态判断，不能将断网或取消请求等同于服务端回滚。
 
-`logout` 成功后清除当前会话；`dispose` 必须可重复调用，停止本次请求、业务等待、订阅连接，清除本地引用，且不再发布事件。仅 AbortSignal 不能代替关闭 WebSocket/EventSource 等连接。外观偏好属于浏览器本地状态，退出后保留。
+`logout` 成功后清除当前会话；`dispose` 必须可重复调用，停止本次请求、业务等待、订阅连接，清除本地引用，且不再发布事件。仅 AbortSignal 不能代替关闭 WebSocket/EventSource 等连接。应用同时销毁本次工作区 store，阻止迟到回调写回；偏好独立使用 Zustand 并沿用本地存储，退出后保留。
 
 ## 接入验收与已知边界
 
@@ -154,6 +158,6 @@ PPTX 在下载时动态加载 PptxGenJS 生成实际 OOXML 文件；Excel 沿用
 
 ## 演示默认值和确认备注
 
-Mock 默认快照包含 `demoMode: true`，实施首次生成静止的第 4 批中间态，`execution.sampleProgress` 表明示例来源，任务 `demoFrozen` 防止无用户操作时推进。这些字段不能被真实适配用于豁免远端校验。目录可选 `sampleConnection` 仅用于公开示例凭据，真实凭据不得放入目录、日志、消息或持久存储。
+Mock 默认快照包含 `demoMode: true`，实施首次生成静止的第 4 批中间态，`execution.sampleProgress` 表明示例来源，任务 `demoFrozen` 防止无用户操作时推进。这些字段不能被真实适配用于豁免远端校验。目录可选 `sampleConnection` 仅用于公开示例凭据，UI 仅在 demoTools 能力开启时预填和显示样例入口；真实凭据不得放入目录、日志、消息或前端持久存储。
 
 项目命令可携带 `confirmation: { choice, note }`，仅在业务操作成功后将选择与备注记录到发起会话；失败不记成功。`confirmation.record` 接收 `subject/choice/note`，用于留在当前阶段、稍后处理等不执行业务的选择。备注不传入聊天指令解析器，不增加执行权限。原有 operationId、项目/会话归属、预览版本和资源校验保持。

@@ -4,6 +4,7 @@ import {
   type NexentConfiguration,
 } from "@/features/settings/NexentSettings";
 import { ThemePicker } from "@/features/settings/ThemePicker";
+import type { AccountState } from "@/domain/models";
 import { useTranslation } from "@/shared/i18n/index";
 import {
   backgrounds,
@@ -22,10 +23,14 @@ export function SettingsDrawer({
   onClose,
   onSignOut,
   onConfigureAccount,
+  account,
+  demoTools,
 }: {
+  account: AccountState;
+  demoTools: boolean;
   onConfigureAccount: (
     configuration: NexentConfiguration | null,
-  ) => Promise<void>;
+  ) => Promise<AccountState>;
   open: boolean;
   onClose: () => void;
   onSignOut: () => void;
@@ -34,8 +39,6 @@ export function SettingsDrawer({
   const body = useRef<HTMLDivElement>(null);
   const t = useTranslation();
   const [tab, setTab] = useState<"general" | "account">("general");
-  const [configuration, setConfiguration] =
-    useState<NexentConfiguration | null>(null);
   const background = useSyncExternalStore(
     subscribePreferences,
     () => readPreference("background"),
@@ -210,11 +213,9 @@ export function SettingsDrawer({
               <>
                 <AccountSettings onSignOut={onSignOut} />
                 <NexentSettings
-                  configuration={configuration}
-                  onChange={async (value) => {
-                    await onConfigureAccount(value);
-                    setConfiguration(value);
-                  }}
+                  account={account}
+                  demoTools={demoTools}
+                  onChange={onConfigureAccount}
                 />
               </>
             )}
@@ -226,7 +227,9 @@ export function SettingsDrawer({
             {t(
               tab === "general"
                 ? "偏好自动保存在此浏览器"
-                : "认证配置需手动保存，仅在本次页面有效",
+                : demoTools
+                  ? "认证配置需手动保存，仅在本次页面有效"
+                  : "认证配置需手动保存，凭据不会保存在浏览器",
             )}
           </span>
         </footer>

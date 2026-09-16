@@ -3,7 +3,7 @@ import { Icon } from "@/shared/ui/icons";
 import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { useRef, useState, type FormEvent } from "react";
 
-import type { NexentConfiguration } from "@/domain/models";
+import type { AccountState, NexentConfiguration } from "@/domain/models";
 import { errorMessage } from "@/services/errors";
 export type { NexentConfiguration } from "@/domain/models";
 
@@ -22,21 +22,37 @@ const emptyDraft: Draft = {
 };
 
 export function NexentSettings({
-  configuration,
+  account,
+  demoTools,
   onChange,
 }: {
-  configuration: NexentConfiguration | null;
-  onChange: (value: NexentConfiguration | null) => Promise<void>;
+  account: AccountState;
+  demoTools: boolean;
+  onChange: (value: NexentConfiguration | null) => Promise<AccountState>;
 }) {
   const t = useTranslation();
   const form = useRef<HTMLFormElement>(null);
   const [draft, setDraft] = useState<Draft>(() => ({
     ...emptyDraft,
-    ...configuration,
+    method: account.method ?? emptyDraft.method,
   }));
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [revealed, setRevealed] = useState(false);
   const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function saved(result: AccountState) {
+    setDraft({ ...emptyDraft, method: result.method ?? draft.method });
+    setErrors({});
+    setRevealed(false);
+    setNotice(
+      result.configured
+        ? result.verified
+          ? "配置已保存，连接已验证。"
+          : "配置已保存，尚未验证连接。"
+        : "认证配置已清除。",
+    );
+  }
 
   function change(field: Field, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -46,6 +62,7 @@ export function NexentSettings({
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (busy) return;
     const nextErrors: Partial<Record<Field, string>> = {};
     if (draft.method === "api-key" && !draft.apiKey.trim())
       nextErrors.apiKey = "请输入 API Key。";
@@ -64,9 +81,9 @@ export function NexentSettings({
         ?.focus();
       return;
     }
-    // Frontend preview only: credentials stay in React memory and are never sent or persisted.
+    setBusy(true);
     try {
-      await onChange(
+      const result = await onChange(
         draft.method === "api-key"
           ? { method: "api-key", apiKey: draft.apiKey.trim() }
           : {
@@ -75,35 +92,32 @@ export function NexentSettings({
               password: draft.password,
             },
       );
-      setRevealed(false);
-      setNotice("配置已保存，尚未验证连接。");
+      saved(result);
     } catch (error) {
       setNotice(errorMessage(error));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function clear() {
+    if (busy) return;
+    setBusy(true);
+    setNotice("");
     try {
-      await onChange(null);
+      saved(await onChange(null));
     } catch (error) {
       setNotice(errorMessage(error));
-      return;
+    } finally {
+      setBusy(false);
     }
-    setDraft({ ...emptyDraft });
-    setErrors({});
-    setRevealed(false);
-    setNotice("认证配置已清除。");
   }
 
   const secretField = draft.method === "api-key" ? "apiKey" : "password";
   const secretLabel = draft.method === "api-key" ? "API Key" : "平台密码";
-  const dirty = configuration
-    ? configuration.method !== draft.method ||
-      (configuration.method === "api-key"
-        ? configuration.apiKey !== draft.apiKey.trim()
-        : configuration.username !== draft.username.trim() ||
-          configuration.password !== draft.password)
-    : Boolean(draft.apiKey || draft.username || draft.password);
+  const dirty =
+    Boolean(draft.apiKey || draft.username || draft.password) ||
+    (account.configured && account.method !== draft.method);
   return (
     <section
       className="settings-section nexent-settings"
@@ -112,21 +126,35 @@ export function NexentSettings({
       <div className="settings-section-heading">
         <h3 id="nexent-title">{t("Nexent 平台认证")}</h3>
         <span>
-          {t(dirty ? "待保存" : configuration ? "已配置 · 未验证" : "未配置")}
+          {t(
+            dirty
+              ? "待保存"
+              : account.configured
+                ? account.verified
+                  ? "已配置 · 已验证"
+                  : "已配置 · 未验证"
+                : "未配置",
+          )}
         </span>
       </div>
       <p className="settings-description" id="nexent-preview-note">
-        {t("配置仅在当前页面保留，尚未连接 Nexent 服务。")}
+        {t(
+          demoTools
+            ? "配置仅在当前页面保留，尚未连接 Nexent 服务。"
+            : "认证状态由服务返回，保存后清空本次输入的凭据。",
+        )}
       </p>
       <form
         ref={form}
         onSubmit={save}
         noValidate
         autoComplete="off"
+        aria-busy={busy}
         aria-describedby="nexent-preview-note"
       >
         <fieldset
           className="authentication-method"
+          disabled={busy}
           aria-describedby="nexent-method-tip"
         >
           <legend>{t("认证方式")}</legend>
@@ -173,6 +201,7 @@ export function NexentSettings({
               id="nexent-username"
               name="username"
               required
+              disabled={busy}
               value={draft.username}
               onChange={(event) => change("username", event.target.value)}
               placeholder={t("输入 Nexent 平台账号")}
@@ -199,6 +228,7 @@ export function NexentSettings({
               name={secretField}
               type={revealed ? "text" : "password"}
               required
+              disabled={busy}
               value={draft[secretField]}
               onChange={(event) => change(secretField, event.target.value)}
               placeholder={t(
@@ -216,6 +246,7 @@ export function NexentSettings({
               className="icon-button"
               aria-label={t(revealed ? "隐藏凭据" : "显示凭据")}
               aria-pressed={revealed}
+              disabled={busy}
               onClick={() => setRevealed(!revealed)}
             >
               <Icon name={revealed ? "eye-off" : "eye"} size={18} />
@@ -235,11 +266,15 @@ export function NexentSettings({
           )}
         </div>
         <div className="settings-form-actions">
-          <button type="button" disabled={!configuration} onClick={clear}>
+          <button
+            type="button"
+            disabled={busy || !account.configured}
+            onClick={clear}
+          >
             {t("清除配置")}
           </button>
-          <button type="submit" className="primary">
-            {t("保存配置")}
+          <button type="submit" className="primary" disabled={busy}>
+            {t(busy ? "正在保存…" : "保存配置")}
           </button>
         </div>
         <p className="settings-save-status" role="status">

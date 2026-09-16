@@ -2,12 +2,7 @@ import type { RiskItem } from "@/domain/models";
 import { hasRiskDecision } from "@/domain/assessment";
 import { riskCategoryLabels, riskStrategyLabels } from "@/shared/i18n/risks";
 
-export interface RiskLocation {
-  mode: "category" | "vm";
-  category?: string;
-  vmKey?: string;
-  sourceRiskIds?: number[];
-}
+export type { RiskLocation } from "@/stores/riskState";
 export const vmKey = (risk: RiskItem) =>
   risk.vmId && risk.vmId !== "—" ? `id:${risk.vmId}` : `name:${risk.vmName}`;
 export const categoryKey = (risk: RiskItem) => risk.category ?? risk.stage;
@@ -86,30 +81,4 @@ export function ruleGroups(risks: RiskItem[]) {
     groups.set(key, [...(groups.get(key) ?? []), risk]);
   }
   return [...groups].map(([key, items]) => ({ key, risks: items }));
-}
-
-export function vmGroups(risks: RiskItem[]) {
-  const groups = new Map<string, RiskItem[]>();
-  for (const risk of risks) {
-    const key = vmKey(risk);
-    groups.set(key, [...(groups.get(key) ?? []), risk]);
-  }
-  return [...groups].map(([key, items]) => ({ key, risks: items }));
-}
-
-/** A rule location includes every finding for its VMs, including other rules. */
-export function risksAtLocation(risks: RiskItem[], location: RiskLocation) {
-  if (!location.sourceRiskIds) return risks;
-  const source = new Set(location.sourceRiskIds);
-  const vms = new Set(risks.filter((r) => source.has(r.id)).map(vmKey));
-  return risks.filter((r) => vms.has(vmKey(r)));
-}
-
-export function locationForRisks(risks: RiskItem[]): RiskLocation {
-  const vms = vmGroups(risks);
-  return {
-    mode: "vm",
-    sourceRiskIds: risks.map((r) => r.id),
-    vmKey: vms.length === 1 ? vms[0].key : undefined,
-  };
 }

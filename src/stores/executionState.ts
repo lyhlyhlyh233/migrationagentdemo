@@ -3,40 +3,28 @@ import type {
   SimulationScenario,
 } from "@/domain/execution";
 export interface ExecutionView {
-  tab: "dashboard" | "connection" | "tasks" | "issues";
-  mode: "batches" | "vms";
   batchId: string;
   issueId: string;
   expandedTask?: string;
   dashboardPage: number;
   dashboardSize: number;
-  query: string;
-  status: string;
-  page: number;
-  size: number;
   selected: string[];
   computeResource: string;
   network: string;
   window: string;
   targetBatchId: string;
   scenario: SimulationScenario;
-  connectionDraft?: MigrationConnectionInput;
+  connectionDraft?: Omit<MigrationConnectionInput, "password">;
   solution: "automatic" | "manual";
   note: string;
   simulateFailure: boolean;
   diagnosticFailure: "" | "log-failed" | "inconclusive";
 }
 export const initialExecutionView = (): ExecutionView => ({
-  tab: "connection",
   dashboardPage: 1,
   dashboardSize: 10,
-  mode: "batches",
   batchId: "",
   issueId: "",
-  query: "",
-  status: "",
-  page: 1,
-  size: 20,
   selected: [],
   computeResource: "目标资源池",
   network: "目标业务网络",

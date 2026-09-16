@@ -1,12 +1,10 @@
 import type { ProjectSnapshot } from "@/domain/models";
-import type { ProjectCommand, FilePurpose } from "@/services/contracts";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { useTranslation } from "@/shared/i18n";
 import { ExecutionDashboard } from "./ExecutionDashboard";
-import type { ExecutionView } from "./state";
+import type { ExecutionView } from "@/stores/executionState";
 import styles from "./Execution.module.css";
-import workspace from "./ExecutionWorkspace.module.css";
 
 export type ExecutionRequest =
   | { kind: "connection" }
@@ -14,23 +12,19 @@ export type ExecutionRequest =
   | { kind: "tasks"; taskIds: string[] };
 export interface ExecutionWorkspaceProps {
   snapshot: ProjectSnapshot;
+  demoTools?: boolean;
   view: ExecutionView;
   onView: (value: Partial<ExecutionView>) => void;
-  onCommand: (command: ProjectCommand) => Promise<boolean>;
   onDownload: (id: string) => void;
-  onUpload: (purpose: FilePurpose, file: File) => Promise<boolean>;
-  conversationId: string | null;
-  compact?: boolean;
-  onManage?: () => void;
   onContext?: (label: string) => void;
   onRequest?: (request: ExecutionRequest) => void;
 }
 export function ExecutionWorkspace({
   snapshot: s,
+  demoTools = false,
   view: v,
   onView,
   onDownload,
-  compact = false,
   onContext,
   onRequest,
 }: ExecutionWorkspaceProps) {
@@ -47,19 +41,11 @@ export function ExecutionWorkspace({
   };
   return (
     <section
-      className={`${styles.root} ${workspace.root}`}
-      data-compact={compact || undefined}
-      aria-label={t(compact ? "迁移实施工作区" : "迁移任务工作区")}
+      className={styles.root}
+      data-compact
+      aria-label={t("迁移实施工作区")}
     >
-      {!compact && (
-        <header className={`${styles.header} ${workspace.header}`}>
-          <h2>{t("迁移任务")}</h2>
-          <span className={styles.muted}>
-            {t("操作与确认在右侧对话中完成")}
-          </span>
-        </header>
-      )}
-      <div className={`${styles.body} ${workspace.body}`}>
+      <div className={styles.body}>
         {!e ? (
           <div className={styles.empty}>
             {t("规划确认交接后，可以配置 Migration 连接并启动批次。")}
@@ -76,6 +62,7 @@ export function ExecutionWorkspace({
               </p>
             )}
             <ExecutionDashboard
+              demoTools={demoTools}
               execution={e}
               selectedBatchId={v.batchId}
               expandedTaskId={v.expandedTask}

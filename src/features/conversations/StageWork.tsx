@@ -1,4 +1,4 @@
-import type { PanelId } from "@/app/state";
+import type { PanelId } from "@/stores/workspaceState";
 import type { ProjectSnapshot, StageId } from "@/domain/models";
 
 import { PlanningForm } from "@/features/planning/PlanningForm";
@@ -13,7 +13,9 @@ export function StageWork({
   onUpload,
   onDownload,
   onPanel,
+  demoTools = false,
 }: {
+  demoTools?: boolean;
   stage: StageId;
   snapshot: ProjectSnapshot;
   onCommand: (cmd: ProjectCommand) => void | Promise<boolean>;
@@ -26,6 +28,7 @@ export function StageWork({
     <div className="workflow-embeds">
       {stage === "research" ? (
         <AssessmentForm
+          demoTools={demoTools}
           snapshot={snapshot}
           onCommand={onCommand}
           onUpload={onUpload}
@@ -33,6 +36,7 @@ export function StageWork({
         />
       ) : stage === "planning" ? (
         <PlanningForm
+          demoTools={demoTools}
           snapshot={snapshot}
           onCommand={onCommand}
           onDownload={onDownload}

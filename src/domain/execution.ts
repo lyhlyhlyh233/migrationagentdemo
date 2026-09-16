@@ -123,6 +123,8 @@ export interface MigrationFeedback {
   origin: OperationContext;
 }
 export interface ExecutionState {
+  /** Service-recommended initial focus; callers keep their explicit selection. */
+  recommendedBatchId?: string;
   sampleProgress?: boolean;
   revision: number;
   connection?: {

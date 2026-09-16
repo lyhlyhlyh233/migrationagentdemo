@@ -2,12 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RiskItem } from "@/domain/models";
 import {
   categoryGroups,
-  locationForRisks,
-  risksAtLocation,
   ruleGroups,
   undecidedRisks,
   vmCount,
-  vmGroups,
 } from "../presentation";
 const risk: RiskItem = {
   id: 1,
@@ -41,7 +38,7 @@ describe("risk presentation grouping", () => {
   });
   it("keeps identical VM names with different IDs separate and retains every finding per VM", () => {
     const rows = [risk, { ...risk, id: 2 }, { ...risk, id: 3, vmId: "vm-2" }];
-    expect(vmGroups(rows).map((g) => g.risks.length)).toEqual([2, 1]);
+    expect(vmCount(rows)).toBe(2);
     expect(categoryGroups(rows)[0].risks).toHaveLength(3);
   });
   it("never includes existing choices, verified findings or planning risks in category targets", () => {
@@ -63,29 +60,4 @@ describe("risk presentation grouping", () => {
       ]).map((r) => r.id),
     ).toEqual([1]);
   });
-});
-
-it("rule navigation scopes VMs but preserves their other blocking findings", () => {
-  const constraint = {
-    ...risk,
-    id: 2,
-    rule: "drs",
-    impact: "constraint" as const,
-  };
-  const other = { ...risk, id: 3, vmId: "vm-2" };
-  const location = locationForRisks([constraint]);
-  expect(location).toEqual({
-    mode: "vm",
-    sourceRiskIds: [2],
-    vmKey: "id:vm-1",
-  });
-  expect(risksAtLocation([risk, constraint, other], location)).toEqual([
-    risk,
-    constraint,
-  ]);
-  expect(locationForRisks([risk, other]).vmKey).toBeUndefined();
-  expect(risksAtLocation([risk], { mode: "vm", sourceRiskIds: [99] })).toEqual(
-    [],
-  );
-  expect(risksAtLocation([risk, other], { mode: "vm" })).toEqual([risk, other]);
 });

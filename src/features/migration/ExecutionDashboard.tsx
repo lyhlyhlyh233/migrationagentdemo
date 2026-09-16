@@ -16,6 +16,7 @@ import styles from "./ExecutionDashboard.module.css";
 
 export function ExecutionDashboard({
   execution: e,
+  demoTools = false,
   selectedBatchId,
   expandedTaskId,
   onBatch,
@@ -27,6 +28,7 @@ export function ExecutionDashboard({
   onDownload,
 }: {
   execution: ExecutionState;
+  demoTools?: boolean;
   selectedBatchId?: string;
   expandedTaskId?: string;
   onBatch: (id: string) => void;
@@ -41,7 +43,7 @@ export function ExecutionDashboard({
     data = executionDashboard(e);
   const batchId = data.batches.some((batch) => batch.id === selectedBatchId)
     ? selectedBatchId!
-    : ((e.sampleProgress ? data.batches[3]?.id : undefined) ??
+    : (data.batches.find((batch) => batch.id === e.recommendedBatchId)?.id ??
       data.batches[0]?.id);
   const tasks = e.tasks.filter((task) => task.batchId === batchId);
   const selectedData = executionDashboard({ ...e, tasks });
@@ -57,7 +59,7 @@ export function ExecutionDashboard({
       <div className={styles.heading}>
         <h3>
           {t("整体批次进度")}
-          {e.sampleProgress && (
+          {demoTools && e.sampleProgress && (
             <span className={styles.sample}>{t("示例进度")}</span>
           )}
         </h3>
@@ -305,7 +307,7 @@ export function ExecutionDashboard({
                                     onClick={() => onDownload(issue.logId!)}
                                   >
                                     <Icon name="download" size={14} />
-                                    {t("下载模拟日志")}
+                                    {t(demoTools ? "下载模拟日志" : "下载日志")}
                                   </Button>
                                 )}
                               </dd>

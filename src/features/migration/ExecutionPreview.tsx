@@ -12,12 +12,14 @@ export function ExecutionPreview({
   busy,
   onCommand,
   summaryOnly = false,
+  demoTools = false,
 }: {
   preview: Preview;
   conversationId: string | null;
   busy: boolean;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
   summaryOnly?: boolean;
+  demoTools?: boolean;
 }) {
   const t = useTranslation(),
     own = preview.origin.conversationId === conversationId;
@@ -43,7 +45,9 @@ export function ExecutionPreview({
       {preview.action === "cutover" && (
         <p className={styles.notice}>
           {t(
-            "确认后模拟停止同步并执行割接。异常对象不可提交；完成后仍需人工业务验证。",
+            demoTools
+              ? "确认后模拟停止同步并执行割接。异常对象不可提交；完成后仍需人工业务验证。"
+              : "确认后停止同步并执行割接。异常对象不可提交；完成后仍需人工业务验证。",
           )}
         </p>
       )}

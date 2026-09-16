@@ -12,7 +12,7 @@ import { stageEligibility } from "@/domain/policies";
 import { PlanningPreview } from "@/features/planning/PlanningPreview";
 import { ExecutionPreview } from "@/features/migration/ExecutionPreview";
 import { ExecutionIssueEditor } from "@/features/migration/ExecutionIssues";
-import type { ExecutionView } from "@/features/migration/state";
+import type { ExecutionView } from "@/stores/executionState";
 import { useTranslation } from "@/shared/i18n";
 import { Button, Field } from "@/shared/ui/primitives";
 import { Select } from "@/shared/ui/Select";
@@ -23,11 +23,12 @@ import {
 } from "@/shared/ui/ConfirmationChoices";
 import { Pagination } from "@/shared/ui/Pagination";
 import { pageWindow } from "@/shared/ui/pagination-state";
-import type { ConversationConfirmation as Confirmation } from "./state";
+import type { ConversationConfirmation as Confirmation } from "@/stores/conversationState";
 import styles from "./Confirmation.module.css";
 
 export function ConversationConfirmation({
   value,
+  demoTools = false,
   onChange,
   snapshot,
   conversationId,
@@ -40,6 +41,7 @@ export function ConversationConfirmation({
   onClose,
 }: {
   value: Confirmation;
+  demoTools?: boolean;
   onChange: (value: Confirmation) => void;
   snapshot: ProjectSnapshot;
   conversationId: string;
@@ -151,6 +153,7 @@ export function ConversationConfirmation({
                 {t("查看修改前后 · {0} 项", planning.rows.length)}
               </summary>
               <PlanningPreview
+                demoTools={demoTools}
                 preview={planning}
                 onCommand={command}
                 canApply={snapshot.batchConfirmation !== "confirmed"}
@@ -251,6 +254,7 @@ export function ConversationConfirmation({
             <details className={styles.details}>
               <summary>{t("查看操作影响")}</summary>
               <ExecutionPreview
+                demoTools={demoTools}
                 preview={execution}
                 conversationId={conversationId}
                 busy={busy}
@@ -331,7 +335,9 @@ export function ConversationConfirmation({
                     window: execution.window,
                     computeResource: execution.computeResource,
                     network: execution.network,
-                    scenario: execution.scenario,
+                    ...(demoTools && execution.scenario
+                      ? { scenario: execution.scenario }
+                      : {}),
                   });
                 else
                   void run(
@@ -368,6 +374,7 @@ export function ConversationConfirmation({
       )}
       {value.kind === "issue" && (
         <ExecutionIssueEditor
+          demoTools={demoTools}
           snapshot={snapshot}
           issueId={value.id}
           view={executionView}
@@ -396,6 +403,7 @@ export function ConversationConfirmation({
       )}
       {value.kind === "tasks" && (
         <TaskChoices
+          demoTools={demoTools}
           snapshot={snapshot}
           value={value}
           onChange={onChange}
@@ -429,7 +437,9 @@ export function ConversationConfirmation({
               {
                 value: "apply",
                 title: "继续下一阶段",
-                description: "确认当前范围，进入下一阶段继续演示。",
+                description: demoTools
+                  ? "确认当前范围，进入下一阶段继续演示。"
+                  : "确认当前范围，进入下一阶段。",
                 recommended: true,
               },
               {
@@ -490,6 +500,7 @@ export function ConversationConfirmation({
 
 function TaskChoices({
   snapshot,
+  demoTools = false,
   value,
   onChange,
   view,
@@ -501,6 +512,7 @@ function TaskChoices({
 }: {
   snapshot: ProjectSnapshot;
   value: Extract<Confirmation, { kind: "tasks" }>;
+  demoTools?: boolean;
   onChange: (value: Confirmation) => void;
   view: ExecutionView;
   onView: (patch: Partial<ExecutionView>) => void;
@@ -605,20 +617,22 @@ function TaskChoices({
               value={view.network}
               onChange={(event) => onView({ network: event.target.value })}
             />
-            <label>
-              {t("模拟场景")}
-              <Select
-                value={view.scenario}
-                onValueChange={(scenario) =>
-                  onView({ scenario: scenario as ExecutionView["scenario"] })
-                }
-              >
-                <option value="normal">{t("正常执行")}</option>
-                <option value="network">{t("同步网络异常")}</option>
-                <option value="capacity">{t("目标容量不足")}</option>
-                <option value="permission">{t("权限不足")}</option>
-              </Select>
-            </label>
+            {demoTools && (
+              <label>
+                {t("模拟场景")}
+                <Select
+                  value={view.scenario}
+                  onValueChange={(scenario) =>
+                    onView({ scenario: scenario as ExecutionView["scenario"] })
+                  }
+                >
+                  <option value="normal">{t("正常执行")}</option>
+                  <option value="network">{t("同步网络异常")}</option>
+                  <option value="capacity">{t("目标容量不足")}</option>
+                  <option value="permission">{t("权限不足")}</option>
+                </Select>
+              </label>
+            )}
           </div>
         </details>
       )}
@@ -665,7 +679,7 @@ function TaskChoices({
                 taskIds: chosen.map((task) => task.id),
                 computeResource: view.computeResource,
                 network: view.network,
-                scenario: view.scenario,
+                ...(demoTools ? { scenario: view.scenario } : {}),
                 targetBatchId: view.targetBatchId,
                 window: view.window,
               });

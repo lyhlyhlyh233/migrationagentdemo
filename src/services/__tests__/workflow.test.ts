@@ -60,7 +60,7 @@ async function migration() {
     stageId: "planning" as const,
     conversationId: "stage-planning-main",
   };
-  await finish(service.execute(p, { type: "planning.useSample" }));
+  await finish(service.execute(p, { type: "planning.generate" }));
   await service.execute(p, { type: "stage.confirm", target: "migration" });
   const m = {
     ...c,
@@ -411,7 +411,7 @@ describe("project service boundaries", () => {
       conversationId: "stage-planning-main",
     };
     await service.execute(p, { type: "planning.confirmScope" });
-    await finish(service.execute(p, { type: "planning.useSample" }));
+    await finish(service.execute(p, { type: "planning.generate" }));
     await service.execute(p, { type: "stage.confirm", target: "migration" });
     const m = {
       ...c,
@@ -777,7 +777,7 @@ describe("200 VM assessment sample", () => {
       conversationId: "stage-planning-main",
     };
     await service.execute(p, { type: "planning.confirmScope" });
-    await finish(service.execute(p, { type: "planning.useSample" }));
+    await finish(service.execute(p, { type: "planning.generate" }));
     const planned = await service.getProject(c.projectId);
     expect(planned.batchTasks).toHaveLength(8);
     for (const risk of planned.risks.filter((r) => r.stage === "planning")) {
@@ -811,7 +811,7 @@ describe("200 VM assessment sample", () => {
     expect(revised.scopeRows).toHaveLength(196);
     const names = migrationScope(revised).map((row) => String(row[0]));
     expect(names).toHaveLength(182);
-    await finish(service.execute(p, { type: "planning.useSample" }));
+    await finish(service.execute(p, { type: "planning.generate" }));
     const assigned = (await service.getProject(c.projectId)).batchTasks.flatMap(
       (batch) => batch.vmNames,
     );

@@ -1,26 +1,3 @@
-.root {
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-}
-@media (max-width: 720px) {
-  .root {
-    padding: 12px;
-  }
-}
-.heading {
-  flex: 0 0 auto;
-}
-.heading h2 {
-  font-weight: 650;
-  margin: 0;
-  font-size: 1.25rem;
-}
 .workspace {
   min-width: 0;
   font-size: var(--ui-size);
@@ -66,59 +43,14 @@
 .dock:not([data-editing="true"]) {
   overflow-y: auto;
 }
-.summaryRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-}
-.scopeHint {
-  color: var(--secondary);
-  font-size: var(--ui-caption);
-}
-.overview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: baseline;
-}
-.overview span {
-  color: var(--secondary);
-}
-.overview strong {
-  font-weight: 650;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  margin-left: 5px;
-}
-.overview strong[data-tone="warning"] {
-  color: var(--warning);
-}
+
 .hint {
   font-size: var(--ui-small);
   line-height: 1.55;
   color: var(--secondary);
   margin: 6px 0 14px;
 }
-.modeSwitch {
-  display: flex;
-  gap: 4px;
-  margin: 0 0 0 auto;
-}
-.modeSwitch button {
-  border: 0;
-  border-radius: 6px;
-  padding: 5px 10px;
-  background: transparent;
-  font: inherit;
-  color: var(--secondary);
-}
-.modeSwitch button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  color: var(--accent-ink);
-  box-shadow: inset 0 -2px var(--accent);
-  font-weight: 600;
-}
+
 .filters {
   display: flex;
   gap: 8px;
@@ -311,16 +243,7 @@
   color: var(--secondary);
   margin: 6px 0 9px;
 }
-.rowActions {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.rowActions > button {
-  white-space: normal;
-  text-align: left;
-}
+
 .ruleActions {
   display: flex;
   flex-direction: column;
@@ -359,8 +282,7 @@
 .workspace:lang(en) .riskTable .actionsColumn {
   width: 136px;
 }
-.riskTable,
-.vmTable {
+.riskTable {
   min-width: 0;
 }
 .levelColumn {
@@ -378,12 +300,7 @@
 .actionsColumn {
   width: 88px;
 }
-.identifierColumn {
-  width: 20%;
-}
-.progressColumn {
-  width: 12%;
-}
+
 .table > tbody > tr:not(.expandedRow) > :is(td, th) {
   vertical-align: middle;
 }
@@ -405,24 +322,7 @@
 .workspace:lang(en) .filters > * {
   width: 130px;
 }
-.vmTable .strategyColumn {
-  width: 18%;
-}
-.vmTable .actionsColumn {
-  width: 20%;
-}
-.vmTable[data-subtable="false"] .identifierColumn {
-  width: 16%;
-}
-.vmTable[data-subtable="false"] .vmCountColumn {
-  width: 6%;
-}
-.vmTable[data-subtable="false"] .strategyColumn {
-  width: 13%;
-}
-.vmTable[data-subtable="false"] .actionsColumn {
-  width: 12%;
-}
+
 .ruleDetails {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) 2fr;
@@ -441,18 +341,7 @@
 .ruleDetails p + p {
   margin-top: 6px;
 }
-.subtable {
-  min-width: 0;
-}
-.subtable > .tableScroll {
-  container: risk-table / inline-size;
-  border: 0;
-  border-radius: 0;
-}
-.subtable .vmTable th,
-.subtable .vmTable td {
-  padding: 8px 10px;
-}
+
 .bulkBar {
   background: var(--panel);
   padding: 0;
@@ -494,7 +383,6 @@
   padding: 6px 10px;
   font-size: var(--ui-size);
 }
-
 .workspace button.bulkPrimary {
   background: var(--bubble-bg);
   border-color: var(--bubble-bg);
@@ -576,82 +464,7 @@
   background: var(--surface);
   padding: 10px 12px;
 }
-.findings {
-  min-width: 0;
-}
-.findingRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(80px, auto) auto;
-  gap: 12px;
-  align-items: start;
-  margin-top: 14px;
-}
-.findingRow:first-child {
-  margin-top: 0;
-}
-.findingRow strong {
-  font-size: inherit;
-  font-weight: 550;
-}
-.findingRow small {
-  display: block;
-  color: var(--secondary);
-  font-size: var(--ui-caption);
-}
-.findingRow > span {
-  font-size: var(--ui-small);
-}
-.evidence {
-  margin: 6px 0 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--ui-small);
-}
-.evidence:last-child {
-  margin-bottom: 0;
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-.evidence summary {
-  color: var(--secondary);
-  cursor: pointer;
-  width: fit-content;
-  padding-block: 3px;
-}
-.evidence dl {
-  margin: 12px 0;
-}
-.evidence dl > div {
-  margin-bottom: 10px;
-}
-.evidence dt {
-  color: var(--secondary);
-  font-size: var(--ui-caption);
-  margin-bottom: 2px;
-}
-.evidence dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.verification {
-  margin-top: 12px;
-}
-.verification label {
-  display: block;
-}
-.verification textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: 8px;
-  font: inherit;
-  margin-top: 6px;
-  resize: vertical;
-}
-.actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
+
 .empty {
   text-align: center;
   padding: 42px 16px;
@@ -668,17 +481,6 @@
   margin: 12px 0;
 }
 @container (max-width: 480px) {
-  .findingRow {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .findingRow > span {
-    grid-row: 2;
-  }
-  .findingRow > button {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
-
   .sectionHeading {
     flex-wrap: wrap;
   }
@@ -693,9 +495,7 @@
   .selectionSummary {
     font-size: var(--ui-caption);
   }
-  .modeSwitch {
-    margin-block: 0;
-  }
+
   .hint {
     margin-bottom: 8px;
   }
@@ -714,9 +514,7 @@
   gap: 12px;
   flex-wrap: wrap;
 }
-.workspace .subtable .vmTable {
-  font-size: inherit;
-}
+
 @container risk-table (max-width: 460px) {
   .table {
     display: block;
@@ -775,12 +573,6 @@
   .table tbody > .expandedRow > td {
     padding: 8px;
   }
-  .rowActions {
-    gap: 16px;
-  }
-  .rowActions button {
-    min-height: 32px;
-  }
 }
 
 @container risk-table (max-width: 740px) {
@@ -817,18 +609,8 @@
   .bulkButtons button {
     padding-inline: 7px;
   }
-  .scopeHint {
-    display: none;
-  }
 }
 @container (max-width: 540px) {
-  .summaryRow {
-    gap: 6px;
-  }
-  .overview {
-    gap: 6px 12px;
-    font-size: var(--ui-small);
-  }
   .filters {
     margin-left: 0;
   }
@@ -855,67 +637,11 @@
   }
 }
 
-.vmCountButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: var(--control-compact);
-  padding: 4px 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.vmCountButton strong {
-  font-size: var(--ui-title);
-  font-weight: 600;
-}
-.vmCountButton span {
-  font-size: var(--ui-caption);
-  color: var(--secondary);
-}
-.vmCountButton[aria-expanded="true"] {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-}
-.table .subtable {
-  padding: 4px 0;
-}
-.table .subtable .vmTable thead th {
-  background: var(--surface);
-  color: var(--secondary);
-  border-bottom: 1px solid var(--line-strong);
-}
-.table .subtable .vmTable tbody > tr:not(.expandedRow) {
-  background: var(--surface-subtle);
-}
-.subtable .tableScroll {
-  border: 0;
-  border-radius: 0;
-}
 .bulkControlRow > .search {
   min-height: var(--control-height);
 }
 .bulkButtons button {
   min-height: var(--control-height);
-}
-
-.locationScope {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--ui-caption);
-}
-.locationScope span {
-  flex: 1;
-  min-width: 160px;
-  overflow-wrap: anywhere;
 }
 
 @container risk-table (min-width: 1000px) {
@@ -941,8 +667,8 @@
     min-height: 36px;
   }
 }
-
-/* Keep filtering beside search, separated from the charts and findings. */
+/* Keep filtering beside search,
+separated from the charts and findings. */
 .searchFilters {
   display: flex;
   align-items: center;
@@ -960,14 +686,22 @@
   margin: 0;
   flex: 0 1 auto;
 }
-
 .listViewport:focus-visible {
   outline-offset: -2px;
 }
 .dock:focus-visible {
   outline-offset: -2px;
 }
-
 .dock :is(button, input):focus-visible {
   outline-offset: -2px;
+}
+.vmCount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.vmCount strong {
+  font-weight: 600;
 }

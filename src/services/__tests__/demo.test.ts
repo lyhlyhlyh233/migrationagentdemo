@@ -91,13 +91,15 @@ describe("Mock walkthrough and confirmation notes", () => {
         { type: "stage.confirm", target: "planning" },
       ),
     ).rejects.toThrow("阶段交接条件");
-    expect((await strictService.catalog()).sampleConnection).toBeUndefined();
+    // Strict stage gates are independent from optional demo controls.
+    expect((await strictService.catalog()).capabilities?.demoTools).toBe(true);
     strictService.dispose();
   });
 
   it("seeds actual planned assets through batch 4 and keeps the snapshot static on connection checks", async () => {
     const { c, s } = await migration();
     const e = s.execution!;
+    expect(e.recommendedBatchId).toBe("B-004");
     const batch = (id: string) => e.tasks.filter((t) => t.batchId === id);
     expect(batch("B-001").every((t) => t.phase === "validation")).toBe(true);
     expect(batch("B-002").every((t) => t.phase === "validation")).toBe(true);
@@ -169,7 +171,7 @@ describe("Mock walkthrough and confirmation notes", () => {
       selectedAt: "2026-09-01",
     };
     const p = context(c, "planning");
-    await timed(service.execute(p, { type: "planning.useSample" }));
+    await timed(service.execute(p, { type: "planning.generate" }));
     s.planning!.batches[0].window = "用户保留窗口";
     s.planning!.conditions.fullBandwidth = 42;
     s.planning!.stale = true;
@@ -272,7 +274,7 @@ describe("Mock walkthrough and confirmation notes", () => {
     expect(s.risks).toEqual(risks);
     const planningContext = context(c, "planning");
     const planning = service.execute(planningContext, {
-      type: "planning.useSample",
+      type: "planning.generate",
     });
     const planningStopped = expect(planning).rejects.toMatchObject({
       code: "STOPPED",
@@ -296,12 +298,12 @@ describe("Mock walkthrough and confirmation notes", () => {
     const c = await project();
     await service.execute(c, { type: "stage.confirm", target: "planning" });
     const p = context(c, "planning");
-    await timed(service.execute(p, { type: "planning.useSample" }));
+    await timed(service.execute(p, { type: "planning.generate" }));
     const s = service.runtime.state(c.projectId);
     s.planning!.batches[0].window = "用户规划窗口";
     s.planning!.stale = true;
     const baseline = structuredClone(s.planning!.batches);
-    const regenerate = service.execute(p, { type: "planning.useSample" });
+    const regenerate = service.execute(p, { type: "planning.generate" });
     await service.execute(p, { type: "stage.confirm", target: "migration" });
     const tasks = structuredClone(s.execution!.tasks);
     expect(s.planningStatus).toBe("completed");

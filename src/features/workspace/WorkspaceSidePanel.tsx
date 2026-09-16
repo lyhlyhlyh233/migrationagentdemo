@@ -1,7 +1,6 @@
-import type { SidePanelTab } from "@/app/state";
+import type { SidePanelTab } from "@/stores/workspaceState";
 import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { useTranslation } from "@/shared/i18n";
-import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import styles from "./WorkspaceSidePanel.module.css";
 
@@ -10,8 +9,6 @@ export function WorkspaceSidePanel({
   onWidthChange,
   onCollapse,
   onClose,
-  onManage,
-  manageDisabled,
   risks,
   planning,
   execution,
@@ -31,8 +28,6 @@ export function WorkspaceSidePanel({
   tabs: SidePanelTab[];
   active: SidePanelTab;
   onSelect: (tab: SidePanelTab) => void;
-  onManage: () => void;
-  manageDisabled: boolean;
 }) {
   const t = useTranslation();
   const panel = useRef<HTMLElement>(null);
@@ -188,17 +183,6 @@ export function WorkspaceSidePanel({
           ))}
         </div>
         <div className={styles.headerActions}>
-          <Button disabled={manageDisabled} onClick={onManage}>
-            {t(
-              {
-                risk: "打开迁移风险页面",
-                planning: "打开迁移规划页面",
-                execution: "打开迁移任务页面",
-                validation: "打开验证结果页面",
-              }[active],
-            )}{" "}
-            <Icon name="open" size={14} />
-          </Button>
           <button
             type="button"
             className="icon-button"

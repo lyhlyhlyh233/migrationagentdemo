@@ -15,6 +15,7 @@ export function initializeExecution(s: ProjectSnapshot): ExecutionState {
   );
   const assets = new Map(eligiblePlanningAssets(s).map((a) => [a.id, a]));
   s.execution = {
+    recommendedBatchId: s.planning.batches[0]?.id,
     revision: 0,
     connectionStatus: "unconfigured",
     issues: [],

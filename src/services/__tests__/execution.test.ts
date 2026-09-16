@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ExecutionWorkspace } from "@/features/migration/ExecutionWorkspace";
-import { initialExecutionView } from "@/features/migration/state";
+import { initialExecutionView } from "@/stores/executionState";
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { MockMigrationService } from "../mock";
 import type { OperationContext } from "@/domain/models";
@@ -51,7 +51,7 @@ async function setup(language: "zh-CN" | "en" = "zh-CN") {
   await service.execute(c, { type: "stage.confirm", target: "planning" });
   c.stageId = "planning";
   c.conversationId = "stage-planning-main";
-  const plan = service.execute(c, { type: "planning.useSample" });
+  const plan = service.execute(c, { type: "planning.generate" });
   await vi.runAllTimersAsync();
   await plan;
   await service.execute(c, { type: "stage.confirm", target: "migration" });
@@ -561,6 +561,93 @@ describe("batch execution and business validation", () => {
     });
     expect(e.validations[1].business).toBe("pending");
   });
+  it("keeps passed business confirmations intact through non-blocking feedback and review", async () => {
+    const { s, ids, v } = await cutover(),
+      e = s.execution!;
+    const selected = e.validations.find((item) => item.taskId === ids[1])!;
+    await service.execute(v, {
+      type: "validation.record",
+      taskIds: [ids[1]],
+      status: "passed",
+      note: "业务测试正常",
+    });
+    const confirmations = structuredClone(e.validations);
+    const tasks = structuredClone(e.tasks);
+    await service.execute(v, {
+      type: "validation.feedback",
+      taskIds: [ids[1]],
+      description: "建议下次增加日志保留时长",
+      blocking: false,
+    });
+    const feedback = e.feedback.at(-1)!;
+    expect(e.validations).toEqual(confirmations);
+    expect(canValidate(e, selected)).toBe(true);
+    await service.execute(v, {
+      type: "validation.feedbackReview",
+      feedbackId: feedback.id,
+      resolution: "已登记后续优化建议",
+    });
+    await service.execute(v, {
+      type: "validation.feedbackReview",
+      feedbackId: feedback.id,
+      resolution: "确认后续优化建议已归档",
+      confirm: true,
+    });
+    expect(feedback.status).toBe("resolved");
+    expect(e.validations).toEqual(confirmations);
+    expect(e.tasks).toEqual(tasks);
+    expect(
+      await (await service.download(s.id, "validation-report")).blob.text(),
+    ).toContain("业务：passed");
+  });
+  it("preserves a manual failure and unrelated tasks until successful recheck and explicit retry", async () => {
+    const { c, s } = await setup(),
+      e = s.execution!;
+    await timed(service.execute(c, connection));
+    const affected = e.tasks[0];
+    await act(c, "start", [affected.id], { scenario: "capacity" });
+    await vi.advanceTimersByTimeAsync(3500);
+    const issue = e.issues[0];
+    const peers = structuredClone(e.tasks.slice(1));
+    const validations = structuredClone(e.validations);
+    await service.execute(c, {
+      type: "execution.remedy",
+      issueId: issue.id,
+      solution: "manual",
+      note: "人工检查目标容量",
+    });
+    expect(issue.state).toBe("manual");
+    await expect(
+      timed(
+        service.execute(c, {
+          type: "execution.recheck",
+          issueId: issue.id,
+          note: "扩容待确认，请重试",
+          simulateFailure: true,
+        }),
+      ),
+    ).rejects.toThrow("模拟修复或复查失败");
+    expect(issue.state).toBe("repair-failed");
+    expect(issue.note).toBe("扩容待确认，请重试");
+    expect(affected.phase).toBe("failed");
+    await expect(act(c, "retry", [affected.id])).rejects.toThrow();
+    await timed(
+      service.execute(c, {
+        type: "execution.recheck",
+        issueId: issue.id,
+        note: "目标容量已经扩容完成",
+      }),
+    );
+    expect(issue.state).toBe("resolved");
+    expect(affected.phase).toBe("failed");
+    expect(e.tasks.slice(1)).toEqual(peers);
+    expect(e.validations).toEqual(validations);
+    await act(c, "retry", [affected.id]);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(affected.phase).toBe("created");
+    expect(e.tasks.slice(1)).toEqual(peers);
+    expect(e.validations).toEqual(validations);
+  });
   it("blocks new controls on permission failures until reconnect, manual review and explicit retry", async () => {
     const { c, s } = await setup(),
       e = s.execution!;
@@ -893,7 +980,7 @@ describe("batch execution and business validation", () => {
       id: `scale-${i}`,
       name: `scale-vm-${i}`,
     }));
-    for (const compact of [false, true]) {
+    {
       const html = renderToStaticMarkup(
         createElement(ExecutionWorkspace, {
           snapshot,
@@ -903,12 +990,8 @@ describe("batch execution and business validation", () => {
             dashboardPage: 2,
             dashboardSize: 20,
           },
-          compact,
           onView: () => {},
-          onCommand: async () => true,
           onDownload: () => {},
-          onUpload: async () => true,
-          conversationId: null,
         }),
       );
       expect(html.match(/<tr/g) || []).toHaveLength(21);

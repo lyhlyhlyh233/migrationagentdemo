@@ -56,9 +56,12 @@ const catalog: Catalog = {
   },
 };
 export class MockMigrationService implements MigrationService {
-  readonly runtime = new MockRuntime();
+  readonly runtime: MockRuntime;
   private readonly downloads = new AbortController();
-  constructor(private readonly config: { demoMode?: boolean } = {}) {
+  constructor(
+    private readonly config: { demoMode?: boolean; demoTools?: boolean } = {},
+  ) {
+    this.runtime = new MockRuntime(config.demoTools !== false);
     this.initialize(EMPTY_WORKSPACE_ID, null, "zh-CN");
   }
   private active(options: RequestOptions = {}) {
@@ -164,7 +167,8 @@ export class MockMigrationService implements MigrationService {
   async catalog(options: RequestOptions = {}) {
     this.active(options);
     const result = structuredClone(catalog);
-    if (this.config.demoMode === false) delete result.sampleConnection;
+    result.capabilities = { demoTools: this.runtime.demoTools };
+    if (!this.runtime.demoTools) delete result.sampleConnection;
     return result;
   }
   async listProjects(options: RequestOptions = {}) {

@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
-import type { ConversationConfirmation, ConversationView } from "./state";
+import type {
+  ConversationConfirmation,
+  ConversationView,
+} from "@/stores/conversationState";
 
 /** Only explicit previews in this conversation may open its composer. */
 export function useConversationConfirmation(

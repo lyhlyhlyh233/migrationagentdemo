@@ -10,31 +10,23 @@ import { pageWindow, type PageState } from "@/shared/ui/pagination-state";
 import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
 import {
   highestRiskLevel,
-  locationForRisks,
   ruleGroups,
   selectionState,
   strategyLabel,
   vmCount,
 } from "./presentation";
-import type { RiskInteractions } from "./RiskVmDetails";
-import { RiskVmTable } from "./RiskVmTable";
+import type { RiskInteractions } from "./RiskInteractions";
 import styles from "./RiskPanel.module.css";
 
 export interface CategoryTableView {
   pagination: PageState;
-  expanded: string[];
-  vmPages: Record<string, PageState>;
 }
 export const initialCategoryView = (): CategoryTableView => ({
   pagination: { page: 1, size: 20 },
-  expanded: [],
-  vmPages: {},
 });
 
 export function CategoryRiskTable({
   risks,
-  allRisks,
-  readOnlyVms,
   selected,
   onSelect,
   view,
@@ -42,8 +34,6 @@ export function CategoryRiskTable({
   ...actions
 }: {
   risks: RiskItem[];
-  allRisks: RiskItem[];
-  readOnlyVms: boolean;
   selected: ReadonlySet<number>;
   onSelect: (risks: RiskItem[], checked: boolean) => void;
   view: CategoryTableView;
@@ -119,7 +109,6 @@ export function CategoryRiskTable({
             {rows.map(({ key, risks: items }) => {
               const risk = items[0];
               const labels = [...new Set(items.map(strategyLabel))];
-              const open = view.expanded.includes(key);
               const detailsOpen = details.includes(key);
               const rowSelected = items.some((r) => selected.has(r.id));
               return (
@@ -154,31 +143,10 @@ export function CategoryRiskTable({
                       </span>
                     </td>
                     <td data-label={t("虚拟机数")}>
-                      <button
-                        className={styles.vmCountButton}
-                        aria-expanded={readOnlyVms ? undefined : open}
-                        aria-label={t("{0} 台", vmCount(items))}
-                        disabled={
-                          actions.navigationLocked ||
-                          (readOnlyVms && actions.editing)
-                        }
-                        onClick={() =>
-                          readOnlyVms
-                            ? actions.onManage?.(locationForRisks(items))
-                            : onView({
-                                ...view,
-                                expanded: open
-                                  ? view.expanded.filter((k) => k !== key)
-                                  : [...view.expanded, key],
-                              })
-                        }
-                      >
-                        {!readOnlyVms && (
-                          <Icon name={open ? "chevron" : "right"} size={14} />
-                        )}
+                      <span className={styles.vmCount}>
                         <strong>{vmCount(items)}</strong>
                         <span>{t("台")}</span>
-                      </button>
+                      </span>
                     </td>
                     <td data-label={t("当前策略")}>
                       <span>
@@ -251,31 +219,6 @@ export function CategoryRiskTable({
                             </dd>
                           </div>
                         </dl>
-                      </td>
-                    </tr>
-                  )}
-                  {!readOnlyVms && open && (
-                    <tr className={styles.expandedRow}>
-                      <td colSpan={7}>
-                        <RiskVmTable
-                          risks={items}
-                          allRisks={allRisks}
-                          readOnly={readOnlyVms}
-                          subtable
-                          label={t("{0}的虚拟机", t(risk.description))}
-                          selected={selected}
-                          onSelect={onSelect}
-                          pagination={
-                            view.vmPages[key] ?? { page: 1, size: 10 }
-                          }
-                          onPage={(page) =>
-                            onView({
-                              ...view,
-                              vmPages: { ...view.vmPages, [key]: page },
-                            })
-                          }
-                          {...actions}
-                        />
                       </td>
                     </tr>
                   )}

@@ -2160,5 +2160,18 @@
   "尚未生成规划，请在规划会话中补充资料并生成初稿。": "No plan yet. Add planning information and generate a draft in the planning conversation.",
   "进入规划会话": "Open planning conversation",
   "本批次虚拟机": "Virtual machines in this batch",
-  "割接时间": "Cutover time"
+  "割接时间": "Cutover time",
+  "补充业务属性与依赖，也可填写基础约束。": "Add business attributes, dependencies and basic constraints.",
+  "重新生成规划初稿": "Regenerate draft plan",
+  "导入预览": "Import preview",
+  "确认后才应用，请核对修改范围。": "Review the affected scope. Changes are applied only after confirmation.",
+  "解释分批规则": "Explain batch rules",
+  "下载日志": "Download logs",
+  "阶段性结果": "Interim results",
+  "确认复查通过": "Confirm recheck passed",
+  "确认后停止同步并执行割接。异常对象不可提交；完成后仍需人工业务验证。": "Confirmation stops synchronization and performs cutover. Tasks with issues cannot be submitted; business validation is still required afterwards.",
+  "正在核对日志，请稍候。": "Reviewing logs. Please wait.",
+  "确认当前范围，进入下一阶段。": "Confirm the current scope and continue to the next stage.",
+  "当前服务未启用演示工具": "Demo tools are not enabled for the current service.",
+  "模拟排程": "Simulated schedule"
 }

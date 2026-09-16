@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
 import type { ProjectCommand, FilePurpose } from "@/services/contracts";
-import type { ExecutionView } from "./state";
+import type { ExecutionView } from "@/stores/executionState";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { Select } from "@/shared/ui/Select";
@@ -24,6 +24,7 @@ export const issueStateLabels: Record<string, string> = {
   resolved: "已解决",
 };
 interface IssueProps {
+  demoTools?: boolean;
   snapshot: ProjectSnapshot;
   view: ExecutionView;
   onView: (value: Partial<ExecutionView>) => void;
@@ -34,6 +35,7 @@ interface IssueProps {
 }
 export function ExecutionIssueEditor({
   snapshot,
+  demoTools = false,
   issueId,
   view,
   onView,
@@ -121,7 +123,12 @@ export function ExecutionIssueEditor({
         </p>
         {!diagnosticError && (
           <p className={styles.diagnosis}>
-            {t(issue.diagnosis || "正在核对模拟日志，请稍候。")}
+            {t(
+              issue.diagnosis ||
+                (demoTools
+                  ? "正在核对模拟日志，请稍候。"
+                  : "正在核对日志，请稍候。"),
+            )}
           </p>
         )}
         <p>{t(issue.evidence)}</p>
@@ -130,7 +137,7 @@ export function ExecutionIssueEditor({
             {issue.logId && (
               <Button onClick={() => onDownload(issue.logId!)}>
                 <Icon name="download" size={14} />
-                {t("下载模拟日志")}
+                {t(demoTools ? "下载模拟日志" : "下载日志")}
               </Button>
             )}
             {!readonly && (
@@ -141,7 +148,9 @@ export function ExecutionIssueEditor({
                   void send({
                     type: "execution.diagnose",
                     issueId,
-                    simulate: view.diagnosticFailure || undefined,
+                    ...(demoTools && view.diagnosticFailure
+                      ? { simulate: view.diagnosticFailure }
+                      : {}),
                   })
                 }
               >
@@ -227,7 +236,7 @@ export function ExecutionIssueEditor({
           ))}
         </div>
       )}
-      {issue.state !== "resolved" && (
+      {demoTools && issue.state !== "resolved" && (
         <details className={styles.simulation}>
           <summary>{t("模拟处理选项")}</summary>
           <div>
@@ -303,7 +312,9 @@ export function ExecutionIssueEditor({
                       type: "execution.recheck",
                       issueId,
                       note: view.note,
-                      simulateFailure: view.simulateFailure,
+                      ...(demoTools
+                        ? { simulateFailure: view.simulateFailure }
+                        : {}),
                       confirmation: {
                         choice: "提交处理并复查",
                         note: view.note,
@@ -314,7 +325,9 @@ export function ExecutionIssueEditor({
                       issueId,
                       solution: selectedSolution,
                       note: view.note,
-                      simulateFailure: view.simulateFailure,
+                      ...(demoTools
+                        ? { simulateFailure: view.simulateFailure }
+                        : {}),
                       confirmation: {
                         choice:
                           issue.category === "network" &&

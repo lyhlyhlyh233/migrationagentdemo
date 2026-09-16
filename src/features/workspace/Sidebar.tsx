@@ -1,4 +1,4 @@
-import type { PanelId, ProjectUi } from "@/app/state";
+import type { ProjectUi } from "@/stores/workspaceState";
 import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import type {
   ProjectSnapshot,
@@ -10,7 +10,6 @@ import { stageTitles } from "@/shared/i18n/stages";
 import { useTranslation } from "@/shared/i18n";
 import { Icon } from "@/shared/ui/icons";
 import { BrandName } from "@/shared/ui/BrandName";
-import { ProjectResourceButton } from "@/shared/ui/ProjectResourceButton";
 import { Select } from "@/shared/ui/Select";
 import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { StageConversationList } from "./StageNavigation";
@@ -26,7 +25,6 @@ export function Sidebar({
   onNewChat,
   onSelect,
   onRename,
-  onPanel,
 }: {
   snapshot: ProjectSnapshot;
   projects: ProjectSnapshot[];
@@ -39,7 +37,6 @@ export function Sidebar({
   onNewChat: (stage?: StageId) => void;
   onSelect: (id: string, stage?: StageId) => void;
   onRename: (id: string, title: string) => void;
-  onPanel: (panel: PanelId) => void;
 }) {
   const t = useTranslation();
   return (
@@ -133,40 +130,12 @@ export function Sidebar({
           </button>
         </div>
         <div className="nav-tree-scroll">
-          <nav
-            className="primary-nav project-resources"
-            aria-label={t("项目资料")}
-          >
-            {(
-              [
-                { id: "risk", label: "迁移风险", icon: "shield" },
-                { id: "planning", label: "迁移规划", icon: "file" },
-                { id: "tasks", label: "迁移任务", icon: "tasks" },
-                { id: "deliverables", label: "迁移交付件", icon: "file" },
-                { id: "logs", label: "操作日志", icon: "clock" },
-              ] as const
-            ).map((item) => (
-              <ProjectResourceButton
-                key={item.id}
-                {...item}
-                selected={p.panel === item.id}
-                disabled={!s.info}
-                visible
-                count={
-                  item.id === "risk"
-                    ? s.risks.filter((r) => !r.closed).length || undefined
-                    : undefined
-                }
-                onClick={() => onPanel(item.id)}
-              />
-            ))}
-          </nav>
           <StageConversationList
             title={stageTitles[p.activeStage]}
             conversations={
               s.conversations.filter((c) => c.stageId) as StageConversation[]
             }
-            selectedId={!p.panel ? p.conversationId : null}
+            selectedId={p.conversationId}
             disabled={!s.info}
             busyIds={Object.keys(s.pending)}
             onCreate={() => onNewChat(p.activeStage)}
@@ -192,9 +161,7 @@ export function Sidebar({
                 .map((c) => (
                   <button
                     key={c.id}
-                    className={
-                      p.conversationId === c.id && !p.panel ? "selected" : ""
-                    }
+                    className={p.conversationId === c.id ? "selected" : ""}
                     onClick={() => onSelect(c.id)}
                   >
                     <Icon name="chat" size={15} />

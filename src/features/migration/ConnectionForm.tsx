@@ -8,7 +8,7 @@ import type { ProjectCommand } from "@/services/contracts";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { useTranslation } from "@/shared/i18n";
-import type { ExecutionView } from "./state";
+import type { ExecutionView } from "@/stores/executionState";
 import styles from "./ConnectionForm.module.css";
 
 export function ConnectionForm({
@@ -18,6 +18,7 @@ export function ConnectionForm({
   onCommand,
   onDone,
   sampleConnection,
+  demoTools,
 }: {
   snapshot: ProjectSnapshot;
   view: ExecutionView;
@@ -25,19 +26,31 @@ export function ConnectionForm({
   onCommand: (command: ProjectCommand) => Promise<boolean>;
   onDone?: () => void;
   sampleConnection?: MigrationConnectionInput;
+  demoTools: boolean;
 }) {
   const t = useTranslation(),
     id = useId();
   const [busy, setBusy] = useState(false),
     [failed, setFailed] = useState(false);
+  const [password, setPassword] = useState(() =>
+    demoTools ? (sampleConnection?.password ?? "") : "",
+  );
   const execution = snapshot.execution;
   if (!execution) return null;
-  const values = view.connectionDraft ?? {
-    ip: execution.connection?.ip ?? sampleConnection?.ip ?? "",
-    port: execution.connection?.port ?? sampleConnection?.port ?? 443,
+  const sample = demoTools ? sampleConnection : undefined;
+  const values = {
+    ip:
+      view.connectionDraft?.ip ?? execution.connection?.ip ?? sample?.ip ?? "",
+    port:
+      view.connectionDraft?.port ??
+      execution.connection?.port ??
+      sample?.port ??
+      443,
     username:
-      execution.connection?.username ?? sampleConnection?.username ?? "",
-    password: sampleConnection?.password ?? "",
+      view.connectionDraft?.username ??
+      execution.connection?.username ??
+      sample?.username ??
+      "",
   };
   const checking = busy || execution.connectionStatus === "checking";
   const active =
@@ -55,20 +68,20 @@ export function ConnectionForm({
       aria-label={t("Migration 连接配置")}
       onSubmit={(event) => {
         event.preventDefault();
-        if (checking || active) return;
+        if (checking || active || execution.finalized) return;
         setBusy(true);
         setFailed(false);
         void onCommand({
           type: "execution.connection",
-          values,
-          simulateFailure: view.simulateFailure,
+          values: { ...values, password },
+          ...(demoTools ? { simulateFailure: view.simulateFailure } : {}),
         })
           .then((ok) => {
             setFailed(!ok);
             if (ok) {
+              setPassword("");
               onView({
-                connectionDraft: { ...values, password: "" },
-                tab: "dashboard",
+                connectionDraft: { ...values },
               });
               onDone?.();
             }
@@ -119,9 +132,9 @@ export function ConnectionForm({
             id={`${id}-password`}
             type="password"
             disabled={checking}
-            value={values.password}
+            value={password}
             autoComplete="new-password"
-            onChange={(e) => field("password", e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </label>
@@ -139,20 +152,24 @@ export function ConnectionForm({
               ? "正在检测连接"
               : execution.connectionStatus === "ready"
                 ? "连接可用"
-                : "模拟连接，不访问真实服务",
+                : demoTools
+                  ? "模拟连接，不访问真实服务"
+                  : "尚未检测连接",
           )}
         </span>
-        {sampleConnection && (
+        {sample && (
           <button
             type="button"
             className={styles.textButton}
             disabled={checking}
-            onClick={() =>
+            onClick={() => {
+              const { password: samplePassword, ...connectionDraft } = sample;
+              setPassword(samplePassword);
               onView({
-                connectionDraft: { ...sampleConnection },
+                connectionDraft,
                 simulateFailure: false,
-              })
-            }
+              });
+            }}
           >
             {t("使用样例配置")}
           </button>
@@ -179,18 +196,20 @@ export function ConnectionForm({
           {t("运行中可编辑草稿，暂停同步或等待远程操作完成后再应用。")}
         </p>
       )}
-      <details className={styles.simulation}>
-        <summary>{t("模拟检测选项")}</summary>
-        <label>
-          <input
-            type="checkbox"
-            checked={view.simulateFailure}
-            disabled={checking}
-            onChange={(e) => onView({ simulateFailure: e.target.checked })}
-          />
-          {t("模拟连接失败")}
-        </label>
-      </details>
+      {demoTools && (
+        <details className={styles.simulation}>
+          <summary>{t("模拟检测选项")}</summary>
+          <label>
+            <input
+              type="checkbox"
+              checked={view.simulateFailure}
+              disabled={checking}
+              onChange={(e) => onView({ simulateFailure: e.target.checked })}
+            />
+            {t("模拟连接失败")}
+          </label>
+        </details>
+      )}
     </form>
   );
 }

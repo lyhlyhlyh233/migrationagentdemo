@@ -1,6 +1,6 @@
-import { conversationReducer } from "@/features/conversations/state";
+import { conversationReducer } from "@/stores/conversationState";
 import { describe, expect, it } from "vitest";
-import { initialUi, uiReducer, type UiAction } from "../state";
+import { initialUi, uiReducer, type UiAction } from "@/stores/workspaceState";
 describe("workspace UI isolation", () => {
   it("remembers the assessment risk prompt across navigation without affecting another project", () => {
     const opened = uiReducer(initialUi, {
@@ -30,21 +30,18 @@ describe("workspace UI isolation", () => {
       type: "project",
       id: "a",
       patch: {
-        panel: "risk",
-        riskLocation: { mode: "vm", vmKey: "id:vm-1", sourceRiskIds: [1, 2] },
+        riskLocation: { category: "compatibility" },
       },
     });
     const b = uiReducer(a, {
       type: "project",
       id: "b",
-      patch: { panel: "risk" },
+      patch: { assessmentRiskOpened: true },
     });
     expect(b.projects.a.riskLocation).toEqual({
-      mode: "vm",
-      vmKey: "id:vm-1",
-      sourceRiskIds: [1, 2],
+      category: "compatibility",
     });
-    expect(b.projects.b.riskLocation).toEqual({ mode: "category" });
+    expect(b.projects.b.riskLocation).toEqual({});
   });
   it("stale handoff completion cannot replace a subsequently selected conversation", () => {
     const next = uiReducer(initialUi, {
@@ -62,6 +59,22 @@ describe("workspace UI isolation", () => {
         expected: "older",
       }),
     ).toBe(next);
+    expect(
+      uiReducer(next, {
+        type: "conversation",
+        id: "p",
+        conversationId: "created-from-implicit",
+        expected: null,
+      }),
+    ).toBe(next);
+    expect(
+      uiReducer(initialUi, {
+        type: "conversation",
+        id: "p",
+        conversationId: "created-from-implicit",
+        expected: null,
+      }).projects.p.conversationId,
+    ).toBe("created-from-implicit");
   });
   it("merges delayed execution patches into the latest project view without replacing navigation", () => {
     let state = uiReducer(initialUi, {
@@ -73,7 +86,6 @@ describe("workspace UI isolation", () => {
           ip: "192.0.2.10",
           port: 443,
           username: "example",
-          password: "",
         },
       },
       contextLabel: "B-004",

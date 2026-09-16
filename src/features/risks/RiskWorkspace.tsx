@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ProjectSnapshot, RiskItem } from "@/domain/models";
 import {
   canChangeAssessmentDecision,
   hasRiskDecision,
-  migrationScope,
   riskReadyForExecution,
 } from "@/domain/assessment";
 import type { BulkRiskAction } from "@/domain/risk-decisions";
@@ -11,7 +10,6 @@ import type { ProjectCommand } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { Select } from "@/shared/ui/Select";
 import { Icon } from "@/shared/ui/icons";
-import type { PageState } from "@/shared/ui/pagination-state";
 import { SelectionCheckbox } from "@/shared/ui/SelectionCheckbox";
 import {
   CategoryRiskTable,
@@ -20,17 +18,14 @@ import {
 } from "./CategoryRiskTable";
 import { RiskStrategyDock } from "./RiskStrategyDock";
 import { RiskStrategyEditor } from "./RiskStrategyEditor";
-import type { RiskInteractions } from "./RiskVmDetails";
-import { RiskVmTable } from "./RiskVmTable";
+import type { RiskInteractions } from "./RiskInteractions";
 import { RiskBulkToolbar, RiskBulkConfirmation } from "./RiskBulkActions";
 import {
   categoryGroups,
-  risksAtLocation,
   selectionState,
   toggleRiskSelection,
   undecidedRisks,
   vmCount,
-  vmGroups,
   type RiskLocation,
 } from "./presentation";
 import { RiskOverview } from "./RiskOverview";
@@ -57,14 +52,7 @@ export function RiskWorkspace({
   location,
   onLocationChange,
   onCommand,
-  sidePanel = false,
-  onManage,
-  onInteractionLockChange,
-}: RiskWorkspaceProps & {
-  onInteractionLockChange?: (locked: boolean) => void;
-  sidePanel?: boolean;
-  onManage?: (location: RiskLocation) => void;
-}) {
+}: RiskWorkspaceProps) {
   const t = useTranslation();
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("all");
@@ -73,18 +61,6 @@ export function RiskWorkspace({
   const [categoryViews, setCategoryViews] = useState<
     Record<string, CategoryTableView>
   >({});
-  const [vmPage, setVmPage] = useState<PageState>(() => ({
-    page:
-      Math.floor(
-        Math.max(
-          0,
-          vmGroups(risksAtLocation(s.risks, location)).findIndex(
-            (row) => row.key === location.vmKey,
-          ),
-        ) / 20,
-      ) + 1,
-    size: 20,
-  }));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -96,10 +72,6 @@ export function RiskWorkspace({
   const scopeLocked = saving || !!editing;
   const inlineEditing = !!editing && editing.key !== "bulk";
   const navigationLocked = saving || inlineEditing;
-  useEffect(() => {
-    onInteractionLockChange?.(scopeLocked);
-    return () => onInteractionLockChange?.(false);
-  }, [onInteractionLockChange, scopeLocked]);
   const editingRisks = editing
     ? s.risks.filter((r) => editing.ids.includes(r.id))
     : [];
@@ -135,14 +107,9 @@ export function RiskWorkspace({
     });
   }
   const editable = canChangeAssessmentDecision(s);
-  const included = migrationScope(s).length;
-  const located = risksAtLocation(
-    s.risks,
-    sidePanel ? { mode: "category" } : location,
-  );
   const visible = editing?.visibleIds
     ? s.risks.filter((r) => editing.visibleIds!.includes(r.id))
-    : located.filter(
+    : s.risks.filter(
         (risk) =>
           (level === "all" || risk.level === level) &&
           (status === "all" ||
@@ -168,7 +135,6 @@ export function RiskWorkspace({
   const categories = categoryGroups(visible);
   const category =
     categories.find((c) => c.key === location.category) ?? categories[0];
-  const mode = sidePanel ? "category" : location.mode;
   const filtersActive = !!query || level !== "all" || status !== "all";
   const available = visible.filter((r) => r.stage === "research");
   const selectedRisks = available.filter((r) => selected.has(r.id));
@@ -181,13 +147,10 @@ export function RiskWorkspace({
   function resetFilters() {
     clearSelection();
     setCategoryViews({});
-    setVmPage({ ...vmPage, page: 1 });
-    onLocationChange({ ...location, vmKey: undefined });
   }
   function navigate(next: RiskLocation) {
-    if (navigationLocked || (editing && next.mode !== mode)) return;
+    if (navigationLocked) return;
     if (!editing) setFeedback("");
-    if (next.mode !== mode) setSelected(new Set());
     onLocationChange(next);
   }
   function select(risks: RiskItem[], checked: boolean) {
@@ -238,9 +201,7 @@ export function RiskWorkspace({
                     ? "确认本次不迁"
                     : "批量设置策略",
             )
-          : editing.key.startsWith("vm:")
-            ? t("虚拟机：{0}", editing.name ?? "")
-            : t("风险事项：{0}", t(editing.name ?? ""))
+          : t("风险事项：{0}", t(editing.name ?? ""))
       }
     >
       {editing.quick ? (
@@ -272,7 +233,6 @@ export function RiskWorkspace({
     editable,
     saving,
     editing: !!editing,
-    onManage,
     navigationLocked,
     inlineEditor: inlineEditing
       ? { key: editing.key, content: editor }
@@ -281,7 +241,7 @@ export function RiskWorkspace({
     onEdit: (key, risks, onlyUndecided = false) => {
       beginEditing({
         key,
-        name: key.startsWith("vm:") ? risks[0]?.vmName : risks[0]?.description,
+        name: risks[0]?.description,
         ids: risks.filter((r) => r.stage === "research").map((r) => r.id),
         onlyUndecided,
       });
@@ -289,56 +249,9 @@ export function RiskWorkspace({
   };
 
   return (
-    <div className={styles.workspace} data-side-panel={sidePanel}>
+    <div className={styles.workspace} data-side-panel>
       <div className={styles.workspaceHeader}>
-        {sidePanel && <RiskOverview snapshot={s} editing={scopeLocked} />}
-        {!sidePanel && (
-          <div className={styles.summaryRow}>
-            <div className={styles.overview}>
-              <span>
-                {t("可纳入")} <strong>{included}</strong>
-              </span>
-              <span>
-                {t("暂时排除")}{" "}
-                <strong data-tone="warning">
-                  {s.scopeRows.length - included}
-                </strong>
-              </span>
-              <span>
-                {t("未选策略")}{" "}
-                <strong>
-                  {s.risks.filter((r) => !hasRiskDecision(r)).length}
-                </strong>
-              </span>
-            </div>
-            <span
-              className={styles.scopeHint}
-              title={t("风险可稍后处理，受阻对象不会进入实施。")}
-            >
-              {t("受阻对象自动排除")}
-            </span>
-            <div
-              className={styles.modeSwitch}
-              role="group"
-              aria-label={t("风险查看方式")}
-            >
-              <button
-                aria-pressed={mode === "category"}
-                disabled={scopeLocked}
-                onClick={() => navigate({ ...location, mode: "category" })}
-              >
-                {t("按类别")}
-              </button>
-              <button
-                aria-pressed={mode === "vm"}
-                disabled={scopeLocked}
-                onClick={() => navigate({ ...location, mode: "vm" })}
-              >
-                {t("按虚拟机")}
-              </button>
-            </div>
-          </div>
-        )}
+        <RiskOverview snapshot={s} editing={scopeLocked} />
         {!editable && !!s.risks.length && (
           <p className={styles.hint}>
             {t(
@@ -433,35 +346,6 @@ export function RiskWorkspace({
           </p>
         )}
       </div>
-      {!sidePanel && location.sourceRiskIds && (
-        <div className={styles.locationScope} role="status">
-          <span>
-            {t(
-              "定位范围：{0} · {1} 台虚拟机",
-              t(
-                s.risks.find((r) => location.sourceRiskIds!.includes(r.id))
-                  ?.description ?? "来源风险已不存在",
-              ),
-              vmCount(located),
-            )}
-          </span>
-          <button
-            className={styles.textAction}
-            disabled={scopeLocked}
-            onClick={() => {
-              setQuery("");
-              setLevel("all");
-              setStatus("all");
-              clearSelection();
-              setCategoryViews({});
-              setVmPage({ ...vmPage, page: 1 });
-              onLocationChange({ mode: "vm" });
-            }}
-          >
-            {t("清除范围，查看全部")}
-          </button>
-        </div>
-      )}
       <div
         className={styles.listViewport}
         role="region"
@@ -476,7 +360,7 @@ export function RiskWorkspace({
                 : "完成评估后，在这里查看风险与处理建议。",
             )}
           </p>
-        ) : mode === "category" ? (
+        ) : (
           <div className={styles.categoryLayout}>
             <nav className={styles.categories} aria-label={t("风险类别")}>
               <label className={styles.selectAllCategories}>
@@ -513,7 +397,6 @@ export function RiskWorkspace({
                       onClick={() =>
                         navigate({
                           ...location,
-                          mode: "category",
                           category: group.key,
                         })
                       }
@@ -552,8 +435,6 @@ export function RiskWorkspace({
                 <CategoryRiskTable
                   key={category.key}
                   risks={category.risks}
-                  allRisks={s.risks}
-                  readOnlyVms={sidePanel}
                   selected={selected}
                   onSelect={select}
                   view={categoryViews[category.key] ?? initialCategoryView()}
@@ -567,37 +448,6 @@ export function RiskWorkspace({
                 />
               </section>
             )}
-          </div>
-        ) : (
-          <div>
-            <div className={styles.tableSelection}>
-              <span>
-                {t(
-                  "风险数与处理进度按当前筛选结果统计；迁移资格按全部项目风险计算。",
-                )}
-              </span>
-              <button
-                className={styles.textAction}
-                disabled={!editable || scopeLocked || !available.length}
-                onClick={() => select(available, true)}
-              >
-                {t("选择全部 {0} 台虚拟机（含所有页）", vmCount(available))}
-              </button>
-            </div>
-            <RiskVmTable
-              risks={visible}
-              allRisks={s.risks}
-              selected={selected}
-              onSelect={select}
-              label={t("虚拟机风险列表")}
-              pagination={vmPage}
-              onPage={setVmPage}
-              expandedVm={location.vmKey}
-              onExpandVm={(vmKey) =>
-                navigate({ ...location, mode: "vm", vmKey })
-              }
-              {...interactions}
-            />
           </div>
         )}
       </div>

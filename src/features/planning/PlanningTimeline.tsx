@@ -6,12 +6,10 @@ import styles from "./Planning.module.css";
 
 export function PlanningTimeline({
   planning: p,
-  onBatch,
-  selectedBatch,
+  demoTools = false,
 }: {
   planning: PlanningState;
-  onBatch: (id: string) => void;
-  selectedBatch?: string;
+  demoTools?: boolean;
 }) {
   const t = useTranslation();
   if (!p.batches.length)
@@ -27,7 +25,7 @@ export function PlanningTimeline({
   ).filter((time) => time < end);
   return (
     <div className={styles.timeline}>
-      <p className={styles.note}>{t("模拟排程 · 点击批次查看详情")}</p>
+      {demoTools && <p className={styles.note}>{t("模拟排程")}</p>}
       <table className={styles.timelineTable} aria-label={t("批次甘特图")}>
         <colgroup>
           <col className={styles.batchColumn} />
@@ -67,22 +65,9 @@ export function PlanningTimeline({
             );
             const description = `${b.id} · ${t(planningPhaseLabels[b.phase])} · ${b.assetIds.length} ${t("台")} · ${b.window} · ${b.start.replace("T", " ")} → ${b.end.replace("T", " ")}`;
             return (
-              <tr
-                className={styles.timelineRow}
-                key={b.id}
-                data-selected={selectedBatch === b.id || undefined}
-              >
+              <tr className={styles.timelineRow} key={b.id}>
                 <th scope="row">
-                  <button
-                    type="button"
-                    onClick={() => onBatch(b.id)}
-                    aria-pressed={
-                      selectedBatch ? selectedBatch === b.id : undefined
-                    }
-                    title={description}
-                  >
-                    {b.id}
-                  </button>
+                  <span title={description}>{b.id}</span>
                 </th>
                 <td>{b.assetIds.length}</td>
                 <td>
@@ -90,13 +75,9 @@ export function PlanningTimeline({
                   {t("天")}
                 </td>
                 <td>
-                  <button
-                    type="button"
+                  <div
                     className={styles.track}
-                    onClick={() => onBatch(b.id)}
-                    aria-pressed={
-                      selectedBatch ? selectedBatch === b.id : undefined
-                    }
+                    role="img"
                     aria-label={description}
                     title={description}
                   >
@@ -133,7 +114,7 @@ export function PlanningTimeline({
                       className={styles.cutoverMark}
                       style={{ left: `${((cutover - start) / span) * 100}%` }}
                     />
-                  </button>
+                  </div>
                 </td>
               </tr>
             );

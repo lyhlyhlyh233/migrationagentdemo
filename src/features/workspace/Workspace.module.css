@@ -731,7 +731,7 @@
 .root :global(.nav-tree-scroll) {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -744,21 +744,7 @@
 .root :global(.nav-tree-scroll :is(button, input):focus-visible) {
   outline-offset: -2px;
 }
-.root :global(.project-resources) {
-  gap: 2px;
-}
-.root :global(.project-resources button) {
-  height: 36px;
-  padding-inline: 10px;
-  gap: 10px;
-  font-size: var(--ui-size);
-  color: var(--ink);
-}
-.root :global(.project-resources button > svg) {
-  width: 16px;
-  height: 16px;
-  color: var(--secondary);
-}
+
 .root :global(.nav-section) {
   margin: 0;
 }
@@ -877,9 +863,7 @@
   .root :global(.workspace-welcome p) {
     font-size: var(--ui-small);
   }
-  .root :global(.project-resources button) {
-    min-height: 38px;
-  }
+
   .root :global(.temporary-conversations button) {
     min-height: 38px;
   }
@@ -916,9 +900,6 @@
   }
   .root :global(.conversation-context) {
     display: flex;
-  }
-  .root :global(.management-view .conversation-content) {
-    padding: 24px 18px;
   }
 }
 .root :global(.nav-platform) {
@@ -1192,10 +1173,7 @@
     --conversation-gutter: 18px;
   }
 }
-.root :global(.management-view .conversation-content) {
-  padding: 30px 34px;
-  max-width: 1280px;
-}
+
 .root :global(.inspector-stats) {
   margin: 0;
   border-top: 1px solid var(--line);
@@ -1424,11 +1402,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.root :global(.nav-tree-scroll > .project-resources) {
-  border-top: 0;
-  padding-top: 0;
-  margin-top: 0;
-}
+
 .root :global(.nav-tree-scroll > .nav-delivery) {
   border: 0;
   padding: 0;
@@ -1534,9 +1508,7 @@
   .root :global(.stage-handoff-summary > div) {
     min-width: 180px;
   }
-  .root :global(.workspace-nav .project-resources button) {
-    min-height: 44px;
-  }
+
   .root :global(.workspace-nav .temporary-conversations button) {
     min-height: 44px;
   }
@@ -1731,18 +1703,7 @@
     font-size: var(--ui-caption);
   }
 }
-.root :global(.project-resources button[aria-disabled="true"]) {
-  opacity: 1;
-  color: var(--ink);
-  background: transparent;
-  cursor: default;
-}
-.root :global(.project-resources button[aria-disabled="true"]:hover) {
-  opacity: 1;
-  color: var(--ink);
-  background: transparent;
-  cursor: default;
-}
+
 .root :global(.account-settings) {
   flex-shrink: 0;
   margin-left: auto;
@@ -1771,8 +1732,7 @@
     --conversation-width: 1560px;
     --conversation-gutter: 32px;
   }
-  .root:global(.workspace.inspector-collapsed),
-  .root:global(.workspace.management-view) {
+  .root:global(.workspace.inspector-collapsed) {
     grid-template-columns: 292px minmax(0, 1fr);
   }
   .root:global(.workspace.nav-collapsed) {
@@ -1844,7 +1804,6 @@
     width: 20px;
     height: 20px;
   }
-  .root :global(.project-resources button),
   .root :global(.stage-chat-link),
   .root :global(.temporary-conversations button) {
     min-height: 42px;
@@ -1855,24 +1814,6 @@
   .root :global(.workspace-welcome p) {
     font-size: 17px;
   }
-}
-
-/* Management workspaces own their list and discussion scroll regions. */
-.root :global(.conversation-scroll[data-workbench="true"]) {
-  overflow: hidden;
-}
-.root
-  :global(.conversation-scroll[data-workbench="true"] > .conversation-content) {
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-  width: 100%;
-  max-width: none;
-}
-.root :global(.management-surface[data-risk-view="true"]) {
-  height: 100%;
-  min-height: 0;
 }
 
 /* Risk tabs use the resizable panel; execution details remain a narrow rail. */

@@ -1,6 +1,6 @@
 # 项目架构
 
-MigrationDirector Ultimate 是 Vite + React + TypeScript 独立静态前端。保留一个服务契约、React Context 和三个 reducer，不引入新的状态库、依赖注入框架或流程引擎。
+MigrationDirector Ultimate 是 Vite + React + TypeScript 独立静态前端。服务契约隔离 UI 与执行实现，Zustand 管理公共状态；不增加流程引擎或组件注册器。
 
 本文维护源码职责与修改入口；后端对接见 [接口适配说明](integration.md)，业务条件见 [业务逻辑说明](../业务逻辑说明.md)，视觉规则见 [DESIGN.md](../DESIGN.md)。
 
@@ -8,169 +8,123 @@ MigrationDirector Ultimate 是 Vite + React + TypeScript 独立静态前端。�
 
 ```text
 src/
-  app/           入口、配置、服务装配、Provider、快照和导航状态
+  app/           入口、公开配置、服务装配、薄 Provider、会话订阅桥接
+  stores/        Zustand 工作区与偏好 store，公共状态类型及纯 reducer
   domain/        模型、会话查找、阶段条件、风险和范围计算
   services/      契约、错误、唯一实现工厂、Mock、HTTP 适配模板
   features/
-    workspace/   布局、导航、进度、右侧详情、操作绑定
+    workspace/   对话布局、项目/会话导航、进度、侧面板、操作绑定
     projects/    项目创建表单
-    conversations/ 对话、结果块、输入框、快捷操作、会话草稿
+    conversations/ 对话、结果块、输入框、快捷操作与确认区
     research/    评估资料输入及模板下载
-    planning/    资料、批次、资源、时间线、调整预览与视图草稿
-    migration/   连接、批次实施、诊断、预览及视图草稿
+    planning/    对话资料、约束、规划结论、时间线与调整预览
+    migration/   对话连接、实施看板、诊断与操作预览
     validation/  技术核对、业务验收、反馈与最终交付
-    risks/       类别/虚拟机表、分页选择、策略编辑、右侧面板
-    deliverables/ 交付件列表
-    logs/        项目操作记录
-    settings/    外观、背景、语言和 Nexent 配置表单
-  shared/        通用 UI、国际化、偏好、本地文件保存
+    risks/       类别表、批量选择、策略编辑与风险概览
+    settings/    外观、背景、语言及 Nexent 认证表单
+  shared/        通用 UI、国际化、偏好配置、本地文件保存
   styles/        基础规则、主题、全局背景和语义颜色
 ```
 
-- `domain` 保持纯模型与规则，不依赖 React 或服务实现；稳定代码与文案分离。
-- `services/index.ts` 是唯一选择 Mock/HTTP 实现的位置，对外只返回 `MigrationService`。`app/config.ts` 读取公开构建配置并传给工厂，服务实现不读取 Vite 环境变量。
-- `App`、`WorkspaceProvider` 和 `useWorkspaceActions` 负责装配与服务调用；展示组件接收数据和回调。设置表单只接收保存回调，不再接收整个服务对象。
-- 业务执行、模拟数据和计时器集中在 `services/mock`。服务可使用纯文本翻译工具，但不导入 React 或页面。
-- `eslint.config.mjs` 检查领域依赖、页面直连实现、直接 `fetch` 和服务反向导入界面。测试可导入 Mock 构造特定场景；规则不代替代码审查。
+- `domain` 保持纯模型与规则，不依赖 React、store 或服务实现；稳定代码与展示标签分离。
+- `services/index.ts` 是唯一实现工厂，对外只返回 `MigrationService`。`app/config.ts` 读取公开构建配置，DTO、地址、认证和事件协议仅在适配器转换。
+- `stores` 管公共数据和 UI 状态，不生成业务任务，不调用具体 Mock/HTTP 实现。状态类型位于 `workspaceState/conversationState/planningState/executionState/riskState`，避免公共层反向依赖 feature。
+- `App`、`app/workspaceSession.ts` 和 `useWorkspaceActions` 绑定服务；展示组件接收数据和回调。服务不导入 React 或页面，不向 UI 返回 HTML/JSX。
+- 业务执行、模拟数据和计时器集中在 `services/mock`。`eslint.config.mjs` 约束依赖方向、页面直连实现和直接 `fetch`；测试可导入 Mock 构造场景。
 
-不要求每个目录都有 barrel 文件，不为单个按钮包装 service，不为现有表单再建立一套 schema 或注册系统。
+不要求每个目录都有 barrel 文件，不为单个按钮包装 service，不建立通用流程引擎或新的网络层。
 
 ## 装配与数据流
 
 ```text
 app/config.ts → createServices(config) → MigrationService
-                                          ↑       ↓
-App / useWorkspaceActions → 命令、消息、文件       快照与事件
-                                          ↓
-                                  WorkspaceProvider
-                                          ↓
-                                  当前工作区及结果块
+App / useWorkspaceActions ────────────────↑       ↓
+                                         命令    快照、通知、账户状态
+                                                  ↓
+                                      app/workspaceSession.ts
+                                                  ↓
+                                        stores/workspaceStore
+                                                  ↓
+                                   useWorkspace(selector) → UI
 ```
 
-`WorkspaceProvider` 先订阅事件，再读取目录、项目列表及初始快照。初始化请求共用 AbortSignal，重试或卸载时取消；普通切页不取消业务任务。退出由 `logout` 和 `dispose` 清理本次服务生命周期，重新进入创建新服务实例。
+`WorkspaceProvider` 为当前登录会话创建 store，用稳定 Context 注入 store、service 和 retry；Context 不承载整包变化状态。`useWorkspace(selector)` 订阅所需状态，`useWorkspaceSession()` 提供服务会话能力。服务和 store 都由对应 effect 创建并清理；服务替换或开发模式 effect 重放会创建新实例，普通重渲染保留现有实例。退出销毁旧会话，迟到回调不能写入已结束会话。
 
-| 状态                                                                   | 归属                                 | 保留范围                 |
-| ---------------------------------------------------------------------- | ------------------------------------ | ------------------------ |
-| 项目资料、风险、任务、消息、等待回复、审批、文件                       | 服务持有，`dataReducer` 保存只读快照 | 当前页面会话内跨项目切换 |
-| 当前项目、会话、最近阶段会话、管理页、面板页签、风险定位、规划视图草稿 | `uiReducer`                          | 按项目保存               |
-| 草稿、附件、Agent、模型、展开操作区、确认引用、重试 requestId                          | `conversationReducer`                | 按项目和会话保存         |
-| 风险筛选、多选、分页、策略编辑草稿                                     | 功能组件局部状态                     | 对应工作区挂载期间       |
-| 外观、背景、语言                                                       | `shared/preferences.ts`              | 浏览器 localStorage      |
+`connectWorkspace` 先订阅，再读取目录、项目列表、初始快照和脱敏账户状态。初始化共用 AbortSignal，重试或卸载取消旧读取；普通项目/会话切换不停止业务任务。快照按 revision 忽略旧版本。notice/error 带会话 ID 时写回对应会话提示，否则归所属项目，不抢占当前会话。服务 `logout/dispose` 负责请求、执行等待、文件和连接清理。
 
-`dataReducer` 忽略较旧 revision；同一项目只有服务维护执行事实，组件不能直接修改快照。只渲染当前工作区，不靠隐藏多份页面保存业务数据。
+| 状态                                                   | 归属                                   | 保留范围                     |
+| ------------------------------------------------------ | -------------------------------------- | ---------------------------- |
+| 项目资料、风险、任务、消息、审批、文件                 | 服务持有，workspace store 缓存只读快照 | 本次登录会话                 |
+| 当前项目、阶段、最近会话、面板页签、规划/实施/验证视图 | workspace store 的 ui                  | 按项目                       |
+| 普通草稿、File、Agent/模型、确认引用、requestId、通知  | workspace store 的 conversationState   | 按项目和会话                 |
+| 认证配置/验证状态与认证方式                            | workspace store 的 AccountState        | 本次登录会话，不含秘密       |
+| 风险筛选、多选、策略草稿、面板宽度、单组件展开及 busy  | 对应功能组件                           | 所属挂载期间；面板折叠保留   |
+| API Key、账户密码、连接密码                            | 提交表单局部状态                       | 成功清空，失败保留，卸载清除 |
+| 主题、背景、语言                                       | preferencesStore                       | 沿用既有 localStorage 键     |
 
-会话 ID 来自快照。`domain/conversations.ts` 负责恢复当前会话及阶段最近会话，不按阶段名称拼编号；Mock 的编号生成只在 `mock/fixtures.ts`。阶段默认 Agent 由 `Catalog.stageAgents` 提供，没有映射时使用目录默认值，阶段代码与 Agent ID 无需相同。
+`preferencesStore` 是偏好的唯一运行时状态源；`shared/preferences.ts` 提供现有调用入口，DOM 的 lang/data 属性只是渲染镜像。`startPreferenceSync()` 在 React 挂载前恢复首屏偏好，并监听 storage 跨标签同步。只有偏好持久化，业务快照、草稿、File 和凭据不写浏览器持久存储。
 
-异步操作捕获发起项目、会话、阶段和操作标识，完成后仍写回该会话。人工交接完成时会校验等待期间的会话选择，后台任务不会强制改变当前页面。请求去重和服务端校验要求见 [接口适配说明](integration.md)。
+会话 ID 来自服务快照，`domain/conversations.ts` 查找当前/最近阶段会话，阶段 Agent 来自目录映射。异步操作固定发起项目、会话、阶段和操作标识；新建会话与阶段交接完成仅在原会话选择未改变时更新导航，也保护尚未显式选择会话的初始状态。后台完成可更新所属项目快照，不抢占当前可见会话。
 
-## 功能模块边界
+## 界面范围
 
-### 评估文件
+工作区只由中央对话、执行详情及现有风险/规划/实施/验证侧面板组成。迁移风险、迁移规划、迁移任务、迁移交付件、操作日志的独立页面及入口已移除；没有替代路由或新的管理页容器。
 
-`services/mock/assessment-files.ts` 汇总评估、逐台资产和风险策略，生成 Excel 结果并登记两份交付件。`assessment-presentation.ts` 仅在 PPT 下载时动态导入，从同一快照生成 PPTX；页面仍只接收资源 ID 并调用统一下载服务。汇报内容与表格均明确标注 Mock，上传解析能力没有改变。
+独立页专属的风险虚拟机视图/子表、单台例外和核验入口、规划批次资产列表、全量交付件列表与项目操作日志列表不迁入面板。已有对话交付文件、看板/诊断日志下载、输入框确认及执行详情最近活动保留。删除展示入口不删除仍被对话使用的领域数据或服务契约。
 
-### 对话与结果
+`WorkspaceSidePanel` 负责四类可关闭页签、拖动和键盘调宽。打开侧面板替换窄执行详情，关闭或折叠恢复详情；风险内容在同一工作区折叠时保留挂载。评估完成自动展开风险一次；规划尚未生成时保留详情，生成后首次展开规划。面板状态不进入业务快照。
 
-`Conversation` 组织回答，`ConversationAnswer` 呈现正文、思考摘要及耗时，`BusinessResults` 根据领域联合类型呈现内容。`useConversationConfirmation` 从本会话明确的预览/审批结果取得确认引用，`ConversationConfirmation` 在 Composer 位置呈现规划预览、实施预览、单问题编辑或交接；不复制业务状态。当前会话只显示一个确认区，后台结果不替换未完成输入，关闭后恢复普通草稿与附件。服务不返回 HTML、JSX 或组件名称。
+## 功能模块
 
-| result.kind         | 内容与状态来源                                               |
-| ------------------- | ------------------------------------------------------------ |
-| assessment-input    | 资料输入与上传快照，最新输入可操作，旧输入保留历史           |
-| assessment-decision | 兼容旧结果的标记；快捷操作统一放在回答底部                   |
-| planning-input      | 最新规划引导的资料、模板和生成入口；小对话只保留文字与结果   |
-| execution-work      | 连接、问题或验证表单的定位引用；仅负责打开对应查看/填写区，不直接执行 |
-| execution-preview   | 固定预览 ID，当前发起会话的输入框确认区读取同一服务预览 |
-| execution-prompt    | 可发送的下一步快捷语言；发送后仍须预览及人工确认 |
-| risk-preview        | 发起对话中的固定风险 ID 和操作意图；确认时读取共享策略，默认保留已有选择 |
-| planning-preview    | 待应用预览 ID；生成后的规划调整由发起会话的输入框确认区呈现，失效预览不重复执行 |
-| summary             | 当次结论和统计快照                                           |
-| tasks               | 任务 ID，进度从当前项目快照读取                              |
-| artifacts           | 文件资源 ID，内容由下载服务提供                              |
-| approval            | 确认项 ID，从当前状态校验条件和是否已确认                    |
+### 对话与确认
 
-普通回答可以只有文字。列表默认显示三项，可展开其余项。新增类型只修改 `BusinessResult`、服务输出及呈现分支，不增加组件注册器。历史统计不重算，资源引用读取当前内容；文件更新语义见接口说明。
+`Conversation` 组织回答，`ConversationAnswer` 呈现正文、思考摘要及耗时，`BusinessResults` 根据领域联合类型呈现资料、统计、文件和资源引用。历史统计保留当次值；任务、文件、审批和预览按 ID 读取当前资源。
 
-### 风险、范围与表格
+`useConversationConfirmation` 只处理本会话明确的预览/审批结果。`ConversationConfirmation` 在输入框位置复用规划预览、实施预览、单问题编辑及阶段交接；当前只显示一个确认区，后台结果不替换未完成输入。取消/完成恢复普通草稿与 File。`ConfirmationChoices` 仅复用编号选项、推荐标识和备注输入，不承载执行逻辑。
 
-`ExecutionInspector` 独立呈现窄执行详情栏，不属于面板页签。规划准备阶段根据实际批次结果判断，尚无结果时保留执行详情，生成后才首次打开规划页签。`WorkspaceSidePanel` 提供可关闭的风险、规划、实施和验证页签，打开时替换执行详情；风险页签与 `RiskPanel`（独立管理页）共用 `RiskWorkspace`。同一工作区内关闭或折叠使用隐藏属性保留已挂载的风险内容，切换项目或管理页则重新建立当前面板，不缓存所有项目页面。面板通过原生 Pointer Capture 支持拖动及键盘调宽。`Workspace` 保存页面内宽度和项目内面板页签与开合状态，CSS 约束两侧最小宽度；这些状态不进入业务快照。评估完成时读取现有快照，首次返回该项目评估会话即自动展开风险；不增加服务命令、API 或重复回复。
+所有实际动作沿用 `execute/upload/download/sendMessage`。确认选择与备注按项目/会话保存；服务继续校验资源归属、执行锁、版本和人工确认，不以界面可见性代替授权。
 
-- `CategoryRiskTable`：按规则、阶段、类别和影响分组，缺失规则保持独立。
-- `RiskVmTable` / `RiskVmDetails`：虚拟机子表、证据与单台例外。
-- `RiskStrategyDock`：非模态策略编辑区域、标题焦点和滚动内容/固定操作按钮布局。
-- `RiskBulkActions` / `RiskStrategyEditor`：上方工具栏、批量确认和可见策略选项；批量位于顶部，单项编辑复用组件嵌入对应风险下方。
-- `presentation.ts`：分组、分页定位和风险 ID 选择，使用项目全部风险计算虚拟机资格。
-- `domain/risk-decisions.ts`：预览与服务共用策略判定；`mock/risk-decisions.ts` 在提交时校验最新状态并整体写入。
+### 风险与范围
 
-`ProjectUi.riskLocation` 保存当前项目的类别/虚拟机定位及可选 `sourceRiskIds` 来源范围，不跨项目、不持久化到 URL。`risksAtLocation` 将来源风险映射为虚拟机范围并保留这些虚拟机的所有风险，资格仍由完整项目快照计算；范围只有一台时自动展开，可清除定位查看全部。多选跨页跨类，过滤和查看模式变化时清空。子表分页在收起后保留，筛选变化重置；具体数量与交互见 [业务说明](../业务逻辑说明.md)。
+`RiskWorkspace` 仅服务现有风险侧面板，组合 `RiskOverview`、类别筛选、`CategoryRiskTable`、`RiskBulkActions` 和策略编辑。数量为只读统计，不再跳到独立 VM 页面。单项策略嵌在事项下方，批量策略位于顶部；目标风险 ID 固定，提交读取最新共享状态，失败保留输入和选择。
 
-`RiskWorkspace` 将统计/筛选、上方操作区、独立滚动列表分开；搜索作为工具栏插槽与批量按钮同行靠右，覆盖选项位于编辑区固定操作行。管理页外壳与右侧面板均提供有界高度。表格采用容器内列宽，窄屏以字段标签重排，不横向滚动。编辑保存本次目标风险 ID，预览读取最新共享快照，提交仍走原风险命令。编辑期间冻结筛选、模式和多选范围；批量编辑仍可浏览类别和分页；单项编辑固定类别与页码，同时冻结匹配记录 ID，防止其他会话更新状态后筛选移除当前编辑行。取消/失败保留原选择和草稿，成功关闭编辑并清空选择，焦点返回发起入口。无需额外 Provider 或服务契约。
+`domain/risk-decisions.ts` 提供预览和服务共用的策略判定；`domain/assessment.ts` 统一计算工具可迁范围，`policies.ts` 计算阶段条件。风险是否已选策略不能代替迁移资格。`RiskOverview` 用项目完整风险计算，筛选和多选不改变图表口径；具体门禁与统计口径只在业务说明维护。
 
-`RiskOverview` 仅挂载在风险侧面板，从完整项目快照调用 `domain/assessment.ts` 的纯函数 `riskOverview`，复用 `riskReadyForExecution` 判定。按当前范围过滤、风险 ID 去重、虚拟机名称去重，先计算排除 VM 集，再聚合这些 VM 的全部相关风险；分别保留 relatedRisks 和实际阻塞的 exclusionRisks。展开偏好为当前组件局部状态，编辑锁只临时收起图形，不修改用户偏好；不新增项目字段、服务接口或图表依赖。筛选和多选不参与图表计算，共享快照更新时重新统计。口径详见 [业务说明](../业务逻辑说明.md)。
+### 规划与导出
 
-`domain/assessment.ts` 统一计算工具可迁范围，`policies.ts` 计算阶段条件。规划与实施调用同一范围规则；风险是否已选择策略不能代替迁移资格。人工交接仍通过 `stage.review` / `stage.confirm`，不能只改前端导航解锁阶段。
+`domain/planning.ts` 定义资产、约束、依赖、容量、批次、预览和纯计算。`mock/planning-data.ts` 从评估范围初始化，`mock/planning.ts` 校验、生成和应用修改，`mock/planning-files.ts` 从同一快照导出模板、计划和 RunBook。
 
-### 实施与分批验证
+对话 `PlanningIntake` 提供导表、模板、基础约束与生成入口，草稿按项目保存在 store。生成后 `PlanningSummary/PlanningTimeline` 只读展示指标、核对事项及甘特图，不再跳转批次资产页；完整资产和资源字段通过现有导出查看。调整通过对话文字或附件提出，由 `PlanningPreview` 在输入框确认。`planning.generate` 是中性生成能力，Mock 内部生成示例计划；`planning.sampleInputs` 只用于显式演示资料入口。
 
-`domain/execution.ts` 定义单台执行状态、操作预览、问题、技术/业务确认与反馈，集中判断控制和验收条件。`ProjectSnapshot.execution` 是唯一执行事实源；旧 `vmTasks/creationTasks/validationTasks` 只由 `mock/execution-state.ts` 投影给已有摘要，旧页面和独立计时器已删除。
+`assessment-files.ts` 与动态加载的 `assessment-presentation.ts` 从同一评估快照生成 Excel/PPTX。页面只传资源 ID 给下载服务，不生成业务文件；格式、更新语义和资源 ID 见接口说明。
 
-- `mock/execution.ts`：连接检测、固定范围预览、原子应用及最新条件检查。
-- `mock/execution-engine.ts`：每项目一个模拟循环，按并发限制推进已确认的当前阶段；创建完成停在 `created`，全量完成停在 `full-complete`，等待状态不继续同步。增量经确认后才进入持续同步，割接另行确认。图表、批次和任务读取同一状态，切页继续执行，退出清理。
-- `mock/execution-issues.ts`：故障归并、日志、诊断、人工/自动方案与复查；仅用户批准后处理。
-- `mock/validation.ts`：批量技术接受/业务确认、反馈、实际附件及阶段性报告。`execution-discussion.ts` 处理限定的问答和预览请求。
-- `ExecutionWorkspace` 在独立页与实施侧面板复用 `ExecutionDashboard`，仅独立页增加页面标题和内边距，不再维护第二套任务列表或批量工具栏。项目内 `ExecutionView` 共享批次、分页与展开任务；结果中的指定任务按同一顺序定位批次及分页。连接表单从大工作台拆出，在对话内配置；`ExecutionIssueEditor` 和 `ExecutionPreview` 由对话确认区复用，展示单个问题或固定操作预览。独立任务页也把控制交给同一阶段会话，`ValidationWorkspace` 保留既有验证表格与条件。
-- `ExecutionDashboard` 与纯展示聚合 `execution-dashboard.ts` 读取现有任务时间、阶段及趋势，不写业务快照、不增加计时器。
-- `ExecutionView`、`ValidationView` 按项目存入 `uiReducer`，保留草稿、分页和选择。实施查看状态通过 `execution-view` 增量合并，异步连接或执行回执只修改指定字段，不覆盖用户已切换的批次和页码。连接密码仅在此内存草稿及检测请求中暂存，成功后清空；不进入服务快照。
-- `PlanningSummary` 为侧面板与独立页共用看板，展示七项规划结论、待核对事项和 `PlanningTimeline`，状态及数量复用导出所用的计算。独立页在甘特图下组合只读 `PlanningAssets`，只展示当前批次；完整资料、依赖及资源字段保留在导出。
+### 实施与验证
 
-新能力继续走 `execute/upload/download` 与原有快照事件，不增加状态 Provider 或新的网络端点。远程执行独立于聊天 pending；停止回复仅停止生成。操作确认从当前项目资源状态校验，不按当前会话所属阶段绕过保护。具体命令和并发语义见接口说明。
+`ProjectSnapshot.execution` 是唯一执行事实源，旧兼容读模型只由 `mock/execution-state.ts` 投影。`mock/execution-engine.ts` 每项目一个模拟循环，`execution-issues.ts` 处理故障和诊断，`validation.ts` 处理验收、反馈及报告；切换查看位置不复制任务状态。
+
+`ConnectionForm` 在对话内配置连接，非敏感草稿按项目保存，密码只存在表单。`ExecutionWorkspace/ExecutionDashboard` 组成实施侧面板，从现有任务、时间与趋势生成只读统计；批次和分页按项目保留，指定任务定位后关联对话。`ExecutionIssueEditor/ExecutionPreview` 复用于输入框确认，`ValidationWorkspace` 保留既有技术核对、业务验证、反馈、附件和报告能力。
+
+服务提供可选 `execution.recommendedBatchId`，UI 先使用有效用户选择，再使用有效推荐值，最后回退首批；不根据样例标记选择固定数组位置。状态和视图通过增量 patch 更新，延迟操作回执不覆盖用户后来选择的批次/页码。
+
+### 账户与演示边界
+
+`SettingsDrawer/NexentSettings` 接收脱敏 AccountState 与保存回调。保存消费服务返回状态，不能自行推断认证成功；秘密不放公共 store，成功清空、失败保留。实际认证协议仍留在 HTTP 适配器，当前模板未实现。
+
+`Catalog.capabilities?.demoTools === true` 才显示样例按钮、故障注入和 Mock 说明。UI 只读取目录能力，不读取服务模式、导入 fixture 或生成样例。`ProjectSnapshot.demoMode` 独立表示 Mock 宽松演示推进，不能兼作认证或后端能力开关。Mock 的冻结样例、缺失资料补齐、场景执行均由服务管理。
 
 ## 常见修改入口
 
-### 规划数据与工作台
+| 修改                       | 入口                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| 后端 DTO、认证、错误与事件 | services/contracts.ts、services/http；先读 integration.md                             |
+| 配置和服务装配             | app/config.ts、services/index.ts                                                      |
+| 公共状态、退出隔离         | stores/workspaceStore.ts、stores/*State.ts、app/workspaceSession.ts                   |
+| 偏好持久化及首屏主题       | stores/preferencesStore.ts、shared/preference-config.ts、shared/preferences.ts        |
+| 导航、面板和操作绑定       | workspace/Sidebar、WorkspaceSidePanel、Workspace、useWorkspaceActions                 |
+| 回答、输入和确认           | conversations/ConversationAnswer、BusinessResults、Composer、ConversationConfirmation |
+| 风险与范围                 | risks/RiskWorkspace、CategoryRiskTable、RiskStrategyEditor；domain/assessment         |
+| 规划和文件                 | domain/planning、mock/planning*、planning/PlanningIntake、PlanningSummary             |
+| 实施和验收                 | domain/execution、mock/execution*、mock/validation、migration、validation             |
+| 主题、字号、语义色、文案   | styles/tokens.css、styles/index.css、shared/i18n                                      |
 
-`domain/planning.ts` 定义稳定资产 ID、业务属性、依赖、约束、容量、批次、预览及纯计算选择器。显示标签在 `shared/i18n/planning.ts` / `en.json`，领域不依赖界面。项目只保留一份当前计划和一份待确认调整，不新增版本库。
-
-- `mock/planning-data.ts` 从评估范围生成示例资产，保留稳定 ID 和已有属性，初始化进入规划时的评估基线。
-- `mock/planning.ts` 校验、生成、预览和应用修改，同时更新原实施任务结构。`mock/planning-files.ts` 从同一规划快照输出模板、五 Sheet 计划和 RunBook。
-- `PlanningWorkspace` 装配共享看板、批次虚拟机及服务回调，使用现有 `expandedBatch/query/grade/assetPage` 保存查看状态；没有结果时只提供返回规划会话入口。`PlanningInputs`、`PlanningPreview` 继续服务于对话资料与确认流程，不在组件中生成业务样例。
-- `PlanningView` 通过已有 `uiReducer` 的 `planning-view` action 按项目增量保存。折叠、切页不丢资料草稿、分页和选择。表格只渲染当前页，默认 20 条，可切 50/100，不创建 1 万行 DOM。
-- `WorkspaceSidePanel` 使用风险、规划、实施、验证四个明确页签，状态按项目保留，宽度采用对话 70% / 面板 30% 默认值及原拖动规则。执行详情仍独立于页签。
-- `ManagementDiscussion` 只负责宽工作台和小对话布局。`Workspace` / `useWorkspaceActions` 查找同一最近阶段会话，复用消息、输入、Agent、模型和操作上下文，不新建会话或复制消息。风险、任务和验证管理页也复用该容器；对话为约 28% / 360–600px，与工作台留 16px 间隔，窄屏切换查看模式。
-
-规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，样例资料使用 `planning.sampleInputs` 进入相同预览流程。
-
-生成后独立页只读复用 `PlanningSummary` 及批次 `PlanningAssets`，移除旧四视图和重复资料/资源组件。生成后的调整预览由 `ConversationConfirmation` 复用 `PlanningPreview` 呈现，`BusinessResults` 保留预览引用和重新打开入口，只允许发起会话确认；生成前资料导入同样在输入框确认区展示编号选项，原资料行仅保留查看预览入口。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
-
-Composer 的待发送 File、普通草稿和当前确认引用位于 `conversationReducer` 中，按项目/会话隔离；业务预览仍由服务持有。切入确认模式不清空普通草稿或 File，取消/完成后恢复。消息仅保留文件引用与元信息，快捷对话不顺带发送草稿附件。不新增确认队列、状态 Provider 或流程引擎。
-
-规划 revision 独立于普通聊天的项目 revision，跨会话保存必须匹配。预览固定版本、资产/批次 ID 和发起会话，失败保留输入。风险资格变化使计划待更新；待更新或待确认预览不能交接。真实适配仍须在后端实施并发校验。详细语义见 [接口说明](integration.md)。
-
-### 其他入口
-
-| 修改                       | 入口                                                                                      |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| 后端接口、DTO、事件协议    | services/contracts.ts、services/http；先读 integration.md                                 |
-| 环境配置与服务选择         | app/config.ts、services/index.ts、.env.example                                            |
-| 示例资产、模拟回复与执行   | services/mock/fixtures、assessment-knowledge、replies、runtime                            |
-| 菜单、折叠、会话列表       | workspace/Sidebar、StageNavigation                                                        |
-| 四阶条件、进度和宽屏布局   | domain/policies、workspace/presentation、ProgressRail、Workspace.module.css               |
-| 回答排版、业务结果、输入框 | conversations/ConversationAnswer、BusinessResults、Composer                               |
-| 表单内容                   | research、planning、migration、validation 对应组件                                        |
-| 规划数据与导出             | domain/planning、mock/planning-data、mock/planning、mock/planning-files                   |
-| 表格、风险策略             | risks/RiskWorkspace、CategoryRiskTable、RiskVmTable、RiskStrategyDock、RiskStrategyEditor |
-| 主题、字号、语义颜色       | styles/tokens.css、styles/index.css                                                       |
-| 界面文案、阶段/状态标签    | shared/i18n/en.json、stages、status-labels                                                |
-
-CSS Modules 就近维护，复杂既有表格可用 Module 根节点约束内部类名。规划样式在 `planning/Planning.module.css`，不修改全局字号或其他管理表格列宽。
-
-运行命令见 [README](../README.md)，检查与文档维护约定见 [AGENTS.md](../AGENTS.md)。接口测试不等于真实迁移回归；本项目仍未接入后端。
-
-### 输入框操作确认
-
-`features/conversations/useConversationConfirmation.ts` 只从当前会话的明确预览结果打开确认区，记录已读消息 ID，不让后台诊断替换正在编辑的内容。`ConversationConfirmation` 复用规划预览、实施预览与单个问题编辑组件；取消或完成后恢复保留的正文草稿及附件。`ConfirmationChoices` 只复用编号单选、推荐标签及备注输入；没有业务执行逻辑。确认选择与备注按会话保存，普通草稿独立保留。问题方案与处理说明按项目/会话保留，服务预览仍按 ID 和原始会话校验。普通回复不切换输入模式。
-
-### Mock 演示推进
-
-`ProjectSnapshot.demoMode` 仅由 Mock 默认启用，严格测试可通过构造选项关闭。缺失样例补齐、实施中间态初始化与冻结状态全部由服务管理；组件仅依据 `execution.sampleProgress` 选择默认 B-004、展示示例标签。目录 `sampleConnection` 提供可编辑的 Mock 初值；UI 不引用模拟 fixture。执行循环跳过冻结样例，明确提交的任务才恢复推进，避免打开页面就运行整个场景。演示交接封存已有规划基线，较早的生成结果或停止回复不能覆盖交接后的状态。真实适配保留原阶段条件。
-
-独立风险页在 `RiskPanel` 补齐页面内边距，内嵌 `RiskWorkspace` 不重复加 padding。`ManagementDiscussion` 与 `Conversation` 的 management 变体共用 `AssistantMark`，仅改变管理页对话的标识、头像与局部文字层级；正文和输入固定使用 14px，不附加画布底色，标题跟随当前 Agent 目录标签，业务数据仍使用同一会话。
+CSS Modules 就近维护，不修改全局字号来修补单个面板。运行命令见 [README](../README.md)，验证和协作约定见 [AGENTS.md](../AGENTS.md)。Mock 功能回归不代表真实迁移服务已验证。

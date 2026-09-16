@@ -56,7 +56,7 @@ async function setup(language: "zh-CN" | "en" = "zh-CN") {
 describe("planning workspace service", () => {
   it("receives attachment-only adjustments without applying, isolates origins, and clears files on logout", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const before = structuredClone(state.planning!);
     const child = await service.createConversation(
       c.projectId,
@@ -158,7 +158,7 @@ describe("planning workspace service", () => {
   });
   it("localizes authored planning guidance and generated results", async () => {
     const { c, state } = await setup("en");
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const replies = state.messages.filter(
       (m) => m.stageId === "planning" && m.role === "agent",
     );
@@ -194,7 +194,7 @@ describe("planning workspace service", () => {
       clusterRole: "主节点",
     });
     expect(state.planning!.assets[0].system).toBeTruthy();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     expect(state.planning!.batches[0].assetIds).not.toContain(
       state.planning!.assets[0].id,
     );
@@ -208,7 +208,7 @@ describe("planning workspace service", () => {
       state.messages.filter((m) => m.text === "开始迁移项目的规划设计"),
     ).toHaveLength(1);
     expect(state.messages.at(-1)?.conversationId).toBe(c.conversationId);
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     expect(planningSummary(state.planning!)).toMatchObject({
       included: 186,
       excluded: 14,
@@ -225,7 +225,7 @@ describe("planning workspace service", () => {
   });
   it("preserves inputs and existing assignments until explicit regeneration, then updates files", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const original = structuredClone(state.planning!.batches);
     await service.execute(c, {
       type: "planning.save",
@@ -237,7 +237,7 @@ describe("planning workspace service", () => {
     expect(state.planning!.batches).toEqual(original);
     expect(planningIsStale(state)).toBe(true);
     expect(stageEligibility(state).migration).toBe(false);
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     expect(planningIsStale(state)).toBe(false);
     expect(planningWarnings(state.planning!)).toContain(
       "同步带宽较低，需重新估算同步时长",
@@ -271,7 +271,7 @@ describe("planning workspace service", () => {
   });
   it("keeps preview isolated, cancels without changing assignments, applies moves once without duplicate VMs", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const p = state.planning!;
     const before = structuredClone(p.batches);
     const target = p.batches[1].id;
@@ -307,7 +307,7 @@ describe("planning workspace service", () => {
   });
   it("blocks stale and other-session updates, retains failed preview, then permits cancellation", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const p = state.planning!;
     const child = await service.createConversation(
       state.id,
@@ -397,7 +397,7 @@ describe("planning workspace service", () => {
       }),
     ).rejects.toThrow();
     expect(p).toEqual(before);
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     await service.execute(c, { type: "stage.confirm", target: "migration" });
     await expect(
       service.execute(c, {
@@ -409,7 +409,7 @@ describe("planning workspace service", () => {
   });
   it("detects later risk changes and never adds newly excluded VMs on regeneration", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const risk = state.risks.find((r) => r.impact === "constraint")!;
     await service.execute(c, {
       type: "risk.decide",
@@ -422,7 +422,7 @@ describe("planning workspace service", () => {
     });
     expect(planningIsStale(state)).toBe(true);
     expect(stageEligibility(state).migration).toBe(false);
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     expect(state.batchTasks.flatMap((b) => b.vmNames)).not.toContain(
       risk.vmName,
     );
@@ -439,7 +439,7 @@ describe("planning workspace service", () => {
     const abort = new AbortController();
     const pending = service.execute(
       from,
-      { type: "planning.useSample" },
+      { type: "planning.generate" },
       { signal: abort.signal },
     );
     const rejection = expect(pending).rejects.toMatchObject({
@@ -449,13 +449,13 @@ describe("planning workspace service", () => {
     await rejection;
     expect(state.planning!.batches).toEqual([]);
     expect(state.planningStatus).toBe("scope-review");
-    await settle(service.execute(from, { type: "planning.useSample" }));
+    await settle(service.execute(from, { type: "planning.generate" }));
     expect(state.messages.at(-1)?.conversationId).toBe(child.id);
     expect(second.state.planning!.batches).toEqual([]);
   });
   it("supports authored conversation adjustment previews without applying a change on send", async () => {
     const { c, state } = await setup();
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const before = state.planning!.batches[1].cutover;
     await settle(
       service.sendMessage(c, {
@@ -473,6 +473,39 @@ describe("planning workspace service", () => {
     });
     expect(new Date(state.planning!.batches[1].cutover).getDay()).toBe(6);
   });
+  it("cancels conversational constraint changes without altering the plan, baseline or downloads", async () => {
+    const { c, state } = await setup();
+    await settle(service.execute(c, { type: "planning.generate" }));
+    const conditions = structuredClone(state.planning!.conditions);
+    const batches = structuredClone(state.planning!.batches);
+    const risks = structuredClone(state.risks);
+    const workbook = await (
+      await service.download(state.id, "batch-plan")
+    ).blob.text();
+    await settle(
+      service.sendMessage(c, {
+        text: "降低单批次并发",
+        agentId: "planning",
+        modelId: "glm-5.1",
+        requestId: "cancel-constraints",
+      }),
+    );
+    expect(state.planning!.preview?.change.kind).toBe("conditions");
+    expect(state.planning!.conditions).toEqual(conditions);
+    const previewId = state.planning!.preview!.id;
+    await service.execute(c, { type: "planning.cancel", previewId });
+    expect(state.planning!.preview).toBeUndefined();
+    expect(state.planning!.conditions).toEqual(conditions);
+    expect(state.planning!.batches).toEqual(batches);
+    expect(state.risks).toEqual(risks);
+    expect(planningIsStale(state)).toBe(false);
+    expect(
+      await (await service.download(state.id, "batch-plan")).blob.text(),
+    ).toBe(workbook);
+    await expect(
+      service.execute(c, { type: "planning.apply", previewId }),
+    ).rejects.toThrow();
+  });
   it("covers 10,000 assets and exports without duplicate assignments", async () => {
     const { c, state } = await setup();
     state.scopeRows = Array.from({ length: 10000 }, (_, i) => [
@@ -483,7 +516,7 @@ describe("planning workspace service", () => {
       "pool",
     ]);
     state.vmCount = 10000;
-    await settle(service.execute(c, { type: "planning.useSample" }));
+    await settle(service.execute(c, { type: "planning.generate" }));
     const p = state.planning!;
     expect(p.assets).toHaveLength(10000);
     const ids = p.batches.flatMap((b) => b.assetIds);

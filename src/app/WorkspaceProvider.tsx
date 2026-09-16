@@ -1,72 +1,15 @@
-import { conversationReducer } from "@/features/conversations/state";
-import { EMPTY_WORKSPACE_ID } from "@/domain/models";
 import { createServices } from "@/services";
 import type { MigrationService } from "@/services/contracts";
-import { errorMessage } from "@/services/errors";
-import { useEffect, useReducer, useState, type ReactNode } from "react";
+import {
+  createWorkspaceStore,
+  type WorkspaceStore,
+} from "@/stores/workspaceStore";
+import { EmptyState } from "@/shared/ui/Status";
+import { useEffect, useState, type ReactNode } from "react";
 import { WorkspaceContext } from "./context";
-import { dataReducer, initialData, initialUi, uiReducer } from "./state";
 import { serviceConfig } from "./config";
-function useWorkspaceState(service: MigrationService) {
-  const [conversationState, dispatchConversation] = useReducer(
-    conversationReducer,
-    {},
-  );
-  const [data, dispatchData] = useReducer(dataReducer, initialData);
-  const [ui, dispatchUi] = useReducer(uiReducer, initialUi);
-  const [reload, setReload] = useState(0);
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-    const options = { signal: controller.signal };
-    const unsub = service.subscribe((e) => {
-      if (!active) return;
-      if (e.type === "snapshot")
-        dispatchData({ type: "snapshot", snapshot: e.snapshot });
-      else if (e.type === "error")
-        dispatchUi({
-          type: "project",
-          id: e.projectId,
-          patch: { actionError: e.message },
-        });
-    });
-    dispatchData({ type: "loading" });
-    Promise.all([
-      service.catalog(options),
-      service.listProjects(options),
-      service.getProject(EMPTY_WORKSPACE_ID, options),
-    ])
-      .then(async ([catalog, projects, lobby]) => {
-        const snapshots = await Promise.all(
-          projects.map((p) => service.getProject(p.id, options)),
-        );
-        if (!active) return;
-        [lobby, ...snapshots].forEach((snapshot) =>
-          dispatchData({ type: "snapshot", snapshot }),
-        );
-        dispatchData({ type: "ready", catalog });
-      })
-      .catch((error) => {
-        if (active)
-          dispatchData({ type: "error", message: errorMessage(error) });
-      });
-    return () => {
-      active = false;
-      controller.abort();
-      unsub();
-    };
-  }, [service, reload]);
-  return {
-    service,
-    data,
-    ui,
-    dispatchUi,
-    conversationState,
-    dispatchConversation,
-    retry: () => setReload((n) => n + 1),
-  };
-}
-export type WorkspaceContextValue = ReturnType<typeof useWorkspaceState>;
+import { connectWorkspace } from "./workspaceSession";
+
 export function WorkspaceProvider({
   children,
   service,
@@ -74,15 +17,39 @@ export function WorkspaceProvider({
   children: ReactNode;
   service: MigrationService;
 }) {
-  const state = useWorkspaceState(service);
+  const [session, setSession] = useState<{
+    store: WorkspaceStore;
+    service: MigrationService;
+    retry: () => Promise<void>;
+  } | null>(null);
+  useEffect(() => {
+    // Each effect lifetime owns a fresh store, including development effect replay.
+    const store = createWorkspaceStore();
+    const connection = connectWorkspace(store, service);
+    setSession({ store, service, retry: connection.retry });
+    return () => connection.dispose();
+  }, [service]);
+  if (!session || session.service !== service)
+    return <EmptyState title="正在载入工作空间…" />;
   return (
-    <WorkspaceContext.Provider value={state}>
+    <WorkspaceContext.Provider value={session}>
       {children}
     </WorkspaceContext.Provider>
   );
 }
 export function useServiceSession() {
-  const [service, setService] = useState(() => createServices(serviceConfig));
-  useEffect(() => () => service.dispose(), [service]);
-  return { service, reset: () => setService(createServices(serviceConfig)) };
+  const [version, setVersion] = useState(0);
+  const [service, setService] = useState<MigrationService | null>(null);
+  useEffect(() => {
+    const next = createServices(serviceConfig);
+    setService(next);
+    return () => next.dispose();
+  }, [version]);
+  return {
+    service,
+    reset: () => {
+      setService(null);
+      setVersion((value) => value + 1);
+    },
+  };
 }

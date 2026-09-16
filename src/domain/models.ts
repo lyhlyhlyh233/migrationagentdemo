@@ -222,6 +222,8 @@ export interface CatalogOption {
   label: string;
 }
 export interface Catalog {
+  /** Optional capabilities are disabled unless explicitly enabled by the service. */
+  capabilities?: { demoTools?: boolean };
   /** Present only in Mock; never a stored account credential. */
   sampleConnection?: MigrationConnectionInput;
   agents: CatalogOption[];

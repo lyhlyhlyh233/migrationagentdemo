@@ -1,9 +1,9 @@
 import { RiskPromptPreview } from "./RiskPromptPreview";
-import type { ConversationConfirmation } from "./state";
+import type { ConversationConfirmation } from "@/stores/conversationState";
 import { PlanningPreview } from "@/features/planning/PlanningPreview";
 import { planningIsStale } from "@/domain/planning";
 import { PlanningForm } from "@/features/planning/PlanningForm";
-import type { PanelId } from "@/app/state";
+import type { PanelId } from "@/stores/workspaceState";
 import type { BusinessResult, ProjectSnapshot, StageId } from "@/domain/models";
 import { canExecute, stageEligibility } from "@/domain/policies";
 import { AssessmentForm } from "@/features/research/AssessmentForm";
@@ -15,6 +15,7 @@ import { Status } from "@/shared/ui/Status";
 import { useState, type ReactNode } from "react";
 import styles from "./BusinessResults.module.css";
 export interface ResultActions {
+  demoTools?: boolean;
   onConfirmation?: (value: ConversationConfirmation) => void;
   executionInput?: ReactNode;
   conversationId?: string;
@@ -88,6 +89,7 @@ export function BusinessResults({
 }
 function BusinessResultBlock({
   result: r,
+  demoTools = false,
   snapshot: s,
   onPanel,
   onDownload,
@@ -146,6 +148,9 @@ function BusinessResultBlock({
       <div className={styles.quickActions}>
         <Button
           primary
+          disabled={
+            r.view === "connection" && !!s.pending[conversationId ?? ""]
+          }
           onClick={() =>
             onExecutionWork
               ? onExecutionWork(r)
@@ -169,9 +174,9 @@ function BusinessResultBlock({
       <div className={styles.quickActions}>
         <Button
           primary
-          onClick={() => void onCommand({ type: "planning.useSample" })}
+          onClick={() => void onCommand({ type: "planning.generate" })}
         >
-          {t("重新生成模拟初稿")}
+          {t(demoTools ? "重新生成模拟初稿" : "重新生成规划初稿")}
           <Icon name="right" size={15} />
         </Button>
       </div>
@@ -180,6 +185,7 @@ function BusinessResultBlock({
     return (
       planningInput ?? (
         <PlanningForm
+          demoTools={demoTools}
           snapshot={s}
           dirty={planningDraftDirty}
           onCommand={onCommand}
@@ -210,6 +216,7 @@ function BusinessResultBlock({
         </div>
       ) : (
         <PlanningPreview
+          demoTools={demoTools}
           preview={s.planning.preview}
           canApply={
             s.planning.preview.conversationId === conversationId &&
@@ -223,6 +230,7 @@ function BusinessResultBlock({
     return activeInput && s.assessmentStatus !== "completed" && onUpload ? (
       <div className={styles.input}>
         <AssessmentForm
+          demoTools={demoTools}
           snapshot={s}
           onCommand={onCommand}
           onUpload={onUpload}
@@ -293,10 +301,6 @@ function BusinessResultBlock({
           <span>
             {t("交付文件")} · {files.length}
           </span>
-          <button type="button" onClick={() => onPanel("deliverables")}>
-            {t("打开交付件列表")}
-            <Icon name="right" size={14} />
-          </button>
         </div>
         {(expanded ? files : files.slice(0, 3)).map((a) => (
           <div className={styles.fileRow} key={a.id}>

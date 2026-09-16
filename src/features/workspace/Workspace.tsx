@@ -1,13 +1,17 @@
 import { ConversationConfirmation } from "@/features/conversations/ConversationConfirmation";
 import { useConversationConfirmation } from "@/features/conversations/useConversationConfirmation";
-import type { ConversationConfirmation as ConfirmationValue } from "@/features/conversations/state";
+import type { ConversationConfirmation as ConfirmationValue } from "@/stores/conversationState";
 import { ConnectionForm } from "@/features/migration/ConnectionForm";
 import { executionBlock } from "@/domain/execution";
 import { ExecutionWorkspace } from "@/features/migration/ExecutionWorkspace";
 import { ValidationWorkspace } from "@/features/validation/ValidationWorkspace";
-import type { ExecutionView, ValidationView } from "@/features/migration/state";
+import type { ExecutionView, ValidationView } from "@/stores/executionState";
 import { useWorkspace } from "@/app/context";
-import { projectUi, type PanelId, type SidePanelTab } from "@/app/state";
+import {
+  projectUi,
+  type PanelId,
+  type SidePanelTab,
+} from "@/stores/workspaceState";
 import styles from "./Workspace.module.css";
 
 import type { StageId } from "@/domain/models";
@@ -29,18 +33,22 @@ import { Button } from "@/shared/ui/primitives";
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { PlanningWorkspace } from "@/features/planning/PlanningWorkspace";
 import { PlanningIntake } from "@/features/planning/PlanningIntake";
-import type { PlanningView } from "@/features/planning/state";
-import { ManagementDiscussion } from "./ManagementDiscussion";
-import { ManagementView } from "./ManagementView";
+import type { PlanningView } from "@/stores/planningState";
 import { workspacePresentation } from "./presentation";
 import { ProgressRail } from "./ProgressRail";
 import { Sidebar } from "./Sidebar";
 import { useWorkspaceActions } from "./useWorkspaceActions";
+const emptyConversationView = { draft: "" };
 export function Workspace({ onSettings }: { onSettings: () => void }) {
   const t = useTranslation();
-  const { data, ui, dispatchUi, conversationState } = useWorkspace();
-  const s = data.snapshots[ui.selected];
-  const a = useWorkspaceActions(ui.selected);
+  const selected = useWorkspace((state) => state.ui.selected);
+  const navCollapsed = useWorkspace((state) => state.ui.navCollapsed);
+  const snapshots = useWorkspace((state) => state.data.snapshots);
+  const catalog = useWorkspace((state) => state.data.catalog)!;
+  const storedProject = useWorkspace((state) => state.ui.projects[selected]);
+  const dispatchUi = useWorkspace((state) => state.dispatchUi);
+  const s = snapshots[selected];
+  const a = useWorkspaceActions(selected);
   const [inspector, setInspector] = useState(
     () => window.matchMedia("(min-width: 981px)").matches,
   );
@@ -51,7 +59,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     return () => media.removeEventListener("change", update);
   }, []);
   const openSidePanelButton = useRef<HTMLButtonElement>(null);
-  const [riskInteractionLocked, setRiskInteractionLocked] = useState(false);
   const [sidePanelWidth, setSidePanelWidth] = useState<number>();
   const [navOpen, setNavOpen] = useState(false);
   const scrollViewport = useRef<HTMLDivElement>(null);
@@ -71,28 +78,18 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       delete viewport.dataset.scrolling;
     };
   }, []);
-  const p = { ...(ui.projects[s.id] ?? projectUi()) };
-  const chat =
-    ([
-      "planning",
-      "risk",
-      "tasks",
-      "execution",
-      "connection",
-      "issues",
-      "validation",
-    ].includes(p.panel ?? "")
-      ? findStageConversation(
-          s.conversations,
-          p.activeStage,
-          p.lastStages[p.activeStage],
-        )
-      : undefined) ??
-    currentConversation(s.conversations, p.conversationId, p.activeStage);
+  const p = { ...(storedProject ?? projectUi()) };
+  const chat = currentConversation(
+    s.conversations,
+    p.conversationId,
+    p.activeStage,
+  );
+  const demoTools = catalog?.capabilities?.demoTools === true;
   p.conversationId = chat?.id ?? null;
-  const view = conversationState[s.id]?.[p.conversationId ?? ""] ?? {
-    draft: "",
-  };
+  const view =
+    useWorkspace(
+      (state) => state.conversationState[s.id]?.[p.conversationId ?? ""],
+    ) ?? emptyConversationView;
   const confirmation = useConversationConfirmation(s, chat?.id, view, a.view);
   const openConfirmation = (value: ConfirmationValue) => {
     if (!confirmation) {
@@ -117,16 +114,10 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           : {}),
       });
     }
-    dispatchUi({
-      type: "project",
-      id: s.id,
-      patch: { managementChatCollapsed: false },
-    });
   };
   const { stageSteps, progress } = workspacePresentation(s);
-  const management = !!p.panel;
   const stage = chat?.stageId ?? p.activeStage;
-  const showRail = !management && (!chat || !!chat.stageId);
+  const showRail = !chat || !!chat.stageId;
   const panelScope = s.id;
   const openSidePanel = (tab: SidePanelTab) =>
     dispatchUi({
@@ -140,12 +131,15 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         },
       },
     });
-  const canShowSidePanel = !!s.info && !management && !!chat?.stageId;
+  const canShowSidePanel = !!s.info && !!chat;
   const planningPreparing =
     chat?.stageId === "planning" && !s.planning?.batches.length;
-  const hasRiskPanel = p.sidePanel.tabs.length > 0 && !planningPreparing;
+  const hasRiskPanel =
+    p.sidePanel.tabs.length > 0 &&
+    !(planningPreparing && p.sidePanel.active === "planning");
   const showSidePanel = canShowSidePanel && hasRiskPanel && p.sidePanel.open;
-  const showInspector = canShowSidePanel && inspector && !showSidePanel;
+  const showInspector =
+    canShowSidePanel && !!chat?.stageId && inspector && !showSidePanel;
   const closeRiskPanel = () => {
     dispatchUi({
       type: "project",
@@ -159,7 +153,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     if (
       s.assessmentStatus !== "completed" ||
       chat?.stageId !== "research" ||
-      management ||
       p.assessmentRiskOpened
     )
       return;
@@ -180,7 +173,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     s.id,
     s.assessmentStatus,
     chat?.stageId,
-    management,
     panelScope,
     p.assessmentRiskOpened,
     p.sidePanel,
@@ -189,7 +181,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   useEffect(() => {
     if (
       chat?.stageId !== "planning" ||
-      management ||
       p.planningOpened ||
       !s.planning?.batches.length
     )
@@ -208,7 +199,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     });
   }, [
     chat?.stageId,
-    management,
     p.planningOpened,
     s.planning?.batches.length,
     p.sidePanel,
@@ -222,11 +212,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         : chat?.stageId === "validation"
           ? "validation"
           : null;
-    if (
-      !tab ||
-      management ||
-      (tab === "execution" ? p.executionOpened : p.validationOpened)
-    )
+    if (!tab || (tab === "execution" ? p.executionOpened : p.validationOpened))
       return;
     dispatchUi({
       type: "project",
@@ -242,7 +228,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     });
   }, [
     chat?.stageId,
-    management,
     p.executionOpened,
     p.validationOpened,
     p.sidePanel,
@@ -283,14 +268,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     });
   const setContext = (contextLabel: string) =>
     dispatchUi({ type: "project", id: s.id, patch: { contextLabel } });
-  const setPanel = (panel: PanelId) => {
-    if (["creation", "sync", "cutover"].includes(panel ?? "")) {
-      panel = "tasks";
-      executionViewChange({ tab: "tasks" });
-    }
-    dispatchUi({ type: "project", id: s.id, patch: { panel } });
-    setNavOpen(false);
-  };
   const chooseChat = (id: string, stageId?: StageId) => {
     a.selectConversation(id, stageId);
     setNavOpen(false);
@@ -308,13 +285,12 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   }
   const agent =
     view.agentId ??
-    (chat?.stageId && data.catalog!.stageAgents?.[chat.stageId]) ??
-    data.catalog!.defaultAgent;
-  const model = view.modelId ?? data.catalog!.defaultModel;
+    (chat?.stageId && catalog.stageAgents?.[chat.stageId]) ??
+    catalog.defaultAgent;
+  const model = view.modelId ?? catalog.defaultModel;
   const conversationPanel = (panel: PanelId) => {
     if (panel === "risk") {
-      if (planningPreparing) setPanel("risk");
-      else openSidePanel("risk");
+      openSidePanel("risk");
       setInspector(true);
       void a.send(t("查看迁移风险与处置建议"), agent, model);
     } else if (panel === "planning") {
@@ -322,7 +298,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       else openSidePanel("planning");
     } else if (panel === "connection") {
       a.view({ connectionOpen: true });
-      void a.send(t("修改 Migration 连接"), agent, model);
     } else if (
       [
         "execution",
@@ -334,12 +309,8 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         "tasks",
       ].includes(panel ?? "")
     ) {
-      executionViewChange({
-        tab: panel === "issues" ? "issues" : "tasks",
-      });
       openSidePanel("execution");
     } else if (panel === "validation") openSidePanel("validation");
-    else setPanel(panel);
   };
   const order: StageId[] = ["research", "planning", "migration", "validation"];
   const next = chat?.stageId
@@ -371,28 +342,18 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   );
   const planningViewChange = (patch: Partial<PlanningView>) =>
     dispatchUi({ type: "planning-view", id: s.id, patch });
-  const planningDraftDirty = !!(
-    p.planningView.conditionsDraft ||
-    p.planningView.capacityDraft ||
-    p.planningView.dependenciesDraft ||
-    p.planningView.attributesDraft
-  );
+  const planningDraftDirty = !!p.planningView.conditionsDraft;
   const planningContent = (
     <PlanningWorkspace
+      demoTools={demoTools}
       snapshot={s}
-      view={p.planningView}
-      onView={planningViewChange}
-      onCommand={a.execute}
       onDownload={a.download}
-      onUpload={a.upload}
-      conversationId={chat?.id ?? null}
-      onManage={() => setPanel("planning")}
       onConversation={() => selectStage("planning")}
-      compact={!management}
     />
   );
   const planningInput = planningPreparing ? (
     <PlanningIntake
+      demoTools={demoTools}
       snapshot={s}
       view={p.planningView}
       onView={planningViewChange}
@@ -406,9 +367,11 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const executionInput =
     !s.execution?.connection || view.connectionOpen ? (
       <ConnectionForm
+        key={s.id}
+        demoTools={demoTools}
         snapshot={s}
         view={p.executionView}
-        sampleConnection={data.catalog?.sampleConnection}
+        sampleConnection={catalog?.sampleConnection}
         onView={executionViewChange}
         onCommand={a.execute}
         onDone={() => a.view({ connectionOpen: false })}
@@ -417,6 +380,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   const confirmationContent =
     confirmation && chat ? (
       <ConversationConfirmation
+        demoTools={demoTools}
         key={`${s.id}-${chat.id}-${confirmation.kind}-${"id" in confirmation ? confirmation.id : confirmation.taskIds.join(",")}`}
         value={confirmation}
         onChange={(value) => a.view({ confirmation: value })}
@@ -445,7 +409,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
     ) : undefined;
   const batchId =
     p.executionView.batchId ||
-    s.planning?.batches[s.execution?.sampleProgress ? 3 : 0]?.id ||
+    s.execution?.recommendedBatchId ||
     s.planning?.batches[0]?.id;
   const selectedTaskIds = new Set(p.executionView.selected);
   const batchTasks =
@@ -455,8 +419,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         : task.batchId === batchId,
     ) ?? [];
   const executionPrompts =
-    s.enteredStages.includes("migration") &&
-    (stage === "migration" || ["tasks", "execution"].includes(p.panel ?? ""))
+    s.enteredStages.includes("migration") && stage === "migration"
       ? [
           t("修改 Migration 连接"),
           ...(batchTasks.some((task) => !executionBlock(s, task, "start"))
@@ -492,36 +455,27 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       : [];
   const executionContent = (
     <ExecutionWorkspace
+      demoTools={demoTools}
       onRequest={(request) => {
         if (confirmation) return;
         if (request.kind === "connection") {
           a.view({ connectionOpen: true });
-          void a.send(t("修改 Migration 连接"), agent, model);
-          dispatchUi({
-            type: "project",
-            id: s.id,
-            patch: { managementChatCollapsed: false },
-          });
         } else if (request.kind === "issue") {
           executionViewChange({ issueId: request.issueId });
           openConfirmation({ kind: "issue", id: request.issueId });
         } else openConfirmation({ kind: "tasks", taskIds: request.taskIds });
       }}
-      onManage={() => setPanel("tasks")}
       snapshot={s}
       view={p.executionView}
       onView={executionViewChange}
-      onCommand={a.execute}
-      onUpload={a.upload}
       onDownload={a.download}
-      conversationId={chat?.id ?? null}
-      compact={!management}
       onContext={setContext}
     />
   );
   const validationContent = (
     <ValidationWorkspace
-      compact={!management}
+      demoTools={demoTools}
+      compact
       snapshot={s}
       view={p.validationView}
       onView={validationViewChange}
@@ -538,7 +492,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             p.validationView.selected.includes(task.id),
         );
         executionViewChange({
-          tab: "tasks",
           batchId:
             current?.batchId ??
             (s.planning?.batches.some((b) => b.id === p.validationView.scope)
@@ -561,7 +514,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       return;
     if (work.view === "connection") {
       a.view({ connectionOpen: true });
-      void a.send(t("修改 Migration 连接"), agent, model);
       return;
     }
     if (work.view === "issues" && work.issueId) {
@@ -578,11 +530,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           query: work.taskIds?.length === 1 ? task.name : "",
           page: 1,
         });
-      if (management) setPanel("validation");
-      else openSidePanel("validation");
+      openSidePanel("validation");
     } else {
       executionViewChange({
-        tab: work.view,
         ...(work.issueId ? { issueId: work.issueId } : {}),
         ...(task
           ? {
@@ -599,70 +549,9 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             }
           : {}),
       });
-      if (management) setPanel("tasks");
-      else openSidePanel("execution");
+      openSidePanel("execution");
     }
   };
-  const smallConversation = chat ? (
-    <Conversation
-      variant="management"
-      compact
-      onExecutionWork={executionLocation}
-      onConfirmation={openConfirmation}
-      executionInput={executionInput}
-      planningDraftDirty={planningDraftDirty}
-      onPlanningTimeline={() => setPanel("planning")}
-      snapshot={s}
-      chat={chat}
-      view={view}
-      onPanel={setPanel}
-      onAsk={(text) => a.send(text, agent, model)}
-      onDownload={a.download}
-      onCommand={a.execute}
-      onStage={a.confirmStage}
-      onNavigateStage={selectStage}
-      onUpload={a.upload}
-      onCloseWork={() => a.view({ workOpen: false })}
-    />
-  ) : null;
-  const smallComposer = chat ? (
-    <Composer
-      confirmation={confirmationContent}
-      executionPrompts={executionPrompts}
-      compact
-      catalog={data.catalog!}
-      draft={view.draft}
-      agentId={agent}
-      modelId={model}
-      busy={!!s.pending[chat.id]}
-      retry={!!view.requestId && !s.pending[chat.id] && !!view.draft}
-      stage={chat.stageId}
-      onDraft={(draft) => a.view({ draft, requestId: undefined })}
-      onAgent={(agentId) => a.view({ agentId })}
-      onModel={(modelId) => a.view({ modelId })}
-      onSend={(text) => a.send(text, agent, model, true)}
-      onPrompt={(text) => a.send(text, agent, model)}
-      attachment={view.attachment}
-      onAttachment={(attachment) =>
-        a.view({ attachment, requestId: undefined })
-      }
-      assessmentComplete={s.assessmentStatus === "completed"}
-      planningGenerated={
-        !!s.planning?.batches.length && s.batchConfirmation !== "confirmed"
-      }
-      onStop={() => void a.stop()}
-      onWork={() =>
-        setPanel(
-          stage === "migration"
-            ? "tasks"
-            : stage === "validation"
-              ? "validation"
-              : "planning",
-        )
-      }
-      onPanel={setPanel}
-    />
-  ) : null;
   return (
     <main
       style={
@@ -670,7 +559,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           ? undefined
           : ({ "--side-panel-size": `${sidePanelWidth}px` } as CSSProperties)
       }
-      className={`${styles.root} workspace ${ui.navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "inspector-open" : "inspector-collapsed"} ${management ? "management-view" : ""} ${showSidePanel ? "side-panel-open" : ""}`}
+      className={`${styles.root} workspace ${navCollapsed ? "nav-collapsed" : ""} ${navOpen ? "nav-open" : ""} ${showInspector ? "inspector-open" : "inspector-collapsed"} ${showSidePanel ? "side-panel-open" : ""}`}
     >
       <a className="skip-link" href="#workspace-content">
         {t("跳转到对话")}
@@ -684,15 +573,15 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       )}
       <Sidebar
         snapshot={s}
-        projects={Object.values(data.snapshots)}
+        projects={Object.values(snapshots)}
         view={p}
-        collapsed={ui.navCollapsed && !navOpen}
+        collapsed={navCollapsed && !navOpen}
         onCollapse={() => {
           if (navOpen) setNavOpen(false);
           else
             dispatchUi({
               type: "global",
-              patch: { navCollapsed: !ui.navCollapsed },
+              patch: { navCollapsed: !navCollapsed },
             });
         }}
         onSettings={onSettings}
@@ -707,7 +596,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         }}
         onSelect={chooseChat}
         onRename={a.rename}
-        onPanel={setPanel}
       />
       <section className="conversation-workspace">
         <div className="mobile-workspace-bar">
@@ -728,10 +616,10 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             onStage={selectStage}
           />
         )}
-        {p.actionError && (
+        {(view.notice || p.actionError) && (
           <div className={styles.actionFeedback} role="alert">
             <Icon name="info" size={16} />
-            <span>{t(p.actionError)}</span>
+            <span>{t(view.notice || p.actionError)}</span>
             <button
               className="icon-button"
               aria-label={t("关闭提示")}
@@ -741,7 +629,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             </button>
           </div>
         )}
-        {chat && !management && (
+        {chat && (
           <div className="conversation-toolbar">
             <div className="conversation-context">
               <Icon name={chat.stageId ? "agent" : "chat"} size={15} />
@@ -771,127 +659,21 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         <div
           ref={scrollViewport}
           className="conversation-scroll"
-          data-auto-hide-scrollbar={!management || undefined}
-          data-workbench={
-            [
-              "risk",
-              "planning",
-              "tasks",
-              "execution",
-              "connection",
-              "issues",
-              "validation",
-            ].includes(p.panel ?? "") || undefined
-          }
+          data-auto-hide-scrollbar
           id="workspace-content"
           tabIndex={-1}
         >
-          <div
-            className={`conversation-content ${management ? "has-inline-panel" : ""}`}
-          >
-            {management ? (
-              [
-                "planning",
-                "risk",
-                "tasks",
-                "execution",
-                "connection",
-                "issues",
-                "validation",
-              ].includes(p.panel ?? "") ? (
-                <ManagementDiscussion
-                  key={s.id}
-                  activeOperation={!!confirmation || !!view.connectionOpen}
-                  agentLabel={
-                    data.catalog!.agents.find((item) => item.id === agent)
-                      ?.label ?? "通用智能体"
-                  }
-                  title={
-                    t(chat?.title ?? "") === t(stageName[stage])
-                      ? t(stageName[stage])
-                      : `${t(stageName[stage])} · ${t(chat?.title ?? "")}`
-                  }
-                  contextLabel={p.contextLabel}
-                  onClearContext={() => {
-                    if (
-                      ["tasks", "execution", "connection", "issues"].includes(
-                        p.panel ?? "",
-                      )
-                    )
-                      executionViewChange({ selected: [], batchId: "" });
-                    setContext("");
-                  }}
-                  collapsed={p.managementChatCollapsed}
-                  onCollapse={(managementChatCollapsed) =>
-                    dispatchUi({
-                      type: "project",
-                      id: s.id,
-                      patch: { managementChatCollapsed },
-                    })
-                  }
-                  onReturn={() => {
-                    if (chat) chooseChat(chat.id, chat.stageId);
-                    else setPanel(null);
-                  }}
-                  conversation={smallConversation}
-                  composer={smallComposer}
-                >
-                  {p.panel === "planning" ? (
-                    planningContent
-                  ) : ["tasks", "execution", "connection", "issues"].includes(
-                      p.panel ?? "",
-                    ) ? (
-                    executionContent
-                  ) : p.panel === "validation" ? (
-                    validationContent
-                  ) : (
-                    <ManagementView
-                      key={`${s.id}-${p.panel}`}
-                      panel={p.panel}
-                      snapshot={s}
-                      onCommand={a.execute}
-                      onClose={() => setPanel(null)}
-                      onNotify={a.notify}
-                      onDownload={a.download}
-                      riskLocation={p.riskLocation}
-                      onRiskLocation={(riskLocation) =>
-                        dispatchUi({
-                          type: "project",
-                          id: s.id,
-                          patch: { riskLocation },
-                        })
-                      }
-                    />
-                  )}
-                </ManagementDiscussion>
-              ) : (
-                <ManagementView
-                  key={`${s.id}-${p.panel}`}
-                  panel={p.panel}
-                  snapshot={s}
-                  onCommand={a.execute}
-                  onClose={() => setPanel(null)}
-                  onNotify={a.notify}
-                  onDownload={a.download}
-                  riskLocation={p.riskLocation}
-                  onRiskLocation={(riskLocation) =>
-                    dispatchUi({
-                      type: "project",
-                      id: s.id,
-                      patch: { riskLocation },
-                    })
-                  }
-                />
-              )
-            ) : chat ? (
+          <div className="conversation-content">
+            {chat ? (
               <Conversation
+                demoTools={demoTools}
                 key={chat.id}
                 onExecutionWork={executionLocation}
                 onConfirmation={openConfirmation}
                 executionInput={executionInput}
                 planningInput={planningInput}
                 planningDraftDirty={planningDraftDirty}
-                onPlanningTimeline={() => setPanel("planning")}
+                onPlanningTimeline={() => openSidePanel("planning")}
                 snapshot={s}
                 chat={chat}
                 view={view}
@@ -927,11 +709,11 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
             )}
           </div>
         </div>
-        {chat && !management && (
+        {chat && (
           <Composer
             confirmation={confirmationContent}
             executionPrompts={executionPrompts}
-            catalog={data.catalog!}
+            catalog={catalog}
             draft={view.draft}
             agentId={agent}
             modelId={model}
@@ -1045,25 +827,6 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
           planning={planningContent}
           execution={executionContent}
           validation={validationContent}
-          manageDisabled={
-            p.sidePanel.active === "risk" && riskInteractionLocked
-          }
-          onManage={() =>
-            dispatchUi({
-              type: "project",
-              id: s.id,
-              patch: {
-                panel:
-                  p.sidePanel.active === "execution"
-                    ? "tasks"
-                    : p.sidePanel.active,
-                riskLocation: {
-                  mode: "category",
-                  category: p.riskLocation.category,
-                },
-              },
-            })
-          }
           onCollapse={closeRiskPanel}
           onClose={(tab) => {
             const tabs = p.sidePanel.tabs.filter((id) => id !== tab);
@@ -1085,21 +848,12 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
               key={s.id}
               snapshot={s}
               onCommand={a.execute}
-              sidePanel
-              onInteractionLockChange={setRiskInteractionLocked}
               location={p.riskLocation}
               onLocationChange={(riskLocation) =>
                 dispatchUi({
                   type: "project",
                   id: s.id,
                   patch: { riskLocation },
-                })
-              }
-              onManage={(riskLocation) =>
-                dispatchUi({
-                  type: "project",
-                  id: s.id,
-                  patch: { panel: "risk", riskLocation },
                 })
               }
             />

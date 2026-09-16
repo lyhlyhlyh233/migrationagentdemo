@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import type { PlanningInputPatch } from "@/domain/planning";
-import type { ProjectCommand } from "@/services/contracts";
+import type { ProjectCommand, FilePurpose } from "@/services/contracts";
+import type { ProjectSnapshot } from "@/domain/models";
+import type { PlanningView } from "@/stores/planningState";
 import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { PlanningInputs } from "./PlanningInputs";
-import type { PlanningWorkspaceProps } from "./PlanningWorkspace";
 import styles from "./Planning.module.css";
 
-/** Conversation intake shares the workbench draft and existing service commands. */
+/** Planning inputs stay in the conversation and use the existing service commands. */
 export function PlanningIntake({
   snapshot: s,
   view,
@@ -18,7 +19,16 @@ export function PlanningIntake({
   onDownload,
   conversationId,
   onConfirmation,
-}: Omit<PlanningWorkspaceProps, "compact" | "onManage"> & {
+  demoTools = false,
+}: {
+  snapshot: ProjectSnapshot;
+  demoTools?: boolean;
+  view: PlanningView;
+  onView: (patch: Partial<PlanningView>) => void;
+  onCommand: (command: ProjectCommand) => Promise<boolean>;
+  onDownload: (id: string) => void;
+  onUpload: (purpose: FilePurpose, file: File) => Promise<boolean>;
+  conversationId: string | null;
   onConfirmation: (id: string) => void;
 }) {
   const t = useTranslation();
@@ -27,12 +37,7 @@ export function PlanningIntake({
   const [error, setError] = useState(false);
   const p = s.planning;
   if (!p) return null;
-  const unsaved = !!(
-    view.conditionsDraft ||
-    view.attributesDraft ||
-    view.dependenciesDraft ||
-    view.capacityDraft
-  );
+  const unsaved = !!view.conditionsDraft;
   const locked =
     busy ||
     s.planningStatus === "generating" ||
@@ -56,10 +61,7 @@ export function PlanningIntake({
     ) {
       onView({
         conditionsDraft: undefined,
-        draftRevision:
-          view.attributesDraft || view.dependenciesDraft || view.capacityDraft
-            ? p!.revision + 1
-            : undefined,
+        draftRevision: undefined,
         intakeConditionsOpen: false,
       });
     }
@@ -104,7 +106,11 @@ export function PlanningIntake({
       </div>
       <p className={styles.note}>
         {s.planningWorkbook || t("尚未导入资料")} ·{" "}
-        {t("补充业务属性与依赖，也可填写基础约束；上传仅展示样例解析。")}
+        {t(
+          demoTools
+            ? "补充业务属性与依赖，也可填写基础约束；上传仅展示样例解析。"
+            : "补充业务属性与依赖，也可填写基础约束。",
+        )}
       </p>
       {p.preview ? (
         <Button
@@ -132,11 +138,10 @@ export function PlanningIntake({
           </summary>
           <PlanningInputs
             planning={p}
-            view={{ ...view, section: "conditions" }}
+            view={view}
             onView={onView}
             onSave={save}
             locked={locked}
-            conditionsOnly
           />
         </details>
       )}
@@ -150,9 +155,6 @@ export function PlanningIntake({
             onClick={() =>
               onView({
                 conditionsDraft: undefined,
-                attributesDraft: undefined,
-                dependenciesDraft: undefined,
-                capacityDraft: undefined,
                 draftRevision: undefined,
               })
             }
@@ -178,19 +180,21 @@ export function PlanningIntake({
         <Button
           primary
           disabled={locked || unsaved}
-          onClick={() => void execute({ type: "planning.useSample" })}
+          onClick={() => void execute({ type: "planning.generate" })}
         >
           {t(s.planningStatus === "generating" ? "正在生成" : "生成规划初稿")}
           <Icon name="right" size={15} />
         </Button>
-        <button
-          type="button"
-          className={styles.textAction}
-          disabled={locked || unsaved}
-          onClick={() => void execute({ type: "planning.sampleInputs" })}
-        >
-          {t("使用样例数据")}
-        </button>
+        {demoTools && (
+          <button
+            type="button"
+            className={styles.textAction}
+            disabled={locked || unsaved}
+            onClick={() => void execute({ type: "planning.sampleInputs" })}
+          >
+            {t("使用样例数据")}
+          </button>
+        )}
       </div>
     </section>
   );

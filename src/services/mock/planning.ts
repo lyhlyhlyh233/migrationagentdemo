@@ -473,6 +473,7 @@ export function planningDiscussion(
     s.batchConfirmation !== "confirmed" &&
     !p.preview
   ) {
+    requireCondition(rt.demoTools, "当前服务未启用演示工具");
     const preview = previewPlanning(
       rt,
       c,

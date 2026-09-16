@@ -12,11 +12,13 @@ export function PlanningPreview({
   onCommand,
   canApply = true,
   summaryOnly = false,
+  demoTools = false,
 }: {
   preview: Preview;
   onCommand: (command: ProjectCommand) => Promise<boolean>;
   canApply?: boolean;
   summaryOnly?: boolean;
+  demoTools?: boolean;
 }) {
   const t = useTranslation();
   const region = useRef<HTMLElement>(null);
@@ -59,15 +61,23 @@ export function PlanningPreview({
     >
       <header>
         <strong>
-          {t(preview.change.kind === "import" ? "示例解析预览" : "调整预览")}
+          {t(
+            preview.change.kind === "import"
+              ? demoTools
+                ? "示例解析预览"
+                : "导入预览"
+              : "调整预览",
+          )}
         </strong>
         <span>{t("共 {0} 项", preview.rows.length)}</span>
       </header>
       <p>
         {t(
-          preview.change.kind === "import"
-            ? "展示示例解析结果，尚未读取实际表格内容。已有填写会保留。"
-            : "确认后才应用。示例时间未经真实排程求解，请核对依赖影响。",
+          !demoTools
+            ? "确认后才应用，请核对修改范围。"
+            : preview.change.kind === "import"
+              ? "展示示例解析结果，尚未读取实际表格内容。已有填写会保留。"
+              : "确认后才应用。示例时间未经真实排程求解，请核对依赖影响。",
         )}
       </p>
       <div className={styles.previewRows}>

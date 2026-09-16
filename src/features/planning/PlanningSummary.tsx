@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
 import {
   planningSummary,
@@ -12,17 +11,11 @@ import styles from "./Planning.module.css";
 export function PlanningSummary({
   snapshot: s,
   onDownload,
-  onBatch,
-  selectedBatch,
-  standalone = false,
-  children,
+  demoTools = false,
 }: {
   snapshot: ProjectSnapshot;
   onDownload: (id: string) => void;
-  onBatch: (id: string) => void;
-  selectedBatch?: string;
-  standalone?: boolean;
-  children?: ReactNode;
+  demoTools?: boolean;
 }) {
   const t = useTranslation(),
     p = s.planning!,
@@ -30,11 +23,7 @@ export function PlanningSummary({
     warnings = planningWarnings(p),
     stale = planningIsStale(s);
   return (
-    <section
-      className={styles.dashboard}
-      data-standalone={standalone || undefined}
-      aria-label={t("规划结果看板")}
-    >
+    <section className={styles.dashboard} aria-label={t("规划结果看板")}>
       <header className={styles.dashboardHeader}>
         <h2>{t("整体规划结论")}</h2>
         <button
@@ -54,7 +43,15 @@ export function PlanningSummary({
       <div className={styles.assessmentStatus}>
         <span>{t("售后评估状态")}</span>
         <strong data-tone={warnings.length ? "warning" : "success"}>
-          {t(warnings.length ? "示例检查：存在待核对事项" : "示例检查完成")}
+          {t(
+            warnings.length
+              ? demoTools
+                ? "示例检查：存在待核对事项"
+                : "存在待核对事项"
+              : demoTools
+                ? "示例检查完成"
+                : "规划检查完成",
+          )}
         </strong>
         {stale && <small data-tone="warning">{t("待更新")}</small>}
       </div>
@@ -87,13 +84,8 @@ export function PlanningSummary({
       )}
       <section className={styles.dashboardSection}>
         <h3>{t("批次甘特图")}</h3>
-        <PlanningTimeline
-          planning={p}
-          onBatch={onBatch}
-          selectedBatch={selectedBatch}
-        />
+        <PlanningTimeline planning={p} demoTools={demoTools} />
       </section>
-      {children}
       <p className={styles.note}>
         {t(
           s.batchConfirmation === "confirmed"

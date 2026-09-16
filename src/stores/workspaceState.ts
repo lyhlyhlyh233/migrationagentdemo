@@ -3,14 +3,11 @@ import {
   initialValidationView,
   type ExecutionView,
   type ValidationView,
-} from "@/features/migration/state";
+} from "./executionState";
 import type { Catalog, ProjectSnapshot, StageId } from "@/domain/models";
 import { EMPTY_WORKSPACE_ID } from "@/domain/models";
-import type { RiskLocation } from "@/features/risks/presentation";
-import {
-  initialPlanningView,
-  type PlanningView,
-} from "@/features/planning/state";
+import type { RiskLocation } from "./riskState";
+import { initialPlanningView, type PlanningView } from "./planningState";
 export type SidePanelTab = "risk" | "planning" | "execution" | "validation";
 export type PanelId =
   | "planning"
@@ -19,26 +16,21 @@ export type PanelId =
   | "issues"
   | "tasks"
   | "risk"
-  | "deliverables"
-  | "logs"
   | "creation"
   | "sync"
   | "cutover"
   | "validation"
   | null;
-export type { ConversationView } from "@/features/conversations/state";
+export type { ConversationView } from "./conversationState";
 export interface ProjectUi {
   activeStage: StageId;
   conversationId: string | null;
   lastStages: Partial<Record<StageId, string>>;
-  panel: PanelId;
   actionError: string;
-  handoff: StageId | null;
   riskLocation: RiskLocation;
   assessmentRiskOpened: boolean;
   planningOpened: boolean;
   planningView: PlanningView;
-  managementChatCollapsed: boolean;
   contextLabel: string;
   executionView: ExecutionView;
   validationView: ValidationView;
@@ -54,14 +46,11 @@ export const projectUi = (): ProjectUi => ({
   activeStage: "research",
   conversationId: null,
   lastStages: {},
-  panel: null,
   actionError: "",
-  handoff: null,
-  riskLocation: { mode: "category" },
+  riskLocation: {},
   assessmentRiskOpened: false,
   planningOpened: false,
   planningView: initialPlanningView(),
-  managementChatCollapsed: false,
   contextLabel: "",
   executionView: initialExecutionView(),
   validationView: initialValidationView(),
@@ -96,7 +85,8 @@ export type UiAction =
       id: string;
       conversationId: string;
       stageId?: StageId;
-      expected?: string;
+      expected?: string | null;
+      collapsePanel?: boolean;
     };
 export function uiReducer(s: UiState, a: UiAction): UiState {
   if (a.type === "global") return { ...s, ...a.patch };
@@ -125,8 +115,7 @@ export function uiReducer(s: UiState, a: UiAction): UiState {
     };
   if (a.type === "project")
     return { ...s, projects: { ...s.projects, [a.id]: { ...p, ...a.patch } } };
-  if (a.expected && p.conversationId && p.conversationId !== a.expected)
-    return s;
+  if (a.expected !== undefined && p.conversationId !== a.expected) return s;
   return {
     ...s,
     projects: {
@@ -134,8 +123,9 @@ export function uiReducer(s: UiState, a: UiAction): UiState {
       [a.id]: {
         ...p,
         conversationId: a.conversationId,
-        panel: null,
-        handoff: null,
+        ...(a.collapsePanel
+          ? { sidePanel: { ...p.sidePanel, open: false } }
+          : {}),
         activeStage: a.stageId ?? p.activeStage,
         lastStages: a.stageId
           ? { ...p.lastStages, [a.stageId]: a.conversationId }

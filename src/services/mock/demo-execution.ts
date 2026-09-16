@@ -50,6 +50,7 @@ export function seedDemoExecution(
     return;
   e.sampleProgress = true;
   const batches = s.planning?.batches ?? [];
+  e.recommendedBatchId = batches[3]?.id ?? batches[0]?.id;
   const now = Date.now();
   const at = (hours: number) => new Date(now - hours * 3600000).toISOString();
   batches.forEach((batch, index) => {
