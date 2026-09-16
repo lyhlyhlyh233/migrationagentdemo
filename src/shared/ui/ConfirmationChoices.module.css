@@ -1,0 +1,118 @@
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  min-width: 0;
+  font-size: var(--ui-size);
+  line-height: 1.5;
+}
+.option:hover {
+  background: var(--surface);
+}
+.option:has(input:checked) {
+  background: var(--accent-soft);
+}
+.option:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  height: 30px;
+  margin-top: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--secondary);
+}
+.option:has(input:checked) .number {
+  color: var(--text);
+  border-color: var(--text);
+}
+.copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.recommended {
+  padding: 1px 7px;
+  background: var(--accent-soft);
+  border-radius: 5px;
+  font-size: var(--ui-caption);
+  font-weight: 500;
+  color: var(--text);
+}
+.description {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--ui-small);
+}
+.note {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--hover);
+  color: var(--secondary);
+  font-size: var(--ui-small);
+}
+.note textarea {
+  width: 100%;
+  padding: 0;
+  min-height: 48px;
+  max-height: 120px;
+  resize: vertical;
+  font: inherit;
+  font-size: var(--ui-size);
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+}
+.note textarea::placeholder {
+  color: var(--muted);
+}
+.note:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.note textarea:focus-visible {
+  outline: none;
+}
+@media (pointer: coarse) {
+  .option {
+    min-height: 48px;
+  }
+}

@@ -18,7 +18,7 @@ import type {
 } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
 import { uploadExecutionAttachment, validationReport } from "./validation";
-import { command } from "./commands";
+import { command, recordConfirmation } from "./commands";
 import { reply } from "./conversations";
 import { assessmentWelcome } from "./assessment-knowledge";
 import { researchTemplate, scopeArtifacts } from "./files";
@@ -29,6 +29,12 @@ import { assessmentFileIds, assessmentFiles } from "./assessment-files";
 import { MockRuntime } from "./runtime";
 import { createStageConversation } from "./fixtures";
 const catalog: Catalog = {
+  sampleConnection: {
+    ip: "192.0.2.10",
+    port: 443,
+    username: "migration-demo",
+    password: "SampleOnly-2026",
+  },
   agents: [
     { id: "general", label: "通用智能体" },
     { id: "research", label: "评估智能体" },
@@ -52,7 +58,7 @@ const catalog: Catalog = {
 export class MockMigrationService implements MigrationService {
   readonly runtime = new MockRuntime();
   private readonly downloads = new AbortController();
-  constructor() {
+  constructor(private readonly config: { demoMode?: boolean } = {}) {
     this.initialize(EMPTY_WORKSPACE_ID, null, "zh-CN");
   }
   private active(options: RequestOptions = {}) {
@@ -66,6 +72,7 @@ export class MockMigrationService implements MigrationService {
   ) {
     const metric = () => ({ total: 0, completed: 0, queued: 0, running: 0 });
     const s: ProjectSnapshot = {
+      demoMode: this.config.demoMode !== false,
       id,
       info,
       revision: 0,
@@ -156,7 +163,9 @@ export class MockMigrationService implements MigrationService {
   }
   async catalog(options: RequestOptions = {}) {
     this.active(options);
-    return structuredClone(catalog);
+    const result = structuredClone(catalog);
+    if (this.config.demoMode === false) delete result.sampleConnection;
+    return result;
   }
   async listProjects(options: RequestOptions = {}) {
     this.active(options);
@@ -249,7 +258,17 @@ export class MockMigrationService implements MigrationService {
     options: RequestOptions = {},
   ) {
     this.active(options);
-    return command(this.runtime, c, cmd, options);
+    if (cmd.confirmation)
+      requireCondition(cmd.confirmation.choice.trim(), "请选择确认选项");
+    await command(this.runtime, c, cmd, options);
+    if (cmd.confirmation && cmd.type !== "confirmation.record")
+      recordConfirmation(
+        this.runtime,
+        c,
+        c.language === "en" ? "Confirmation" : "操作确认",
+        cmd.confirmation.choice,
+        cmd.confirmation.note,
+      );
   }
   async upload(
     c: OperationContext,

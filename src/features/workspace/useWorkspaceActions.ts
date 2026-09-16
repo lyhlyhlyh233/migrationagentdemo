@@ -120,9 +120,15 @@ export function useWorkspaceActions(projectId: string) {
       invoke(() =>
         service.renameConversation(projectId, conversationId, title),
       ),
-    confirmStage: (target: StageId) =>
+    confirmStage: (
+      target: StageId,
+      confirmation?: { choice: string; note: string },
+    ) =>
       invoke(async () => {
-        await service.execute(context, { type: "stage.confirm", target });
+        await service.execute(
+          { ...context, operationId: crypto.randomUUID() },
+          { type: "stage.confirm", target, confirmation },
+        );
         const next = await service.getProject(projectId);
         const c = findStageConversation(next.conversations, target);
         if (c)

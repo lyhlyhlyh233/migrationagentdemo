@@ -18,6 +18,16 @@
   font-size: var(--ui-size);
   font-weight: 600;
 }
+.sample {
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--info);
+  background: var(--info-soft, var(--accent-soft));
+  font-size: var(--ui-caption);
+  font-weight: 400;
+  white-space: nowrap;
+}
 .heading > span,
 .note {
   color: var(--muted);

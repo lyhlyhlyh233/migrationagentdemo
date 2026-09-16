@@ -139,7 +139,7 @@ App / useWorkspaceActions → 命令、消息、文件       快照与事件
 
 规划引导中的 `PlanningIntake` 复用 `PlanningInputs`、`PlanningPreview` 与项目内 `PlanningView` 草稿；由工作区通过组合传入对话结果，仅最新的规划输入/预览回答展开资料操作。折叠状态与草稿在切换管理页时保留，保存、导入和预览沿用服务命令，样例资料使用 `planning.sampleInputs` 进入相同预览流程。
 
-生成后独立页使用 `PlanningReadOnlyInputs` 及只读资产/资源组件，批次不再包含编辑表单。生成后的调整预览由 `ConversationConfirmation` 复用 `PlanningPreview` 呈现，`BusinessResults` 保留预览引用和重新打开入口，只允许发起会话确认；生成前资料导入仍使用原接收预览。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
+生成后独立页使用 `PlanningReadOnlyInputs` 及只读资产/资源组件，批次不再包含编辑表单。生成后的调整预览由 `ConversationConfirmation` 复用 `PlanningPreview` 呈现，`BusinessResults` 保留预览引用和重新打开入口，只允许发起会话确认；生成前资料导入同样在输入框确认区展示编号选项，原资料行仅保留查看预览入口。RiskPromptPreview 复用风险批量确认组件，快捷对话不直接修改策略。
 
 Composer 的待发送 File、普通草稿和当前确认引用位于 `conversationReducer` 中，按项目/会话隔离；业务预览仍由服务持有。切入确认模式不清空普通草稿或 File，取消/完成后恢复。消息仅保留文件引用与元信息，快捷对话不顺带发送草稿附件。不新增确认队列、状态 Provider 或流程引擎。
 
@@ -167,4 +167,10 @@ CSS Modules 就近维护，复杂既有表格可用 Module 根节点约束内部
 
 ### 输入框操作确认
 
-`features/conversations/useConversationConfirmation.ts` 只从当前会话的明确预览结果打开确认区，记录已读消息 ID，不让后台诊断替换正在编辑的内容。`ConversationConfirmation` 复用规划预览、实施预览与单个问题编辑组件；取消或完成后恢复保留的正文草稿及附件。问题方案与处理说明按项目/会话保留，服务预览仍按 ID 和原始会话校验。普通回复不切换输入模式。
+`features/conversations/useConversationConfirmation.ts` 只从当前会话的明确预览结果打开确认区，记录已读消息 ID，不让后台诊断替换正在编辑的内容。`ConversationConfirmation` 复用规划预览、实施预览与单个问题编辑组件；取消或完成后恢复保留的正文草稿及附件。`ConfirmationChoices` 只复用编号单选、推荐标签及备注输入；没有业务执行逻辑。确认选择与备注按会话保存，普通草稿独立保留。问题方案与处理说明按项目/会话保留，服务预览仍按 ID 和原始会话校验。普通回复不切换输入模式。
+
+### Mock 演示推进
+
+`ProjectSnapshot.demoMode` 仅由 Mock 默认启用，严格测试可通过构造选项关闭。缺失样例补齐、实施中间态初始化与冻结状态全部由服务管理；组件仅依据 `execution.sampleProgress` 选择默认 B-004、展示示例标签。目录 `sampleConnection` 提供可编辑的 Mock 初值；UI 不引用模拟 fixture。执行循环跳过冻结样例，明确提交的任务才恢复推进，避免打开页面就运行整个场景。演示交接封存已有规划基线，较早的生成结果或停止回复不能覆盖交接后的状态。真实适配保留原阶段条件。
+
+独立风险页在 `RiskPanel` 补齐页面内边距，内嵌 `RiskWorkspace` 不重复加 padding。`ManagementDiscussion` 与 `Conversation` 的 management 变体共用 `AssistantMark`，仅改变管理页对话的标识、头像和背景，业务数据仍使用同一会话。

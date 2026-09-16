@@ -1,6 +1,9 @@
 import { useId, useState } from "react";
 import type { ProjectSnapshot } from "@/domain/models";
-import { hasActiveControl } from "@/domain/execution";
+import {
+  type MigrationConnectionInput,
+  hasActiveControl,
+} from "@/domain/execution";
 import type { ProjectCommand } from "@/services/contracts";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
@@ -14,12 +17,14 @@ export function ConnectionForm({
   onView,
   onCommand,
   onDone,
+  sampleConnection,
 }: {
   snapshot: ProjectSnapshot;
   view: ExecutionView;
   onView: (value: Partial<ExecutionView>) => void;
   onCommand: (command: ProjectCommand) => Promise<boolean>;
   onDone?: () => void;
+  sampleConnection?: MigrationConnectionInput;
 }) {
   const t = useTranslation(),
     id = useId();
@@ -28,10 +33,11 @@ export function ConnectionForm({
   const execution = snapshot.execution;
   if (!execution) return null;
   const values = view.connectionDraft ?? {
-    ip: execution.connection?.ip ?? "",
-    port: execution.connection?.port ?? 443,
-    username: execution.connection?.username ?? "",
-    password: "",
+    ip: execution.connection?.ip ?? sampleConnection?.ip ?? "",
+    port: execution.connection?.port ?? sampleConnection?.port ?? 443,
+    username:
+      execution.connection?.username ?? sampleConnection?.username ?? "",
+    password: sampleConnection?.password ?? "",
   };
   const checking = busy || execution.connectionStatus === "checking";
   const active =
@@ -136,24 +142,21 @@ export function ConnectionForm({
                 : "模拟连接，不访问真实服务",
           )}
         </span>
-        <button
-          type="button"
-          className={styles.textButton}
-          disabled={checking}
-          onClick={() =>
-            onView({
-              connectionDraft: {
-                ip: "192.0.2.10",
-                port: 443,
-                username: "migration-demo",
-                password: "sample-only",
-              },
-              simulateFailure: false,
-            })
-          }
-        >
-          {t("使用样例配置")}
-        </button>
+        {sampleConnection && (
+          <button
+            type="button"
+            className={styles.textButton}
+            disabled={checking}
+            onClick={() =>
+              onView({
+                connectionDraft: { ...sampleConnection },
+                simulateFailure: false,
+              })
+            }
+          >
+            {t("使用样例配置")}
+          </button>
+        )}
         <Button
           primary
           type="submit"

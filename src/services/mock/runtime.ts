@@ -171,8 +171,20 @@ export class MockRuntime {
       s.operations[key] = "completed";
       this.publish(s);
     } catch (error) {
-      if (key === "assessment") s.assessmentStatus = previous.assessmentStatus;
-      if (key === "planning") s.planningStatus = previous.planningStatus;
+      const pending = s.pending[c.conversationId];
+      const ownsPending = pending?.runId === runId;
+      if (
+        key === "assessment" &&
+        ownsPending &&
+        s.assessmentStatus === "running"
+      )
+        s.assessmentStatus = previous.assessmentStatus;
+      if (
+        key === "planning" &&
+        ownsPending &&
+        s.planningStatus === "generating"
+      )
+        s.planningStatus = previous.planningStatus;
       if (key === "md-check") s.mdStatus = previous.mdStatus;
       for (const kind of ["creation", "sync", "cutover"] as const)
         if (key === `execute-${kind}`) {
@@ -181,8 +193,12 @@ export class MockRuntime {
           const approval = s.approvals.find((v) => v.id === key);
           if (approval) approval.status = "pending";
         }
-      delete s.operations[key];
-      const pending = s.pending[c.conversationId];
+      if (
+        (key === "assessment" && s.assessmentStatus === "completed") ||
+        (key === "planning" && s.planningStatus === "completed")
+      )
+        s.operations[key] = "completed";
+      else delete s.operations[key];
       if (pending?.runId === runId) delete s.pending[c.conversationId];
       if (run.stopped && !this.disposed)
         this.message(c, "system", "已停止回复");

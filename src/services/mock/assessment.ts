@@ -33,7 +33,8 @@ export async function assess(
       };
       rt.publish(s);
       await rt.sleep(1600, runOptions);
-      s.risks = buildAssessmentRisks(s);
+      if (rt.state(c.projectId).assessmentStatus !== "completed")
+        s.risks = buildAssessmentRisks(s);
       s.assessmentStatus = "completed";
       const report = assessmentReportReply(s);
       assessmentFiles(rt, s);

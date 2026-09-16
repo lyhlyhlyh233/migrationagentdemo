@@ -401,6 +401,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       view={p.planningView}
       onView={planningViewChange}
       onCommand={a.execute}
+      onConfirmation={(id) => openConfirmation({ kind: "planning", id })}
       onDownload={a.download}
       onUpload={a.upload}
       conversationId={chat?.id ?? null}
@@ -411,6 +412,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
       <ConnectionForm
         snapshot={s}
         view={p.executionView}
+        sampleConnection={data.catalog?.sampleConnection}
         onView={executionViewChange}
         onCommand={a.execute}
         onDone={() => a.view({ connectionOpen: false })}
@@ -445,7 +447,10 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
         onClose={() => a.view({ confirmation: undefined })}
       />
     ) : undefined;
-  const batchId = p.executionView.batchId || s.planning?.batches[0]?.id;
+  const batchId =
+    p.executionView.batchId ||
+    s.planning?.batches[s.execution?.sampleProgress ? 3 : 0]?.id ||
+    s.planning?.batches[0]?.id;
   const selectedTaskIds = new Set(p.executionView.selected);
   const batchTasks =
     s.execution?.tasks.filter((task) =>
@@ -588,6 +593,7 @@ export function Workspace({ onSettings }: { onSettings: () => void }) {
   };
   const smallConversation = chat ? (
     <Conversation
+      variant="management"
       compact
       onExecutionWork={executionLocation}
       onConfirmation={openConfirmation}

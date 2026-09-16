@@ -29,7 +29,13 @@ export interface MessageInput {
   /** Explicit management scope; IDs are validated in the current project. */
   executionContext?: { taskIds?: string[]; batchId?: string };
 }
-export type ProjectCommand =
+export type ProjectCommand = (
+  | {
+      type: "confirmation.record";
+      subject: string;
+      choice: string;
+      note: string;
+    }
   | {
       type: "execution.connection";
       values: MigrationConnectionInput;
@@ -37,6 +43,8 @@ export type ProjectCommand =
     }
   | {
       type: "execution.preview";
+      /** Replace only this same-conversation preview after validating the new scope. */
+      replacePreviewId?: string;
       action: ExecutionAction;
       taskIds: string[];
       targetBatchId?: string;
@@ -133,7 +141,11 @@ export type ProjectCommand =
       type: "tasks.action";
       action: "sync" | "pause" | "delete" | "schedule" | "cancel-schedule";
       taskIds: string[];
-    };
+    }
+) & {
+  /** UI choice and optional user note; never parsed as additional commands. */
+  confirmation?: { choice: string; note: string };
+};
 export type FilePurpose =
   | "rvtools"
   | "presales"

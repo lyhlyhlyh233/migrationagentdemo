@@ -112,7 +112,19 @@ export async function executionCommand(
     return;
   }
   if (cmd.type === "execution.preview") {
-    requireCondition(!e.preview, "请先应用或取消当前调整预览");
+    requireCondition(
+      e.preview
+        ? cmd.replacePreviewId === e.preview.id &&
+            e.preview.origin.conversationId === c.conversationId
+        : !cmd.replacePreviewId,
+      "当前预览已变更或属于其他会话，请先完成原预览中的确认",
+    );
+    if (e.preview)
+      requireCondition(
+        e.preview.revision === e.revision,
+        "状态已变化，请取消预览后重新选择",
+      );
+    // Keep the existing preview until the replacement has passed every validation.
     const ids = [...new Set(cmd.taskIds)],
       tasks = e.tasks.filter((t) => ids.includes(t.id));
     requireCondition(
@@ -233,6 +245,7 @@ export async function executionCommand(
         // executionBlock validates this exact interrupted operation. Never infer a phase.
         t.phase = t.resumePhase!;
       }
+      delete t.demoFrozen;
       t.sourceConversationId = c.conversationId;
       rt.executionOrigins.set(`${s.id}/${t.id}`, { ...c, operationId: p.id });
     }

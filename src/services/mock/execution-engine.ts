@@ -13,10 +13,12 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
       const s = rt.state(c.projectId);
       const e = s.execution!;
       if (
-        !e.tasks.some((t) =>
-          ["creating", "full", "incremental", "ready", "cutover"].includes(
-            t.phase,
-          ),
+        !e.tasks.some(
+          (t) =>
+            !t.demoFrozen &&
+            ["creating", "full", "incremental", "ready", "cutover"].includes(
+              t.phase,
+            ),
         )
       )
         break;
@@ -24,8 +26,10 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
       if (e.connectionStatus !== "ready") break;
       const cap = s.planning?.conditions.concurrency ?? 10;
       const active = e.tasks
-        .filter((t) =>
-          ["creating", "full", "incremental", "cutover"].includes(t.phase),
+        .filter(
+          (t) =>
+            !t.demoFrozen &&
+            ["creating", "full", "incremental", "cutover"].includes(t.phase),
         )
         .slice(0, cap);
       const finished: ExecutionTask[] = [];
@@ -111,7 +115,9 @@ export function startExecutionLoop(rt: MockRuntime, c: OperationContext) {
           }
         }
       }
-      for (const t of e.tasks.filter((t) => t.phase === "ready"))
+      for (const t of e.tasks.filter(
+        (t) => !t.demoFrozen && t.phase === "ready",
+      ))
         t.lastSync = new Date().toISOString();
       e.trend.push({
         time: new Date().toISOString(),

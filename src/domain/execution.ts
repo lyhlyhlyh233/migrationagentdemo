@@ -30,6 +30,8 @@ export interface MigrationConnectionInput {
   password: string;
 }
 export interface ExecutionTask {
+  /** Static Mock example; explicit task controls release only their selected IDs. */
+  demoFrozen?: boolean;
   id: string;
   assetId: string;
   name: string;
@@ -121,6 +123,7 @@ export interface MigrationFeedback {
   origin: OperationContext;
 }
 export interface ExecutionState {
+  sampleProgress?: boolean;
   revision: number;
   connection?: {
     ip: string;
@@ -180,8 +183,10 @@ export function executionSummary(e?: ExecutionState) {
 }
 export function hasActiveControl(e: ExecutionState) {
   return (
-    e.tasks.some((t) =>
-      ["creating", "full", "incremental", "cutover"].includes(t.phase),
+    e.tasks.some(
+      (t) =>
+        !t.demoFrozen &&
+        ["creating", "full", "incremental", "cutover"].includes(t.phase),
     ) || e.issues.some((i) => i.state === "repairing")
   );
 }

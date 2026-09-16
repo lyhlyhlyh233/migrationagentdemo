@@ -1,4 +1,9 @@
-export type ConversationConfirmation =
+export type ConversationConfirmation = {
+  choice?: string;
+  note?: string;
+  scopeIds?: string[];
+  scopePage?: number;
+} & (
   | { kind: "planning"; id: string }
   | { kind: "execution"; id: string }
   | { kind: "stage"; id: string }
@@ -7,7 +12,8 @@ export type ConversationConfirmation =
       kind: "tasks";
       taskIds: string[];
       action?: import("@/domain/execution").ExecutionAction;
-    };
+    }
+);
 /** Conversation-local interaction state. Business replies and task state belong to the service. */
 export interface ConversationView {
   draft: string;

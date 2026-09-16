@@ -10,7 +10,7 @@ import { canValidate, executionBlock } from "@/domain/execution";
 let service: MockMigrationService;
 beforeEach(() => {
   vi.useFakeTimers();
-  service = new MockMigrationService();
+  service = new MockMigrationService({ demoMode: false });
 });
 afterEach(() => {
   service.dispose();
@@ -388,6 +388,68 @@ describe("batch execution and business validation", () => {
       }),
     );
     expect(issue.state).toBe("resolved");
+  });
+  it("replaces a preview only for its owner after validating the complete new scope", async () => {
+    const { c, s } = await setup();
+    const e = s.execution!;
+    await timed(service.execute(c, connection));
+    const ids = e.tasks.slice(0, 3).map((task) => task.id);
+    const command = {
+      type: "execution.preview" as const,
+      action: "start" as const,
+      taskIds: ids,
+      computeResource: "pool",
+      network: "net",
+    };
+    await service.execute(c, command);
+    const firstId = e.preview!.id;
+    await service.execute(c, {
+      ...command,
+      taskIds: ids.slice(0, 1),
+      replacePreviewId: firstId,
+    });
+    expect(e.preview!.id).not.toBe(firstId);
+    expect(e.preview!.taskIds).toEqual(ids.slice(0, 1));
+    const current = structuredClone(e.preview);
+    await expect(service.execute(c, command)).rejects.toThrow("当前预览已变更");
+    await expect(
+      service.execute(c, { ...command, replacePreviewId: firstId }),
+    ).rejects.toThrow("当前预览已变更");
+    expect(e.preview).toEqual(current);
+    await expect(
+      service.execute(c, {
+        ...command,
+        taskIds: [ids[0], "unknown-task"],
+        replacePreviewId: current!.id,
+      }),
+    ).rejects.toThrow("未找到所选任务");
+    expect(e.preview).toEqual(current);
+    await expect(
+      service.execute(c, {
+        ...command,
+        network: "",
+        replacePreviewId: current!.id,
+      }),
+    ).rejects.toThrow("请填写目标资源");
+    expect(e.preview).toEqual(current);
+    const child = await service.createConversation(s.id, "migration", "zh-CN");
+    await expect(
+      service.execute(
+        { ...c, conversationId: child.id },
+        { ...command, replacePreviewId: current!.id },
+      ),
+    ).rejects.toThrow("属于其他会话");
+    expect(e.preview).toEqual(current);
+    expect(e.tasks.every((task) => task.phase === "pending")).toBe(true);
+    await service.execute(c, {
+      type: "execution.apply",
+      previewId: current!.id,
+    });
+    expect(
+      e.tasks
+        .filter((task) => task.phase === "creating")
+        .map((task) => task.id),
+    ).toEqual(ids.slice(0, 1));
   });
   it("keeps preview ownership, stale protection and background event origins across conversations", async () => {
     const { c, s } = await setup(),

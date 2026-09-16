@@ -37,8 +37,7 @@ export function useConversationConfirmation(
     candidate = { kind: "execution", id: result.previewId };
   if (
     result?.kind === "planning-preview" &&
-    snapshot.planning?.batches.length &&
-    snapshot.planning.preview?.id === result.previewId
+    snapshot.planning?.preview?.id === result.previewId
   )
     candidate = { kind: "planning", id: result.previewId };
   useEffect(() => {
@@ -66,16 +65,24 @@ export function useConversationConfirmation(
   const executionPreview = snapshot.execution?.preview;
   useEffect(() => {
     if (
-      active?.kind === "tasks" &&
+      (active?.kind === "tasks" ||
+        (active?.kind === "execution" && active.id !== executionPreview?.id)) &&
       executionPreview &&
       executionPreview.origin.conversationId === conversationId
     )
-      onView({ confirmation: { kind: "execution", id: executionPreview.id } });
+      onView({
+        confirmation: {
+          kind: "execution",
+          id: executionPreview.id,
+          note: active.note,
+        },
+      });
   }, [active, executionPreview, conversationId, onView]);
   const expired =
     active &&
     ((active.kind === "execution" &&
-      snapshot.execution?.preview?.id !== active.id) ||
+      snapshot.execution?.preview?.id !== active.id &&
+      snapshot.execution?.preview?.origin.conversationId !== conversationId) ||
       (active.kind === "planning" &&
         snapshot.planning?.preview?.id !== active.id) ||
       (active.kind === "stage" &&

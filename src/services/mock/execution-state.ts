@@ -4,10 +4,13 @@ import { eligiblePlanningAssets } from "@/domain/planning";
 import { buildValidationTasks } from "./fixtures";
 import type { MockRuntime } from "./runtime";
 import { requireCondition } from "../errors";
+import { seedDemoExecution } from "./demo-execution";
 export function initializeExecution(s: ProjectSnapshot): ExecutionState {
   if (s.execution) return s.execution;
   requireCondition(
-    s.planning?.batches.length && s.enteredStages.includes("migration"),
+    s.planning &&
+      (s.demoMode || s.planning.batches.length > 0) &&
+      s.enteredStages.includes("migration"),
     "请先确认规划交接",
   );
   const assets = new Map(eligiblePlanningAssets(s).map((a) => [a.id, a]));
@@ -171,6 +174,8 @@ export function publishExecution(rt: MockRuntime, s: ProjectSnapshot) {
 export function executionIntro(rt: MockRuntime, c: OperationContext) {
   const s = rt.context(c);
   const e = initializeExecution(s);
+  seedDemoExecution(rt, s, c);
+  projectExecution(s);
   rt.message(c, "user", "开始迁移项目的实施准备", { operation: true });
   void rt
     .run(c, "intro:" + c.stageId, async (s, options, runId) => {
@@ -179,9 +184,13 @@ export function executionIntro(rt: MockRuntime, c: OperationContext) {
       await rt.sleep(1200, options);
       rt.result(
         c,
-        c.language === "en"
-          ? `The approved plan covers ${e.tasks.length} VMs. Check the Migration connection first, then select a batch. Task creation, full sync, incremental sync and cutover each require your confirmation. Connection and execution are simulated.`
-          : `规划已交接，共 ${e.tasks.length} 台虚拟机。请先检测 Migration 连接，再选择批次。创建任务、全量同步、增量同步、割接分别由你确认，操作前会展示范围与检查结果。连接与执行均为前端模拟。`,
+        e.sampleProgress
+          ? c.language === "en"
+            ? `Example progress is at batch 4. ${e.tasks.length} VMs are distributed across completed, ready, syncing and pending batches. Check the prefilled Migration connection to try controls. Examples stay unchanged until you confirm an operation.`
+            : `已加载推进至第 4 批的示例进度，共 ${e.tasks.length} 台虚拟机，包含已完成、待割接、同步中和待创建对象。可直接检测预填的 Migration 连接后体验操作；未操作时示例保持静止，每次只推进你确认的对象。`
+          : c.language === "en"
+            ? `The approved plan covers ${e.tasks.length} VMs. Check the Migration connection first, then select a batch. Task creation, full sync, incremental sync and cutover each require your confirmation. Connection and execution are simulated.`
+            : `规划已交接，共 ${e.tasks.length} 台虚拟机。请先检测 Migration 连接，再选择批次。创建任务、全量同步、增量同步、割接分别由你确认，操作前会展示范围与检查结果。连接与执行均为前端模拟。`,
         [{ kind: "execution-work", view: "connection" }],
       );
       delete s.pending[c.conversationId];

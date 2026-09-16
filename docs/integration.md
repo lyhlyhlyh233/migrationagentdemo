@@ -47,7 +47,7 @@
 
 `requestId` 用于同一条聊天的重试，重复请求不能重复追加用户消息。operationId 标识一次命令，另需按项目/操作或任务资源校验共享执行状态；operationId 不相同也不能重复启动同一任务。当前 Mock 的 operation key 与执行锁位于 `runtime.ts`，真实环境应由后端保证并发与幂等。
 
-`stage.review` 返回交接说明和 approval 引用；只有 `stage.confirm` 才开启下一阶段。旧消息中的确认入口根据最新 approval 状态禁用。不能用“风险都已处理”作为交接条件，也不能跳过既有阶段必要工作。
+`stage.review` 返回交接说明和 approval 引用；只有 `stage.confirm` 才开启下一阶段。旧消息中的确认入口根据最新 approval 状态禁用。不能用“风险都已处理”作为交接条件，真实适配不能跳过既有阶段必要工作。默认 Mock 的 `demoMode` 允许确认后补齐缺失样例，仅用于查看交互；`demoMode: false` 保留严格条件。
 
 风险提交基于最新数据验证项目、阶段锁定、资源与策略。默认批量界面传 `onlyUndecided: true`，服务执行时再次过滤，保护其他会话的新选择；省略或传 false 表示允许覆盖，不能擅自更改语义。一次批量操作先整体校验、再写入，失败不留部分结果；覆盖会重置相关验证状态。
 
@@ -74,7 +74,7 @@
 
 连接检测、创建/同步、日志获取、修复、复查均为 Mock，不构造真实端点。沿用 `execution.preview` / `execution.apply`，`action: start` 仅创建任务，新增的 `action: full` 仅授权全量同步。创建完成进入 `created`（待全量），全量完成进入 `full-complete`（待增量）；这些等待状态不自行产生进度、同步量或心跳。`increment` 确认后进入持续增量，`cutover` 仍需独立确认才产生验证记录。每项目一个执行循环；恢复/重试只允许明确的实际中断阶段，不能用兜底状态跨过确认。配置差异和时间线是示例值，不代表远端核验或真实窗口检查。实施安排变化不修改已批准规划。具体业务门禁只在业务文档维护。
 
-消息的 `execution-work` 结果包含 view 及可选 issueId/taskIds，UI 用于打开对话内连接、单个问题或验证区域，不代表执行授权。`execution-preview` 保存固定 previewId，输入框确认区只读取该 ID 对应的共享预览；旧消息不能误操作后来的预览。`execution-prompt` 是下一步快捷语言，不是任务控制命令。`sendMessage` 的 `MessageInput.executionContext` 可带 `taskIds` 和 `batchId`，明确执行工作区来源。所选 ID 在异步等待前复制，完整校验项目归属，优先于文本中的批次；无多选时，用户明确写出的批次优先于页面批次。这样任务页即使沿用评估或规划会话，也能生成执行预览，结果仍写回原会话。`context` 仅为可清除的展示说明，不能替代稳定 ID。语言操作仅建立预览，独立任务页的所选对象同样先进入对话确认。阶段引导回复可停止，迁移循环不受聊天 stopReply 控制。
+消息的 `execution-work` 结果包含 view 及可选 issueId/taskIds，UI 用于打开对话内连接、单个问题或验证区域，不代表执行授权。调整操作范围复用 `execution.preview` 的可选 `replacePreviewId`：必须匹配当前预览、原发起会话及版本，完整校验后才替换；失败保留原预览，其他会话不能覆盖。`execution-preview` 保存固定 previewId，输入框确认区只读取该 ID 对应的共享预览；旧消息不能误操作后来的预览。`execution-prompt` 是下一步快捷语言，不是任务控制命令。`sendMessage` 的 `MessageInput.executionContext` 可带 `taskIds` 和 `batchId`，明确执行工作区来源。所选 ID 在异步等待前复制，完整校验项目归属，优先于文本中的批次；无多选时，用户明确写出的批次优先于页面批次。这样任务页即使沿用评估或规划会话，也能生成执行预览，结果仍写回原会话。`context` 仅为可清除的展示说明，不能替代稳定 ID。语言操作仅建立预览，独立任务页的所选对象同样先进入对话确认。阶段引导回复可停止，迁移循环不受聊天 stopReply 控制。
 
 原有 md.check / executeTasks / creation.update / cutover.complete 等兼容命令不能旁路新确认；旧 UI 已删除，接入新服务应使用上述契约，不恢复两套任务控制逻辑。
 
@@ -151,3 +151,9 @@ PPTX 在下载时动态加载 PptxGenJS 生成实际 OOXML 文件；Excel 沿用
 运行 `npm run check`、`npm run build`。已有测试覆盖会话实际 ID、配置注入、未配置失败、取消与退出、交接、风险范围、批量并发与重试。适配真实 HTTP 时，用实际 DTO/协议补充映射、失败、取消和事件归属测试；现有 Mock 测试不证明真实后端可用。
 
 本轮没有增加网络接口。Mock 上传不解析内容，资产和执行结果为样例，回复是预编文案，Nexent 未验证，业务数据刷新后重置。`scopeRows` 仍是固定列数组，部分资产关联使用虚拟机名称，日志时间和部分提示为展示文字；拿到真实资产和消息结构后再有针对性调整，不在本轮预造新的数据模型。
+
+## 演示默认值和确认备注
+
+Mock 默认快照包含 `demoMode: true`，实施首次生成静止的第 4 批中间态，`execution.sampleProgress` 表明示例来源，任务 `demoFrozen` 防止无用户操作时推进。这些字段不能被真实适配用于豁免远端校验。目录可选 `sampleConnection` 仅用于公开示例凭据，真实凭据不得放入目录、日志、消息或持久存储。
+
+项目命令可携带 `confirmation: { choice, note }`，仅在业务操作成功后将选择与备注记录到发起会话；失败不记成功。`confirmation.record` 接收 `subject/choice/note`，用于留在当前阶段、稍后处理等不执行业务的选择。备注不传入聊天指令解析器，不增加执行权限。原有 operationId、项目/会话归属、预览版本和资源校验保持。

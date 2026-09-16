@@ -292,35 +292,31 @@ export function RiskWorkspace({
     <div className={styles.workspace} data-side-panel={sidePanel}>
       <div className={styles.workspaceHeader}>
         {sidePanel && <RiskOverview snapshot={s} editing={scopeLocked} />}
-        <div className={styles.summaryRow}>
-          {!sidePanel && (
-            <>
-              <div className={styles.overview}>
-                <span>
-                  {t("可纳入")} <strong>{included}</strong>
-                </span>
-                <span>
-                  {t("暂时排除")}{" "}
-                  <strong data-tone="warning">
-                    {s.scopeRows.length - included}
-                  </strong>
-                </span>
-                <span>
-                  {t("未选策略")}{" "}
-                  <strong>
-                    {s.risks.filter((r) => !hasRiskDecision(r)).length}
-                  </strong>
-                </span>
-              </div>
-              <span
-                className={styles.scopeHint}
-                title={t("风险可稍后处理，受阻对象不会进入实施。")}
-              >
-                {t("受阻对象自动排除")}
+        {!sidePanel && (
+          <div className={styles.summaryRow}>
+            <div className={styles.overview}>
+              <span>
+                {t("可纳入")} <strong>{included}</strong>
               </span>
-            </>
-          )}
-          {!sidePanel && (
+              <span>
+                {t("暂时排除")}{" "}
+                <strong data-tone="warning">
+                  {s.scopeRows.length - included}
+                </strong>
+              </span>
+              <span>
+                {t("未选策略")}{" "}
+                <strong>
+                  {s.risks.filter((r) => !hasRiskDecision(r)).length}
+                </strong>
+              </span>
+            </div>
+            <span
+              className={styles.scopeHint}
+              title={t("风险可稍后处理，受阻对象不会进入实施。")}
+            >
+              {t("受阻对象自动排除")}
+            </span>
             <div
               className={styles.modeSwitch}
               role="group"
@@ -341,8 +337,8 @@ export function RiskWorkspace({
                 {t("按虚拟机")}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
         {!editable && !!s.risks.length && (
           <p className={styles.hint}>
             {t(

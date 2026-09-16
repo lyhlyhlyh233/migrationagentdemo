@@ -5,6 +5,10 @@ import type { ExecutionView } from "./state";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { Select } from "@/shared/ui/Select";
+import {
+  ConfirmationChoices,
+  ConfirmationNote,
+} from "@/shared/ui/ConfirmationChoices";
 import { useTranslation } from "@/shared/i18n";
 import styles from "./ExecutionIssue.module.css";
 
@@ -39,10 +43,16 @@ export function ExecutionIssueEditor({
   onDownload,
   onCancel,
   onDone,
+  choice,
+  onChoice,
+  onDefer,
 }: IssueProps & {
   issueId: string;
   onCancel?: () => void;
   onDone?: () => void;
+  choice?: string;
+  onChoice?: (choice: string) => void;
+  onDefer?: () => Promise<boolean>;
 }) {
   const t = useTranslation(),
     id = useId();
@@ -65,6 +75,8 @@ export function ExecutionIssueEditor({
   const requiresRecheck =
     issue.solution === "manual" &&
     ["manual", "repair-failed"].includes(issue.state);
+  const selectedSolution =
+    issue.category === "network" ? view.solution : "manual";
   async function send(command: ProjectCommand, close = false) {
     setPending(true);
     setFailed(false);
@@ -105,81 +117,77 @@ export function ExecutionIssueEditor({
           </Button>
         )}
       </details>
-      {canChoose && !requiresRecheck && (
-        <fieldset className={styles.options}>
-          <legend>{t("选择处理方案")}</legend>
-          {(["automatic", "manual"] as const).map((solution, index) => (
-            <label
-              key={solution}
-              data-selected={view.solution === solution}
-              data-disabled={
-                solution === "automatic" && issue.category !== "network"
-              }
-            >
+      {canChoose && (
+        <ConfirmationChoices
+          label="选择处理方案"
+          value={
+            choice ??
+            (issue.category === "network" && !requiresRecheck
+              ? view.solution
+              : "manual")
+          }
+          disabled={working}
+          onChange={(selected) => {
+            onChoice?.(selected);
+            if (selected === "automatic" || selected === "manual")
+              onView({ solution: selected });
+          }}
+          options={[
+            ...(issue.category === "network" && !requiresRecheck
+              ? [
+                  {
+                    value: "automatic",
+                    title: "自动重建同步通道",
+                    description: "确认后执行，保留已同步数据。",
+                    recommended: true,
+                  },
+                ]
+              : []),
+            {
+              value: "manual",
+              title: requiresRecheck ? "提交处理并复查" : "人工处理后复查",
+              description: "记录处理措施与证据，复查通过后恢复任务。",
+              recommended: issue.category !== "network" || requiresRecheck,
+            },
+            {
+              value: "later",
+              title: "稍后处理",
+              description: "保持当前问题状态，不执行修复。",
+            },
+          ]}
+        />
+      )}
+      <ConfirmationNote
+        value={view.note}
+        onChange={(note) => onView({ note })}
+        disabled={working || readonly}
+      />
+      {canChoose &&
+        choice !== "later" &&
+        (selectedSolution === "manual" ||
+          issue.category !== "network" ||
+          requiresRecheck) && (
+          <details className={styles.evidence}>
+            <summary>{t("补充证据附件")}</summary>
+            <label className={styles.upload}>
               <input
-                type="radio"
-                name={`${id}-solution`}
-                checked={view.solution === solution}
-                disabled={
-                  working ||
-                  (solution === "automatic" && issue.category !== "network")
-                }
-                onChange={() => onView({ solution })}
+                type="file"
+                aria-label={t("补充证据附件")}
+                disabled={working}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    setPending(true);
+                    void onUpload(`issue:${issue.id}`, file)
+                      .then((ok) => setFailed(!ok))
+                      .catch(() => setFailed(true))
+                      .finally(() => setPending(false));
+                  }
+                }}
               />
-              <span className={styles.number}>{index + 1}</span>
-              <span>
-                <strong>
-                  {t(
-                    solution === "automatic"
-                      ? "自动重建同步通道"
-                      : "人工处理后复查",
-                  )}
-                </strong>
-                <small>
-                  {t(
-                    solution === "automatic"
-                      ? issue.category === "network"
-                        ? "确认后执行，保留已同步数据。"
-                        : "该问题需要人工处理，无法自动执行。"
-                      : "记录处理措施与证据，复查通过后恢复任务。",
-                  )}
-                </small>
-              </span>
             </label>
-          ))}
-        </fieldset>
-      )}
-      {canChoose && (view.solution === "manual" || requiresRecheck) && (
-        <div className={styles.supplement}>
-          <label htmlFor={`${id}-note`}>
-            {t("处理说明")}
-            <textarea
-              id={`${id}-note`}
-              value={view.note}
-              disabled={working}
-              onChange={(event) => onView({ note: event.target.value })}
-              placeholder={t("记录处理措施与复查依据")}
-            />
-          </label>
-          <label className={styles.upload}>
-            {t("补充证据附件")}
-            <input
-              type="file"
-              disabled={working}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  setPending(true);
-                  void onUpload(`issue:${issue.id}`, file)
-                    .then((ok) => setFailed(!ok))
-                    .catch(() => setFailed(true))
-                    .finally(() => setPending(false));
-                }
-              }}
-            />
-          </label>
-        </div>
-      )}
+          </details>
+        )}
       {issue.attachments.length > 0 && (
         <div className={styles.attachments}>
           {issue.attachments.map((fileId, index) => (
@@ -253,12 +261,24 @@ export function ExecutionIssueEditor({
             primary
             disabled={
               working ||
-              (requiresRecheck && view.note.trim().length < 4) ||
-              (!requiresRecheck &&
-                view.solution === "automatic" &&
-                issue.category !== "network")
+              (choice !== "later" &&
+                requiresRecheck &&
+                !snapshot.demoMode &&
+                view.note.trim().length < 4)
             }
-            onClick={() =>
+            onClick={async () => {
+              if (choice === "later") {
+                setPending(true);
+                setFailed(false);
+                try {
+                  setFailed(!(await onDefer?.()));
+                } catch {
+                  setFailed(true);
+                } finally {
+                  setPending(false);
+                }
+                return;
+              }
               void send(
                 requiresRecheck
                   ? {
@@ -266,26 +286,40 @@ export function ExecutionIssueEditor({
                       issueId,
                       note: view.note,
                       simulateFailure: view.simulateFailure,
+                      confirmation: {
+                        choice: "提交处理并复查",
+                        note: view.note,
+                      },
                     }
                   : {
                       type: "execution.remedy",
                       issueId,
-                      solution: view.solution,
+                      solution: selectedSolution,
                       note: view.note,
                       simulateFailure: view.simulateFailure,
+                      confirmation: {
+                        choice:
+                          issue.category === "network" &&
+                          selectedSolution === "automatic"
+                            ? "自动重建同步通道"
+                            : "人工处理后复查",
+                        note: view.note,
+                      },
                     },
                 true,
-              )
-            }
+              );
+            }}
           >
             {t(
               working
                 ? "正在提交"
-                : requiresRecheck
-                  ? "提交处理并复查"
-                  : view.solution === "automatic"
-                    ? "确认并执行方案"
-                    : "确认采用人工方案",
+                : choice === "later"
+                  ? "稍后处理"
+                  : requiresRecheck
+                    ? "提交处理并复查"
+                    : selectedSolution === "automatic"
+                      ? "确认并执行方案"
+                      : "确认采用人工方案",
             )}
             <Icon name="right" size={14} />
           </Button>

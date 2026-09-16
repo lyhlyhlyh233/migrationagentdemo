@@ -18,7 +18,7 @@ const info = {
 let service: MockMigrationService;
 beforeEach(() => {
   vi.useFakeTimers();
-  service = new MockMigrationService();
+  service = new MockMigrationService({ demoMode: false });
 });
 afterEach(() => {
   service.dispose();

@@ -34,7 +34,8 @@ export function ExecutionDashboard({
     data = executionDashboard(e);
   const batchId = data.batches.some((batch) => batch.id === selectedBatchId)
     ? selectedBatchId!
-    : data.batches[0]?.id;
+    : ((e.sampleProgress ? data.batches[3]?.id : undefined) ??
+      data.batches[0]?.id);
   const tasks = e.tasks.filter((task) => task.batchId === batchId);
   const selectedData = executionDashboard({ ...e, tasks });
   const range = pageWindow(tasks.length, { page: taskPage, size: taskSize });
@@ -43,7 +44,12 @@ export function ExecutionDashboard({
   return (
     <section className={styles.root} aria-label={t("任务看板")}>
       <div className={styles.heading}>
-        <h3>{t("整体批次进度")}</h3>
+        <h3>
+          {t("整体批次进度")}
+          {e.sampleProgress && (
+            <span className={styles.sample}>{t("示例进度")}</span>
+          )}
+        </h3>
         <span>
           {t("{0} 个批次 · {1} 台虚拟机", data.batches.length, e.tasks.length)}
         </span>

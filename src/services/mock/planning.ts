@@ -365,6 +365,36 @@ export function planningIntro(rt: MockRuntime, c: OperationContext) {
   );
   planningFiles(rt, s);
 }
+/** Shared Mock generation for explicit planning and walkthrough handoff. */
+export function generatePlanningSnapshot(rt: MockRuntime, s: ProjectSnapshot) {
+  const p = initializePlanning(s);
+  p.assets = planningAssets(s);
+  const priority = { "": 0, general: 0, important: 1, critical: 2 };
+  const eligible = eligiblePlanningAssets(s).sort(
+    (a, b) =>
+      priority[a.grade] - priority[b.grade] || a.riskScore - b.riskScore,
+  );
+  const idByName = new Map(eligible.map((a) => [a.name, a.id]));
+  p.batches = buildBatchTasks(eligible.map((a) => a.name))
+    .filter((b) => b.vmNames.length)
+    .map((b, i) => ({
+      id: b.id,
+      phase: b.batchPhase,
+      assetIds: b.vmNames.map((n) => idByName.get(n)!),
+      start: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2),
+      cutover: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2 + 2),
+      end: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2 + 4),
+      downtime: i === 0 ? 1 : 2,
+      bufferDays: 1,
+      window: p.conditions.cutoverWindow,
+    }));
+  p.stale = false;
+  p.riskSignature = planningRiskSignature(s);
+  p.revision++;
+  s.planningStatus = "completed";
+  synchronizePlanningTasks(s);
+  planningFiles(rt, s);
+}
 export async function plan(
   rt: MockRuntime,
   c: OperationContext,
@@ -392,32 +422,19 @@ export async function plan(
       s.pending[c.conversationId] = { startedAt: Date.now(), runId };
       rt.publish(s);
       await rt.sleep(1600, runOptions);
-      p.assets = planningAssets(s);
-      const priority = { "": 0, general: 0, important: 1, critical: 2 };
-      const eligible = eligiblePlanningAssets(s).sort(
-        (a, b) =>
-          priority[a.grade] - priority[b.grade] || a.riskScore - b.riskScore,
-      );
-      const idByName = new Map(eligible.map((a) => [a.name, a.id]));
-      p.batches = buildBatchTasks(eligible.map((a) => a.name))
-        .filter((b) => b.vmNames.length)
-        .map((b, i) => ({
-          id: b.id,
-          phase: b.batchPhase,
-          assetIds: b.vmNames.map((n) => idByName.get(n)!),
-          start: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2),
-          cutover: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2 + 2),
-          end: isoAfter(`${p.conditions.startDate}T00:00:00Z`, i * 2 + 4),
-          downtime: i === 0 ? 1 : 2,
-          bufferDays: 1,
-          window: p.conditions.cutoverWindow,
-        }));
-      p.stale = false;
-      p.riskSignature = planningRiskSignature(s);
-      p.revision++;
-      s.planningStatus = "completed";
-      synchronizePlanningTasks(s);
-      planningFiles(rt, s);
+      if (rt.state(c.projectId).batchConfirmation === "confirmed") {
+        rt.result(
+          c,
+          c.language === "en"
+            ? "The plan has already been handed off. Existing batches were retained; the background generation did not replace the approved baseline."
+            : "规划已交接，保留现有批次；本次后台生成未覆盖已批准的规划基线。",
+          [],
+        );
+        delete s.pending[c.conversationId];
+        return;
+      }
+      if (rt.state(c.projectId).planningStatus !== "completed")
+        generatePlanningSnapshot(rt, s);
       const summary = planningSummary(p);
       const warnings = planningWarnings(p);
       rt.result(

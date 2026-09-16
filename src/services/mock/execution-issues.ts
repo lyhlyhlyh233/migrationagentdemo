@@ -150,7 +150,7 @@ export async function issueCommand(
     }
   } else {
     requireCondition(
-      i.solution && cmd.note.trim().length >= 4,
+      i.solution && (s.demoMode || cmd.note.trim().length >= 4),
       "请先选择处理方案，并填写至少 4 字的处理说明",
     );
     if (i.category === "permission")
@@ -160,7 +160,8 @@ export async function issueCommand(
       );
   }
   i.state = "repairing";
-  i.note = cmd.note;
+  i.note =
+    cmd.note.trim() || (s.demoMode ? "示例处理已完成，执行模拟复查。" : "");
   publishExecution(rt, s);
   try {
     await rt.sleep(1600);

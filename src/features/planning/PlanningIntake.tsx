@@ -5,7 +5,6 @@ import { useTranslation } from "@/shared/i18n";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
 import { PlanningInputs } from "./PlanningInputs";
-import { PlanningPreview } from "./PlanningPreview";
 import type { PlanningWorkspaceProps } from "./PlanningWorkspace";
 import styles from "./Planning.module.css";
 
@@ -18,7 +17,10 @@ export function PlanningIntake({
   onUpload,
   onDownload,
   conversationId,
-}: Omit<PlanningWorkspaceProps, "compact" | "onManage">) {
+  onConfirmation,
+}: Omit<PlanningWorkspaceProps, "compact" | "onManage"> & {
+  onConfirmation: (id: string) => void;
+}) {
   const t = useTranslation();
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -105,15 +107,13 @@ export function PlanningIntake({
         {t("补充业务属性与依赖，也可填写基础约束；上传仅展示样例解析。")}
       </p>
       {p.preview ? (
-        <PlanningPreview
-          key={p.preview.id}
-          preview={p.preview}
-          canApply={
-            p.preview.conversationId === conversationId &&
-            s.batchConfirmation !== "confirmed"
-          }
-          onCommand={execute}
-        />
+        <Button
+          disabled={p.preview.conversationId !== conversationId}
+          onClick={() => onConfirmation(p.preview!.id)}
+        >
+          {t("查看导入预览")}
+          <Icon name="right" size={15} />
+        </Button>
       ) : (
         <details
           className={styles.intakeConditions}

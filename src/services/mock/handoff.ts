@@ -30,6 +30,7 @@ function upsertApproval(rt: MockRuntime, c: OperationContext, next: StageId) {
               : "请先完成至少一项割接",
             "进入验证不影响其余实施任务",
           ];
+  if (s.demoMode) checks.push("演示继续会补齐缺失样例，保留已有选择与任务记录");
   const existing = s.approvals.find((a) => a.id === `enter-${next}`);
   if (existing) {
     existing.checks = checks;
@@ -64,9 +65,13 @@ export function reviewHandoff(
   const ready = stageEligibility(s)[target];
   rt.result(
     c,
-    ready
-      ? `可以继续${stageName[target]}，不需要逐项确认风险。\n\n${a.checks.join("。")}。请确认以下交接事项，或继续留在当前会话答疑。`
-      : "当前还未完成必要的阶段工作。你可以先查看交接条件；不需要为了继续而逐项确认风险。",
+    s.demoMode
+      ? c.language === "en"
+        ? "Continue the walkthrough with your confirmation. Missing examples will be added while preserving saved choices and task records."
+        : "确认后继续演示下一阶段；缺少的资料会补齐样例，已有选择与任务记录保持不变。"
+      : ready
+        ? `可以继续${stageName[target]}，不需要逐项确认风险。\n\n${a.checks.join("。")}。请确认以下交接事项，或继续留在当前会话答疑。`
+        : "当前还未完成必要的阶段工作。你可以先查看交接条件；不需要为了继续而逐项确认风险。",
     [{ kind: "approval", approvalId: a.id }],
   );
 }

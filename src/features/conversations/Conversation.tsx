@@ -7,6 +7,7 @@ import type { FilePurpose } from "@/services/contracts";
 import { useTranslation } from "@/shared/i18n";
 import { EmptyState } from "@/shared/ui/Status";
 import { Icon } from "@/shared/ui/icons";
+import { AssistantMark } from "@/shared/ui/AssistantMark";
 import { Button } from "@/shared/ui/primitives";
 import { useEffect, useRef } from "react";
 import { BusinessResults, type ResultActions } from "./BusinessResults";
@@ -24,6 +25,7 @@ export function Conversation({
   onUpload,
   onCloseWork,
   compact = false,
+  variant = "stage",
   ...actions
 }: {
   snapshot: ProjectSnapshot;
@@ -32,6 +34,7 @@ export function Conversation({
   onUpload: (purpose: FilePurpose, file: File) => void | Promise<boolean>;
   onCloseWork: () => void;
   compact?: boolean;
+  variant?: "stage" | "management";
 } & ResultActions) {
   const t = useTranslation();
   const end = useRef<HTMLDivElement>(null);
@@ -92,7 +95,7 @@ export function Conversation({
     } else end.current?.scrollIntoView({ block: "end", behavior: "instant" });
   }, [chat.id, messages.length, busy, lastRole]);
   return (
-    <div className={styles.root}>
+    <div className={styles.root} data-variant={variant}>
       <div
         ref={log}
         role="log"
@@ -113,6 +116,19 @@ export function Conversation({
               }
               key={message.id}
             >
+              {variant === "management" && message.role !== "system" && (
+                <span
+                  className={styles.avatar}
+                  role="img"
+                  aria-label={t(message.role === "user" ? "你" : "助手")}
+                >
+                  {message.role === "user" ? (
+                    <Icon name="user" size={15} />
+                  ) : (
+                    <AssistantMark />
+                  )}
+                </span>
+              )}
               {message.role === "agent" ? (
                 <>
                   <ConversationAnswer

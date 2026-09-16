@@ -1,9 +1,11 @@
 import type { OperationContext } from "@/domain/models";
 import { stageEligibility } from "@/domain/policies";
 import { stageName } from "@/shared/i18n/stages";
+import { translateText } from "@/shared/i18n/text";
 import type { ProjectCommand, RequestOptions } from "../contracts";
 import { ServiceError, requireCondition } from "../errors";
 import { assess } from "./assessment";
+import { prepareDemoHandoff } from "./demo-handoff";
 import { executionIntro } from "./execution-state";
 import { validationCommand, validationIntro } from "./validation";
 import { checkMd, executeTasks, executionCommand } from "./execution";
@@ -29,6 +31,10 @@ export async function command(
   if (options.signal?.aborted) throw new ServiceError("ABORTED", "操作已取消");
   const s = rt.context(c);
   requireCondition(s.info, "请先创建项目");
+  if (cmd.type === "confirmation.record") {
+    recordConfirmation(rt, c, cmd.subject, cmd.choice, cmd.note);
+    return;
+  }
   if (cmd.type.startsWith("execution.") && cmd.type !== "execution.confirm")
     return executionCommand(rt, c, cmd, options);
   if (cmd.type.startsWith("validation.") && cmd.type !== "validation.confirm")
@@ -180,6 +186,7 @@ export async function command(
         "阶段交接条件尚未满足",
       );
       requireCondition(!s.enteredStages.includes(cmd.target), "该阶段已经进入");
+      prepareDemoHandoff(rt, c, cmd.target);
       s.enteredStages.push(cmd.target);
       const chat = createStageConversation(cmd.target);
       s.conversations.push(chat);
@@ -355,5 +362,19 @@ export async function command(
   }
   if (s.planning) planningFiles(rt, s);
   offerHandoff(rt, c);
+  rt.publish(s);
+}
+
+export function recordConfirmation(
+  rt: MockRuntime,
+  c: OperationContext,
+  subject: string,
+  choice: string,
+  note: string,
+) {
+  const s = rt.context(c);
+  requireCondition(choice.trim(), "请选择确认选项");
+  const text = `${translateText(subject.trim().slice(0, 160), c.language)}${c.language === "en" ? ": " : "："}${translateText(choice.trim().slice(0, 160), c.language)}${note.trim() ? `${c.language === "en" ? ". Note: " : "。补充说明："}${note.trim().slice(0, 2000)}` : ""}`;
+  rt.message(c, "system", text, { operation: true, text });
   rt.publish(s);
 }

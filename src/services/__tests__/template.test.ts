@@ -9,7 +9,7 @@ let service: MockMigrationService;
 let projectId: string;
 beforeEach(async () => {
   vi.useFakeTimers();
-  service = new MockMigrationService();
+  service = new MockMigrationService({ demoMode: false });
   const project = await service.createProject(
     {
       industry: "金融",

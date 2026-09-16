@@ -1,4 +1,4 @@
-import type { ExecutionState } from "./execution";
+import type { ExecutionState, MigrationConnectionInput } from "./execution";
 import type { PlanningState } from "./planning";
 export interface ReplyPresentation {
   summary: string;
@@ -222,6 +222,8 @@ export interface CatalogOption {
   label: string;
 }
 export interface Catalog {
+  /** Present only in Mock; never a stored account credential. */
+  sampleConnection?: MigrationConnectionInput;
   agents: CatalogOption[];
   models: CatalogOption[];
   defaultModel: string;
@@ -289,6 +291,8 @@ export interface PendingReply {
   runId: string;
 }
 export interface ProjectSnapshot {
+  /** Mock walkthrough capability. Absent for normal service adapters. */
+  demoMode?: boolean;
   id: string;
   info: ProjectInfo | null;
   revision: number;

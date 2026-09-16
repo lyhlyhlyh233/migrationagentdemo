@@ -11,7 +11,7 @@ import { planningFiles } from "../mock/planning-files";
 let service: MockMigrationService;
 beforeEach(() => {
   vi.useFakeTimers();
-  service = new MockMigrationService();
+  service = new MockMigrationService({ demoMode: false });
 });
 afterEach(() => {
   service.dispose();

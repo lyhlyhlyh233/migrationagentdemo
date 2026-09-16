@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "@/shared/ui/primitives";
 import { Icon } from "@/shared/ui/icons";
+import { AssistantMark } from "@/shared/ui/AssistantMark";
 import { useTranslation } from "@/shared/i18n";
 import styles from "./ManagementDiscussion.module.css";
 export function ManagementDiscussion({
@@ -54,9 +55,12 @@ export function ManagementDiscussion({
       {!collapsed && (
         <aside className={styles.chat} aria-label={t("工作台对话")}>
           <header>
-            <div>
-              <strong>{t("当前阶段会话")}</strong>
-              <span>{title}</span>
+            <div className={styles.identity}>
+              <AssistantMark size={48} />
+              <div className={styles.identityText}>
+                <strong>{t("AI 协作")}</strong>
+                <span>{title}</span>
+              </div>
             </div>
             <button
               type="button"

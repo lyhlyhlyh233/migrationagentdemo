@@ -114,3 +114,43 @@
   overflow-wrap: anywhere;
   font-size: var(--ui-size);
 }
+
+/* Management discussions have a distinct identity; stage messages stay open. */
+.root[data-variant="management"] {
+  font-size: 1rem;
+}
+.root[data-variant="management"] .answer {
+  position: relative;
+  padding-left: 32px;
+}
+.root[data-variant="management"] .user {
+  position: relative;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  padding-right: 32px;
+}
+.root[data-variant="management"] .user p {
+  max-width: 92%;
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+.avatar {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--secondary);
+}
+.user .avatar {
+  left: auto;
+  right: 0;
+  top: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}

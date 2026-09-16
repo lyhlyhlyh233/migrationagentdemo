@@ -1,6 +1,5 @@
 .root {
-  padding-block: 0 10px;
-  margin-bottom: 8px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
   font-size: var(--ui-small);
   line-height: 1.5;

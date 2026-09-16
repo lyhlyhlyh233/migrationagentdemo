@@ -11,14 +11,17 @@ export function PlanningPreview({
   preview,
   onCommand,
   canApply = true,
+  summaryOnly = false,
 }: {
   preview: Preview;
   onCommand: (command: ProjectCommand) => Promise<boolean>;
   canApply?: boolean;
+  summaryOnly?: boolean;
 }) {
   const t = useTranslation();
   const region = useRef<HTMLElement>(null);
   useEffect(() => {
+    if (summaryOnly) return;
     const element = region.current;
     const trigger =
       document.activeElement instanceof HTMLElement
@@ -36,7 +39,7 @@ export function PlanningPreview({
           workspace.focus({ preventScroll: true });
       });
     };
-  }, []);
+  }, [summaryOnly]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -106,22 +109,24 @@ export function PlanningPreview({
         </p>
       )}
       {!canApply && <p>{t("请在发起调整的会话中应用或取消")}</p>}
-      <footer>
-        <Button
-          disabled={busy || !canApply}
-          onClick={() => void submit("planning.cancel")}
-        >
-          {t("取消")}
-        </Button>
-        <Button
-          primary
-          disabled={busy || !canApply}
-          onClick={() => void submit("planning.apply")}
-        >
-          {t(busy ? "正在保存" : "应用调整")}
-          <Icon name="right" size={15} />
-        </Button>
-      </footer>
+      {!summaryOnly && (
+        <footer>
+          <Button
+            disabled={busy || !canApply}
+            onClick={() => void submit("planning.cancel")}
+          >
+            {t("取消")}
+          </Button>
+          <Button
+            primary
+            disabled={busy || !canApply}
+            onClick={() => void submit("planning.apply")}
+          >
+            {t(busy ? "正在保存" : "应用调整")}
+            <Icon name="right" size={15} />
+          </Button>
+        </footer>
+      )}
     </section>
   );
 }

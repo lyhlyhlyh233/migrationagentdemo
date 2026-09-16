@@ -9,7 +9,7 @@ let service: MockMigrationService;
 let context: OperationContext;
 beforeEach(async () => {
   vi.useFakeTimers();
-  service = new MockMigrationService();
+  service = new MockMigrationService({ demoMode: false });
   const s = await service.createProject(
     {
       siteName: "批量风险检查",

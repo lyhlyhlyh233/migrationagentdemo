@@ -1,6 +1,13 @@
 import type { ExecutionTaskKind, ProjectSnapshot, StageId } from "./models";
 import { planningIsStale } from "./planning";
 export function stageEligibility(s: ProjectSnapshot): Record<StageId, boolean> {
+  if (s.demoMode)
+    return {
+      research: !!s.info,
+      planning: !!s.info && s.enteredStages.includes("research"),
+      migration: !!s.info && s.enteredStages.includes("planning"),
+      validation: !!s.info && s.enteredStages.includes("migration"),
+    };
   return {
     research: !!s.info,
     planning:

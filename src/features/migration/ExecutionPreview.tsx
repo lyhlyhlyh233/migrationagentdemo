@@ -11,11 +11,13 @@ export function ExecutionPreview({
   conversationId,
   busy,
   onCommand,
+  summaryOnly = false,
 }: {
   preview: Preview;
   conversationId: string | null;
   busy: boolean;
   onCommand: (cmd: ProjectCommand) => Promise<boolean>;
+  summaryOnly?: boolean;
 }) {
   const t = useTranslation(),
     own = preview.origin.conversationId === conversationId;
@@ -51,26 +53,28 @@ export function ExecutionPreview({
           {t("操作未完成，预览与选择已保留，请重试。")}
         </p>
       )}
-      <div className={styles.actions}>
-        <Button
-          disabled={busy || !own}
-          onClick={() =>
-            void send({ type: "execution.cancel", previewId: preview.id })
-          }
-        >
-          {t("取消")}
-        </Button>
-        <Button
-          primary
-          disabled={busy || !own}
-          onClick={() =>
-            void send({ type: "execution.apply", previewId: preview.id })
-          }
-        >
-          {t(busy ? "正在应用" : "确认应用")}
-          <Icon name="right" size={14} />
-        </Button>
-      </div>
+      {!summaryOnly && (
+        <div className={styles.actions}>
+          <Button
+            disabled={busy || !own}
+            onClick={() =>
+              void send({ type: "execution.cancel", previewId: preview.id })
+            }
+          >
+            {t("取消")}
+          </Button>
+          <Button
+            primary
+            disabled={busy || !own}
+            onClick={() =>
+              void send({ type: "execution.apply", previewId: preview.id })
+            }
+          >
+            {t(busy ? "正在应用" : "确认应用")}
+            <Icon name="right" size={14} />
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
