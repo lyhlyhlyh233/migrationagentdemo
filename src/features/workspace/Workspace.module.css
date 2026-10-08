@@ -1827,8 +1827,13 @@
   grid-template-columns: var(--side-nav-width) minmax(0, 1fr) var(
       --side-panel-width
     );
-  --conversation-width: 100%;
-  --conversation-gutter: 20px;
+  --conversation-gutter: clamp(24px, 5cqw, 80px);
+  /* Resolve the shared reading track against the chat column, not each
+     nested wrapper. The scroll viewport also reserves scrollbar space. */
+  --reading-width: min(
+    1280px,
+    calc(100cqw - var(--conversation-gutter) * 2)
+  );
 }
 .root:global(.workspace.side-panel-open.nav-collapsed) {
   --side-nav-width: 56px;
@@ -1838,7 +1843,20 @@
   container-name: risk-chat;
 }
 .root:global(.side-panel-open) :global(.progress-rail) {
-  padding: 16px 20px;
+  padding: 16px 0;
+}
+.root:global(.side-panel-open) :global(.conversation-content),
+.root:global(.side-panel-open) :global(.conversation-toolbar) {
+  width: var(--reading-width);
+  max-width: none;
+  padding-inline: 0;
+}
+.root:global(.side-panel-open) :global(.composer-area) {
+  padding-inline: 0;
+}
+.root:global(.side-panel-open) .actionFeedback {
+  width: var(--reading-width);
+  margin-inline: auto;
 }
 .root:global(.side-panel-open) :global(.progress-rail > ol) {
   gap: 12px;
