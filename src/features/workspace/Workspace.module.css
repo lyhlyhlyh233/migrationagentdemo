@@ -1831,7 +1831,7 @@
   /* Resolve the shared reading track against the chat column, not each
      nested wrapper. The scroll viewport also reserves scrollbar space. */
   --reading-width: min(
-    1280px,
+    1120px,
     calc(100cqw - var(--conversation-gutter) * 2)
   );
 }
